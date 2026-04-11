@@ -15,7 +15,6 @@ CREATE DATABASE dumbbell CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```yaml
 spring.datasource.password: 본인 MySQL 비밀번호
 jwt.secret: 256비트 이상의 랜덤 문자열로 교체
-api: google 제미나이 api 붙여넣기
 ```
 
 ### 3. 서버 실행
@@ -26,7 +25,7 @@ JPA `ddl-auto: update` 로 설정되어 있어 테이블이 자동 생성됩니�
 
 ### 4. 시드 데이터 삽입
 ```bash
-mysql -u root -p dumbbell < workout_app/schema.sql
+mysql -u root -p dumbbell < src/main/resources/seed.sql
 ```
 
 ---
@@ -40,47 +39,21 @@ src/main/java/com/dumbbell/
 │   ├── JwtUtil.java
 │   └── SecurityConfig.java
 ├── controller/
-│   ├── AiCoachingController.java
-│   ├── AuthController.java
-│   ├── FriendController.java
-│   ├── StatsController.java
-│   ├── UserController.java
-│   └── WorkoutController.java
-├── dto/
-│   ├── AiCoachingRequest.java
-│   ├── AiCoachingResponse.java
-│   ├── FriendResponse.java
-│   ├── HomeResponse.java
-│   ├── LoginRequest.java
-│   ├── RegisterRequest.java
-│   ├── SessionResponse.java
-│   ├── SessionStartRequest.java
-│   ├── TokenResponse.java
-│   ├── TrackUpdateRequest.java
-│   └── UserProfileResponse.java
+│   └── Controllers.java        # Auth / User / Workout 컨트롤러
+├── service/
+│   ├── UserService.java
+│   └── WorkoutService.java
+├── repository/
+│   └── Repositories.java
 ├── entity/
-│   ├── ExerciseType.java
-│   ├── SocialEntities.java     # Friendship / Group / GroupMember / AiCoachingLog
 │   ├── User.java
 │   ├── UserGoal.java
+│   ├── ExerciseType.java
 │   ├── WorkoutSession.java
-│   └── WorkoutTrack.java
-├── repository/
-│   ├── AiCoachingLogRepository.java
-│   ├── ExerciseTypeRepository.java
-│   ├── FriendshipRepository.java
-│   ├── GroupMemberRepository.java
-│   ├── GroupRepository.java
-│   ├── UserGoalRepository.java
-│   ├── UserRepository.java
-│   ├── WorkoutSessionRepository.java
-│   └── WorkoutTrackRepository.java
-└── service/
-    ├── AiCoachingService.java
-    ├── FriendService.java
-    ├── StatsService.java
-    ├── UserService.java
-    └── WorkoutService.java
+│   ├── WorkoutTrack.java
+│   └── SocialEntities.java     # Friendship / Group / GroupMember / AiCoachingLog
+└── dto/
+    └── Dtos.java
 ```
 
 ---

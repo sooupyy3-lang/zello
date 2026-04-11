@@ -73,7 +73,7 @@ CREATE TABLE friendships (
 );
 
 -- 그룹
-CREATE TABLE groups (
+CREATE TABLE user_groups (
   id          BIGINT AUTO_INCREMENT PRIMARY KEY,
   name        VARCHAR(100) NOT NULL,
   created_by  BIGINT       NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE group_members (
   user_id     BIGINT NOT NULL,
   role        ENUM('owner', 'member') DEFAULT 'member',
   joined_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES user_groups(id) ON DELETE CASCADE,
   FOREIGN KEY (user_id)  REFERENCES users(id)  ON DELETE CASCADE,
   UNIQUE KEY uq_group_member (group_id, user_id)
 );

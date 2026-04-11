@@ -65,7 +65,7 @@ public class AiCoachingService {
 
             // 1. 요청 본문(Contents) 구성
             List<Map<String, Object>> parts = new ArrayList<>();
-            
+
             // 텍스트 파트 추가
             parts.add(Map.of("text", prompt));
 
@@ -73,21 +73,21 @@ public class AiCoachingService {
             if (image != null && !image.isEmpty()) {
                 String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
                 String mimeType = image.getContentType() != null ? image.getContentType() : "image/jpeg";
-                
+
                 parts.add(Map.of(
-                    "inline_data", Map.of(
-                        "mime_type", mimeType,
-                        "data", base64Image
-                    )
+                        "inline_data", Map.of(
+                                "mime_type", mimeType,
+                                "data", base64Image
+                        )
                 ));
             }
 
             Map<String, Object> body = Map.of(
-                "contents", List.of(Map.of("parts", parts)),
-                "generationConfig", Map.of(
-                    "maxOutputTokens", 2048,
-                    "temperature", 0.7
-                )
+                    "contents", List.of(Map.of("parts", parts)),
+                    "generationConfig", Map.of(
+                            "maxOutputTokens", 2048,
+                            "temperature", 0.7
+                    )
             );
 
             HttpEntity<Map<String, Object>> req = new HttpEntity<>(body, headers);
@@ -115,7 +115,7 @@ public class AiCoachingService {
         }
     }
 
-    // buildPrompt와 extractRoutineJson 로직은 기존과 동일하게 유지하거나 
+    // buildPrompt와 extractRoutineJson 로직은 기존과 동일하게 유지하거나
     // Gemini의 특성에 맞춰 프롬프트를 조금 더 다듬으셔도 됩니다.
     private String buildPrompt(User user, String bodyDescription) {
         return String.format("""
@@ -141,6 +141,16 @@ public class AiCoachingService {
                 user.getWeightKg(),
                 bodyDescription != null ? bodyDescription : "없음"
         );
+    }
+
+    public AiCoachingResponse getLatestCoaching(Long userId) {
+        return aiLogRepo.findTopByUserIdOrderByCreatedAtDesc(userId)
+                .map(log -> AiCoachingResponse.builder()
+                        .logId(log.getId())
+                        .aiResponse(log.getAiResponse())
+                        .recommendedRoutine(log.getRecommendedRoutine())
+                        .build())
+                .orElseThrow(() -> new RuntimeException("코칭 기록이 없습니다."));
     }
 
     private String extractRoutineJson(String aiResponse) {
