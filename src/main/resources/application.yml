@@ -16,7 +16,7 @@ spring:
 
 jwt:
   secret: jebal-halsoo-itsuh-1212-gogo-15151717   # 반드시 변경하세요
-  expiration: 86400000   # 24시간 (ms)
+  expiration: 31536000000   # 1년 (ms) - MVP용
 
 server:
   port: 8080
