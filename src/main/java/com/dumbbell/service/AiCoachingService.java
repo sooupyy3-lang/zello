@@ -28,7 +28,7 @@ public class AiCoachingService {
     @Value("${google.gemini.api-key}")
     private String geminiApiKey;
 
-    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=";
+    private static final String GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=";
 
     @Transactional
     public AiCoachingResponse requestCoaching(Long userId, String bodyDescription, MultipartFile image) {
@@ -96,8 +96,8 @@ public class AiCoachingService {
             return extractGeminiText(res.getBody());
 
         } catch (Exception e) {
-            log.error("Gemini API 호출 실패", e);
-            throw new RuntimeException("AI 코칭 중 오류가 발생했습니다.");
+            log.error("Gemini API 호출 실패: {}", e.getMessage(), e);
+            throw new RuntimeException("AI 코칭 중 오류가 발생했습니다. 원인: " + e.getMessage());
         }
     }
 

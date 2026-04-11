@@ -1,16 +1,14 @@
 import GhostRunning from '../assets/Components/GhostRunning.png';
 import AiImage from '../assets/Components/AiCoach.svg';
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react'
+import { getUserName } from '../api';
 
 
 function AiCoach(){
     const navigate = useNavigate();
-    const location = useLocation();
-    
-    // Page2에서 넘겨받은 이름이 없으면 '사용자'로 표시
-    const name = location.state?.name || "사용자";
+    const name = getUserName() || "사용자";
     useEffect(() => {
             const timer = setTimeout(() => {
           navigate('/AiUpload')

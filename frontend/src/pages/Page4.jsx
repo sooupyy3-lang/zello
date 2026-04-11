@@ -53,7 +53,7 @@ function Page4({ setSelectedExercise }) {
       });
       navigate('/Page8');
     } catch (e) {
-      // 백엔드 미연결 시 로컬 데이터로 진행
+      console.error('startSession 실패:', e.message);
       setSelectedExercise(found);
       navigate('/Page8');
     } finally {

@@ -109,8 +109,8 @@ export const getLatestCoaching = () => request('GET', '/api/ai/coaching/latest')
 export const getMyProfile = () => request('GET', '/api/users/me');
 
 // PUT /api/users/me
-export const updateProfile = (userInfo) =>
-  request('PUT', '/api/users/me', {
+export const updateProfile = async (userInfo) => {
+  const data = await request('PUT', '/api/users/me', {
     name: userInfo.name,
     birthDate: userInfo.birth,
     gender: userInfo.gender,
@@ -120,6 +120,9 @@ export const updateProfile = (userInfo) =>
     durationMin: parseInt(userInfo.goalTime) * 60 || 60,
     calorieTarget: parseInt(userInfo.goalCal) || 500,
   });
+  setUserName(userInfo.name);
+  return data;
+};
 
 // ── Stats ──────────────────────────────────────────────
 export const getMyStats = () => request('GET', '/api/stats/me');

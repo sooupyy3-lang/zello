@@ -35,6 +35,7 @@ function AiUpload() {
     <div style={{ position: 'relative', width: '100%', backgroundColor: '#F3F4F4' }}>
       <img src={BodyImage} alt="background" style={{ width: '100%', display: 'block', zIndex: 0 }} />
 
+
       {/* 파일 input */}
       <input id="fileInput" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
 

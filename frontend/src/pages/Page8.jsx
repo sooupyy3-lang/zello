@@ -17,10 +17,28 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
     setIsRunning(Object.values(playing).some((v) => v));
   }, [playing]);
 
-  // 트랙 재생/일시정지 토글
+  // 트랙 재생/일시정지 토글 (한 번에 하나만 재생)
   const togglePlay = async (trackId, itemName) => {
     const nowPlaying = !playing[trackId];
-    setPlaying((prev) => ({ ...prev, [trackId]: nowPlaying }));
+
+    // 다른 트랙 모두 일시정지
+    if (nowPlaying) {
+      const pausePromises = Object.keys(playing)
+        .filter((id) => playing[id] && id !== String(trackId))
+        .map((id) => {
+          if (id !== 'null') {
+            return updateTrack(Number(id), 'paused', trackElapsed[id] || 0).catch(() => {});
+          }
+        });
+      await Promise.all(pausePromises);
+
+      setPlaying((prev) => {
+        const reset = Object.keys(prev).reduce((acc, id) => ({ ...acc, [id]: false }), {});
+        return { ...reset, [trackId]: true };
+      });
+    } else {
+      setPlaying((prev) => ({ ...prev, [trackId]: false }));
+    }
 
     const currentElapsed = trackElapsed[trackId] || 0;
     const status = nowPlaying ? 'running' : 'paused';
