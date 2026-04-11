@@ -1,10 +1,11 @@
 import BodyImage from '../assets/Components/Upload.svg';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate , } from 'react-router-dom';
 import { useState } from 'react';
 import { requestAiCoaching } from '../api';
 
 function AiUpload() {
   const navigate = useNavigate();
+   const name = location.state?.name || "사용자";
   const [selectedFile, setSelectedFile] = useState(null);
   const [bodyDescription, setBodyDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,23 +54,33 @@ function AiUpload() {
       )}
 
       {/* 체형 설명 입력 */}
-      <textarea
-        placeholder="체형 고민이나 특이사항을 입력해주세요 (선택)"
-        value={bodyDescription}
-        onChange={(e) => setBodyDescription(e.target.value)}
-        style={{
-          position: 'absolute', top: '650px', left: '33px', right: '33px',
-          width: 'calc(100% - 66px)', height: '80px',
-          border: '1px solid #BFE8F8', borderRadius: '9px', padding: '10px',
-          fontSize: '14px', fontFamily: 'inherit', color: '#002738',
-          resize: 'none', outline: 'none', boxSizing: 'border-box',
-        }}
-      />
+       <p style={{position: 'absolute',textAlign: 'center', top:150, left:'28px',color: '#002738', fontSize:'16px'}}> {name}님의 체형 사진과 체형 고민을 추가해 주세요</p>
+
+            <p style={{position: 'absolute',textAlign: 'center', top:180, left:'53px',color: '#002738', fontSize:'16px'}}>체형이 잘 드러나는 전신 사진을 업로드 하면<br />정확도가 올라가요!</p>
 
       {error && (
         <p style={{ position: 'absolute', top: '740px', left: '33px', color: '#e53e3e', fontSize: '14px', margin: 0 }}>{error}</p>
       )}
-
+ <textarea
+    placeholder={`${name}님의 체형 특징과 고민을 적어주세요`}
+    style={{
+        position: 'absolute',
+        top: '650px',
+        left: '33px',
+        width: '320px',
+        height: '120px',
+        backgroundColor: '#BFE8F8',
+        borderRadius: '9px',
+        border: 'none',
+        padding: '16px',
+        fontSize: '15px',
+        color: '#002738',
+        fontFamily: 'inherit',
+        resize: 'none',
+        outline: 'none',
+        boxSizing: 'border-box',
+    }}
+/>
       {/* 제출 버튼 */}
       <button
         onClick={handleSubmit}

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import myImage from '../assets/Components/Page3.png';
 import StartEx from '../assets/Components/StartEx.png';
@@ -8,6 +8,7 @@ import { getHome, getUserName } from '../api';
 
 function Page3({ elapsed = 0 }) {
   const navigate = useNavigate();
+   const location = useLocation();
   const [isHover, setIsHover] = useState(false);
   const [homeData, setHomeData] = useState(null);
   const [goal, setGoal] = useState('');
@@ -119,21 +120,15 @@ function Page3({ elapsed = 0 }) {
           <img src={CalendarIcon} alt="캘린더" style={{ width: '18px', height: '18px', objectFit: 'contain' }} />
           <span style={{ fontSize: '15px', fontWeight: '700', color: '#002738' }}>오늘의 목표</span>
         </div>
-        <textarea
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
-          placeholder={homeData ? `주 ${homeData.goalDurationMin ? Math.round(homeData.goalDurationMin/60) : '--'}회 / ${homeData.goalCalorie ?? '--'}kcal 목표` : '목표를 입력하세요'}
-          style={{
-            width: '100%', minHeight: '50px', border: 'none', background: 'none',
-            resize: 'none', outline: 'none', fontSize: '13px', color: '#002738',
-            fontFamily: 'inherit', lineHeight: '1.6', overflow: 'hidden',
-          }}
-          rows={1}
-          onInput={(e) => {
-            e.target.style.height = 'auto';
-            e.target.style.height = e.target.scrollHeight + 'px';
-          }}
-        />
+       
+          
+        {/* 텍스트 */}
+        <p style={{ fontSize: '13px', color: '#002738', lineHeight: '1.6', margin: 0 }}>
+          
+          {streakDays}일째 운동중💪<br />
+            목표 시간까지 {homeData?.goalDurationMin ? Math.round(homeData?.goalDurationMin/60) : '--'} 시간<br />
+            목표 칼로리까지 {homeData?.goalCalorie ?? '--'} kcal
+           </p>
       </div>
     </div>
   );
