@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HomeIcon from '../assets/Icon/HomeIcon.png';
-import { updateTrack, endSession } from '../api';
+import { updateTrack, endSession, getLatestCoaching } from '../api';
 
-function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
+function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const navigate = useNavigate();
   const sessionData = selectedExercise?.sessionData;
   const tracks = sessionData?.tracks || [];
@@ -11,6 +11,18 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
   // trackId → elapsedSec 로컬 타이머
   const [trackElapsed, setTrackElapsed] = useState({});
   const [playing, setPlaying] = useState({});
+  const [aiRoutine, setAiRoutine] = useState([]);
+
+  useEffect(() => {
+    getLatestCoaching()
+      .then(data => {
+        if (data?.recommendedRoutine) {
+          const parsed = JSON.parse(data.recommendedRoutine);
+          setAiRoutine(parsed.routines || []);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     // 트랙별 재생 상태로 전체 isRunning 제어
@@ -18,7 +30,7 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
   }, [playing]);
 
   // 트랙 재생/일시정지 토글 (한 번에 하나만 재생)
-  const togglePlay = async (trackId, itemName) => {
+  const togglePlay = async (trackId) => {
     const nowPlaying = !playing[trackId];
 
     // 다른 트랙 모두 일시정지
@@ -64,6 +76,7 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
   }, [playing]);
 
   const handleEnd = async () => {
+    setIsRunning(false);
     try {
       // 재생 중인 트랙들 먼저 pause 처리 (경과 시간 저장)
       const pausePromises = Object.keys(playing)
@@ -154,7 +167,7 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
                     </p>
                   )}
                 </div>
-                <button onClick={() => togglePlay(item.id, item.name)}
+                <button onClick={() => togglePlay(item.id)}
                   style={{
                     width: '57px', height: '57px', borderRadius: '50%', border: 'none',
                     backgroundColor: '#57D0FF', cursor: 'pointer',
@@ -177,12 +190,19 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
           })}
 
           {/* AI 추천 루틴 */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '20px', minHeight: '80px' }}>
-            <p style={{ margin: '0 0 8px', fontSize: '15px', fontWeight: '700', color: '#002738' }}>AI 추천 루틴</p>
-            {selectedExercise?.sessionData ? (
-              <p style={{ margin: 0, fontSize: '13px', color: '#8EB3C2' }}>AI 코치 탭에서 맞춤 루틴을 확인하세요</p>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '20px' }}>
+            <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>AI 추천 루틴</p>
+            {aiRoutine.length > 0 ? (
+              <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#D9D9D9' }}>
+                {aiRoutine.map((item, idx) => (
+                  <div key={idx} style={{ textAlign: 'center', marginBottom: idx < aiRoutine.length - 1 ? '8px' : 0 }}>
+                    <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#002738' }}>{item.name}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#002738' }}>{item.sets}세트 × {item.reps}</p>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <p style={{ margin: 0, fontSize: '13px', color: '#8EB3C2' }}>AI 코치 탭에서 맞춤 루틴을 받아보세요</p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#8EB3C2', textAlign: 'center' }}>AI 코치 탭에서 맞춤 루틴을 받아보세요</p>
             )}
           </div>
         </div>
@@ -192,3 +212,4 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
 }
 
 export default Page8;
+
