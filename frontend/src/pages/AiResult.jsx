@@ -12,15 +12,15 @@ function renderResponse(text) {
     // **text** → bold 처리
     const parts = trimmed.split(/(\*\*[^*]+\*\*)/);
     const rendered = parts.map((part, j) =>
-      part.startsWith('**') && part.endsWith('**')
-        ? <strong key={j} style={{ fontSize: '15px', fontWeight: '800' }}>{part.slice(2, -2)}</strong>
-        : part
+        part.startsWith('**') && part.endsWith('**')
+            ? <strong key={j} style={{ fontSize: '15px', fontWeight: '800' }}>{part.slice(2, -2)}</strong>
+            : part
     );
     // 줄 전체가 bold인 경우 (섹션 헤더)
     const isHeader = parts.length === 3 && parts[0] === '' && parts[2] === '';
     return isHeader
-      ? <p key={i} style={{ margin: '16px 0 4px', fontSize: '15px', fontWeight: '800', color: '#002738' }}>{rendered}</p>
-      : <p key={i} style={{ margin: '2px 0', fontSize: '14px', color: '#002738', lineHeight: '1.8' }}>{rendered}</p>;
+        ? <p key={i} style={{ margin: '16px 0 4px', fontSize: '15px', fontWeight: '800', color: '#002738' }}>{rendered}</p>
+        : <p key={i} style={{ margin: '2px 0', fontSize: '14px', color: '#002738', lineHeight: '1.8' }}>{rendered}</p>;
   });
 }
 
@@ -33,9 +33,9 @@ function AiResult() {
 
   useEffect(() => {
     getLatestCoaching()
-      .then(setCoaching)
-      .catch(() => setCoaching(null))
-      .finally(() => setLoading(false));
+        .then(setCoaching)
+        .catch(() => setCoaching(null))
+        .finally(() => setLoading(false));
   }, []);
 
   // 루틴 파싱 시도
@@ -48,72 +48,73 @@ function AiResult() {
   }
 
   return (
-    <div style={{
-      width: '402px', minHeight: '1172px',
-      backgroundColor: '#F3F4F4', fontFamily: 'inherit',
-      boxSizing: 'border-box', padding: '40px 24px 60px',
-    }}>
       <div style={{
-        backgroundColor: '#ffffff', borderRadius: '20px', padding: '32px 24px',
-        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)',
-        display: 'flex', flexDirection: 'column', marginBottom: '27px',
+        width: '402px', minHeight: '1172px',
+        backgroundColor: '#F3F4F4', fontFamily: 'inherit',
+        boxSizing: 'border-box', padding: '40px 24px 60px',
       }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#002738', textAlign: 'center', margin: '0 0 32px', lineHeight: '1.3' }}>
-          체형 기반 AI 코칭 받기
-        </h1>
-
-        {loading ? (
-          <p style={{ fontSize: '16px', color: '#8EB3C2', textAlign: 'center' }}>AI 코칭 결과를 불러오는 중...</p>
-        ) : !coaching ? (
-          <p style={{ fontSize: '16px', color: '#8EB3C2', textAlign: 'center' }}>
-            코칭 결과를 찾을 수 없어요.<br />사진을 업로드해주세요.
-          </p>
-        ) : (
-          <>
-            <p style={{ fontSize: '16px', fontWeight: '700', color: '#002738', margin: '0 0 12px' }}>
-              {name}님의 체형 분석 결과 AI 코칭을 알려드릴게요
-            </p>
-            <div style={{ wordBreak: 'keep-all', marginBottom: '24px' }}>
-              {renderResponse(coaching.aiResponse)}
-            </div>
-
-            {routine.length > 0 && (
-              <div style={{ border: '1.5px solid #000000', borderRadius: '15px', padding: '20px 24px', marginBottom: '32px', backgroundColor: '#D9D9D9' }}>
-                <p style={{ fontSize: '15px', fontWeight: '800', color: '#002738', margin: '0 0 16px', textAlign: 'center' }}>
-                  추천 운동 루틴
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                  {routine.map((item, idx) => (
-                    <React.Fragment key={idx}>
-                      <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>{item.name}</p>
-                      <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: '500', color: '#002738', textAlign: 'center' }}>
-                        {item.sets}세트 × {item.reps}
-                      </p>
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      <button
-        onClick={() => navigate('/Page3')}
-        onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
-        onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-        style={{
-          width: '350px', height: '66px',
-          backgroundColor: '#BFE8F8', borderRadius: '9px', border: 'none',
-          boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
-          color: '#002738', fontSize: '20px', fontWeight: '800',
-          fontFamily: 'inherit', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.1s ease-in-out',
+        <div style={{
+          backgroundColor: '#ffffff', borderRadius: '20px', padding: '32px 24px',
+          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)',
+          display: 'flex', flexDirection: 'column', marginBottom: '27px',
         }}>
-        추천 운동 루틴 연동하기
-      </button>
-    </div>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#002738', textAlign: 'center', margin: '0 0 32px', lineHeight: '1.3' }}>
+            체형 기반 AI 코칭 받기
+          </h1>
+
+          {loading ? (
+              <p style={{ fontSize: '16px', color: '#8EB3C2', textAlign: 'center' }}>AI 코칭 결과를 불러오는 중...</p>
+          ) : !coaching ? (
+              <p style={{ fontSize: '16px', color: '#8EB3C2', textAlign: 'center' }}>
+                코칭 결과를 찾을 수 없어요.<br />사진을 업로드해주세요.
+              </p>
+          ) : (
+              <>
+                <p style={{ fontSize: '16px', fontWeight: '700', color: '#002738', margin: '0 0 12px' }}>
+                  {name}님의 체형 분석 결과 AI 코칭을 알려드릴게요
+                </p>
+
+                <div style={{ wordBreak: 'keep-all', marginBottom: '24px' }}>
+                  {renderResponse(coaching.aiResponse)}
+                </div>
+
+                {routine.length > 0 && (
+                    <div style={{ border: '1.5px solid #000000', borderRadius: '15px', padding: '20px 24px', marginBottom: '32px', backgroundColor: '#FFFFFF' }}>
+                      <p style={{ fontSize: '15px', fontWeight: '800', color: '#002738', margin: '0 0 16px', textAlign: 'center' }}>
+                        추천 운동 루틴
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                        {routine.map((item, idx) => (
+                            <React.Fragment key={idx}>
+                              <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>{item.name}</p>
+                              <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: '500', color: '#002738', textAlign: 'center' }}>
+                                {item.sets}세트 × {item.reps}
+                              </p>
+                            </React.Fragment>
+                        ))}
+                      </div>
+                    </div>
+                )}
+              </>
+          )}
+        </div>
+
+        <button
+            onClick={() => navigate('/Page3')}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+            style={{
+              width: '350px', height: '66px',
+              backgroundColor: '#BFE8F8', borderRadius: '9px', border: 'none',
+              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
+              color: '#002738', fontSize: '20px', fontWeight: '800',
+              fontFamily: 'inherit', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.1s ease-in-out',
+            }}>
+          추천 운동 루틴 연동하기
+        </button>
+      </div>
   );
 }
 
