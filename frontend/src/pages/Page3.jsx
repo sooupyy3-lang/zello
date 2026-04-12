@@ -117,12 +117,12 @@ function Page3({ elapsed = 0 }) {
           {/* AI 추천 루틴 */}
           <div style={{
             backgroundColor: '#FFFFFF', borderRadius: '16px',
-            padding: '16px', boxSizing: 'border-box',
+            padding: '16px', boxSizing: 'border-box', height:'auto', overflow:'visible',minHeight:'210px'
           }}>
             {aiRoutine.length > 0 ? (
               <>
                 <p style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>AI 추천 루틴</p>
-                <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#D9D9D9' }}>
+                <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF' }}>
                   {aiRoutine.map((item, idx) => (
                     <div key={idx} style={{ textAlign: 'center', marginBottom: idx < aiRoutine.length - 1 ? '8px' : 0 }}>
                       <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#002738' }}>{item.name}</p>
