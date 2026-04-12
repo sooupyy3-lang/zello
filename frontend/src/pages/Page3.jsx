@@ -86,7 +86,7 @@ function Page3({ elapsed = 0 }) {
       {/* AI 추천 루틴 박스 */}
       <div style={{
         position: 'absolute', top: '401px', left: '50%', transform: 'translateX(-50%)',
-        width: '316px', minHeight: '218px',
+        width: '316px', height:'auto', minHeight: '210px',
         backgroundColor: '#FFFFFF', borderRadius: '16px',
         padding: '16px', boxSizing: 'border-box', zIndex: 20,
       }}>
@@ -102,11 +102,7 @@ function Page3({ elapsed = 0 }) {
             AI 코칭을 받으면 추천 루틴이 표시돼요
           </p>
         )}
-        {streakDays > 0 && (
-          <p style={{ margin: '12px 0 0', fontSize: '13px', fontWeight: '700', color: '#002738', textAlign: 'right' }}>
-            🔥 {streakDays}일째 연속 운동 중!
-          </p>
-        )}
+       
       </div>
 
       {/* 오늘의 목표 박스 */}

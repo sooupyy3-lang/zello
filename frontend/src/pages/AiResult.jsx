@@ -63,7 +63,7 @@ function AiResult() {
             </p>
 
             {routine.length > 0 && (
-              <div style={{ border: '1.5px solid #000000', borderRadius: '15px', padding: '20px 24px', marginBottom: '32px', backgroundColor: '#D9D9D9' }}>
+              <div style={{ border: '1.5px solid #000000', borderRadius: '15px', padding: '20px 24px', marginBottom: '32px', backgroundColor: '#FFFFFF' }}>
                 <p style={{ fontSize: '15px', fontWeight: '800', color: '#002738', margin: '0 0 16px', textAlign: 'center' }}>
                   추천 운동 루틴
                 </p>
