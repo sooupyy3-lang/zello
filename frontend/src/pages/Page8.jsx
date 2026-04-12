@@ -100,7 +100,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
     : (selectedExercise?.items || []).map((name) => ({ id: null, name }));
 
   return (
-    <div style={{ width: '401px', height: '874px', overflow: 'hidden', fontFamily: 'inherit', backgroundColor: '#f0f4f8' }}>
+    <div style={{ width: '401px', height: '874px', overflow: 'hidden', fontFamily: 'inherit', backgroundColor: '#0a0e1a' }}>
       <div style={{ width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
 
         {/* 상단 다크 영역 */}
