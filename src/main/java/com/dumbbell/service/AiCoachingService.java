@@ -83,7 +83,7 @@ public class AiCoachingService {
             Map<String, Object> body = Map.of(
                     "contents", List.of(Map.of("parts", parts)),
                     "generationConfig", Map.of(
-                            "maxOutputTokens", 2048,
+                            "maxOutputTokens", 8192,
                             "temperature", 0.7
                     )
             );
