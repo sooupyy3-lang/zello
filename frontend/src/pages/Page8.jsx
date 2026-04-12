@@ -65,6 +65,11 @@ function Page8({ elapsed, isRunning, setIsRunning, selectedExercise }) {
 
   const handleEnd = async () => {
     try {
+      // 재생 중인 트랙들 먼저 pause 처리 (경과 시간 저장)
+      const pausePromises = Object.keys(playing)
+        .filter((id) => playing[id] && id !== 'null')
+        .map((id) => updateTrack(Number(id), 'paused', trackElapsed[id] || 0).catch(() => {}));
+      await Promise.all(pausePromises);
       await endSession();
     } catch (e) { /* 무시 */ }
     navigate('/Page3');

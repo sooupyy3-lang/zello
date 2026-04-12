@@ -24,7 +24,16 @@ function DayRecord() {
   const totalSec = session?.totalDurationSec || 0;
   const totalHour = Math.floor(totalSec / 3600);
   const totalMin = Math.floor((totalSec % 3600) / 60);
+  const totalRemSec = totalSec % 60;
   const totalCal = Math.round(session?.totalCalories || 0);
+
+  const formatDuration = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    if (m === 0) return `${s}초`;
+    if (s === 0) return `${m}분`;
+    return `${m}분 ${s}초`;
+  };
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', fontFamily: 'inherit' }}>
@@ -53,11 +62,11 @@ function DayRecord() {
             <>
               <div style={{ width: '100%', textAlign: 'center', marginBottom: '16px' }}>
                 <p style={{ margin: '0 0 6px', fontSize: '20px', fontWeight: '700', color: '#002738' }}>
-                  총 운동 시간 - {totalHour > 0 ? `${totalHour}시간 ` : ''}{totalMin}분
+                  총 운동 시간 - {totalHour > 0 ? `${totalHour}시간 ` : ''}{totalMin > 0 ? `${totalMin}분 ` : ''}{totalRemSec > 0 || totalSec === 0 ? `${totalRemSec}초` : ''}
                 </p>
                 {session.tracks?.map((t, i) => (
                   <p key={i} style={{ margin: '2px 0', fontSize: '19px', fontWeight: '700', color: '#002738' }}>
-                    {t.exerciseName} {Math.floor(t.elapsedSec / 60)}분
+                    {t.exerciseName} {formatDuration(t.elapsedSec || 0)}
                   </p>
                 ))}
               </div>
