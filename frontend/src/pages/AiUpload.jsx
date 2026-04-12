@@ -42,7 +42,7 @@ function AiUpload() {
 
       {/* 업로드 버튼 */}
       <button onClick={handleUpload} style={{
-        position: 'absolute', top: '550px', left: '337px',
+        position: 'absolute', top: '575px', left: '337px',
         width: '50px', height: '50px', background: 'transparent', border: 'none', cursor: 'pointer',
       }} />
 
