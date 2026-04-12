@@ -2,6 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getLatestCoaching, getUserName } from '../api';
 
+function renderResponse(text) {
+  if (!text) return null;
+  // JSON 코드 블록 제거 (루틴 카드에서 따로 표시)
+  const cleaned = text.replace(/```json[\s\S]*?```/g, '').trim();
+  return cleaned.split('\n').map((line, i) => {
+    const trimmed = line.trim();
+    if (!trimmed) return <div key={i} style={{ height: '8px' }} />;
+    // **text** → bold 처리
+    const parts = trimmed.split(/(\*\*[^*]+\*\*)/);
+    const rendered = parts.map((part, j) =>
+      part.startsWith('**') && part.endsWith('**')
+        ? <strong key={j} style={{ fontSize: '15px', fontWeight: '800' }}>{part.slice(2, -2)}</strong>
+        : part
+    );
+    // 줄 전체가 bold인 경우 (섹션 헤더)
+    const isHeader = parts.length === 3 && parts[0] === '' && parts[2] === '';
+    return isHeader
+      ? <p key={i} style={{ margin: '16px 0 4px', fontSize: '15px', fontWeight: '800', color: '#002738' }}>{rendered}</p>
+      : <p key={i} style={{ margin: '2px 0', fontSize: '14px', color: '#002738', lineHeight: '1.8' }}>{rendered}</p>;
+  });
+}
+
 function AiResult() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -24,13 +46,6 @@ function AiResult() {
       routine = parsed.routines || [];
     } catch (e) {}
   }
-
-  // 더미 fallback
-  const analysisText = coaching?.aiResponse?.split('<AI 운동 코칭>')[0]?.trim()
-    || coaching?.aiResponse?.slice(0, 500)
-    || '분석 결과를 불러오는 중입니다...';
-
-  const coachingText = coaching?.aiResponse?.split('<AI 운동 코칭>')[1]?.trim() || '';
 
   return (
     <div style={{
@@ -58,9 +73,9 @@ function AiResult() {
             <p style={{ fontSize: '16px', fontWeight: '700', color: '#002738', margin: '0 0 12px' }}>
               {name}님의 체형 분석 결과 AI 코칭을 알려드릴게요
             </p>
-            <p style={{ fontSize: '15px', fontWeight: '500', color: '#002738', lineHeight: '1.8', margin: '0 0 24px', wordBreak: 'keep-all', whiteSpace: 'pre-wrap' }}>
-              {coaching.aiResponse}
-            </p>
+            <div style={{ wordBreak: 'keep-all', marginBottom: '24px' }}>
+              {renderResponse(coaching.aiResponse)}
+            </div>
 
             {routine.length > 0 && (
               <div style={{ border: '1.5px solid #000000', borderRadius: '15px', padding: '20px 24px', marginBottom: '32px', backgroundColor: '#D9D9D9' }}>
@@ -103,3 +118,4 @@ function AiResult() {
 }
 
 export default AiResult;
+
