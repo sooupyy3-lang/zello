@@ -48,6 +48,7 @@ function App() {
             <Route path="/AiCoach" element={<AiCoach />} />
             <Route path="/DayRecord" element={<DayRecord />} />
             <Route path="/AiUpload" element={<AiUpload />} />
+            <Route path="/AiResult" element={<AiResult />} />
             <Route path="/MyPage" element={<MyPage />} />
           </Route>
 
@@ -65,7 +66,6 @@ function App() {
             />
           } />
           <Route path="/Analyzing" element={<Analyzing />} />
-          <Route path="/AiResult" element={<AiResult />} />
         </Routes>
       </div>
     </BrowserRouter>
@@ -73,3 +73,4 @@ function App() {
 }
 
 export default App;
+
