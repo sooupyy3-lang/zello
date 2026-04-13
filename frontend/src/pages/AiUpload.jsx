@@ -63,6 +63,8 @@ function AiUpload() {
       )}
  <textarea
     placeholder={`${name}님의 체형 특징과 고민을 적어주세요`}
+    value={bodyDescription}
+    onChange={(e) => setBodyDescription(e.target.value)}
     style={{
         position: 'absolute',
         top: '650px',
@@ -105,3 +107,4 @@ function AiUpload() {
 }
 
 export default AiUpload;
+
