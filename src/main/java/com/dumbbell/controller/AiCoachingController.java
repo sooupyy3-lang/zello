@@ -18,12 +18,16 @@ public class AiCoachingController {
 
     // POST /api/ai/coaching — AI 코칭 요청 (이미지 선택)
     @PostMapping(value = "/coaching", consumes = "multipart/form-data")
-    public ResponseEntity<AiCoachingResponse> requestCoaching(
+    public ResponseEntity<?> requestCoaching(
             Authentication auth,
             @RequestParam(required = false) String bodyDescription,
             @RequestParam(required = false) MultipartFile image) {
-        Long userId = (Long) auth.getPrincipal();
-        return ResponseEntity.ok(aiService.requestCoaching(userId, bodyDescription, image));
+        try {
+            Long userId = (Long) auth.getPrincipal();
+            return ResponseEntity.ok(aiService.requestCoaching(userId, bodyDescription, image));
+        } catch (Exception e) {
+            return ResponseEntity.status(503).body(java.util.Map.of("error", e.getMessage()));
+        }
     }
 
     // GET /api/ai/coaching/latest — 최근 코칭 결과 조회

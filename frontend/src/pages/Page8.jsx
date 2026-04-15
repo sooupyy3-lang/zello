@@ -193,7 +193,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '20px' }}>
             <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>AI 추천 루틴</p>
             {aiRoutine.length > 0 ? (
-              <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#D9D9D9' }}>
+              <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF' }}>
                 {aiRoutine.map((item, idx) => (
                   <div key={idx} style={{ textAlign: 'center', marginBottom: idx < aiRoutine.length - 1 ? '8px' : 0 }}>
                     <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#002738' }}>{item.name}</p>
