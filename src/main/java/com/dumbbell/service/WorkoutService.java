@@ -196,6 +196,7 @@ public class WorkoutService {
                         .status(t.getStatus().name())
                         .elapsedSec(t.getElapsedSec())
                         .calories(t.getCalories())
+                        .metValue(t.getExerciseType().getMetValue())
                         .build())
                 .collect(Collectors.toList());
 
@@ -206,6 +207,7 @@ public class WorkoutService {
                 .totalCalories(s.getTotalCalories())
                 .startedAt(s.getStartedAt())
                 .tracks(trackDtos)
+                .userWeightKg(s.getUser().getWeightKg())
                 .build();
     }
 }

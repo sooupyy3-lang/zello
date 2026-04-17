@@ -97,19 +97,6 @@ function AiResult() {
                   </div>
                 </div>
 
-                {/* 운동 방법 설명 */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '8px' }}>
-                  {routine.map((item, idx) => (
-                    item.description && (
-                      <div key={idx}>
-                        <span style={{ fontSize: '14px', fontWeight: '800', color: '#002738' }}>{item.name}</span>
-                        <span style={{ fontSize: '14px', fontWeight: '400', color: '#002738', lineHeight: '1.7' }}>
-                          {'  '}{item.description}
-                        </span>
-                      </div>
-                    )
-                  ))}
-                </div>
               </>
             )}
           </>

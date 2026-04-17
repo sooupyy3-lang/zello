@@ -12,6 +12,7 @@ public class SessionResponse {
     private Float          totalCalories;
     private LocalDateTime  startedAt;
     private List<TrackDto> tracks;
+    private Float          userWeightKg;
 
     @Getter @Builder
     public static class TrackDto {
@@ -23,5 +24,6 @@ public class SessionResponse {
         private String  status;
         private Integer elapsedSec;
         private Float   calories;
+        private Float   metValue;
     }
 }
