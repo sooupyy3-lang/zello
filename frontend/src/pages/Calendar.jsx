@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import GhostRunning from '../assets/Components/GhostRunning.png';
 import BackForward from '../assets/Icon/BackForward.svg';
 import { getHome } from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function Calendar() {
   const navigate = useNavigate();
   const [homeData, setHomeData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getHome().then(setHomeData).catch(() => {});
+    getHome().then(setHomeData).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   // workedOutDates: ["2025-04-09", ...] 형식
@@ -52,6 +54,8 @@ function Calendar() {
   };
 
   const years = Array.from({ length: 10 }, (_, i) => today.getFullYear() - 5 + i);
+
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div style={{ width: '100%', height: '100%', backgroundColor: '#eef1f4', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'inherit' }}>

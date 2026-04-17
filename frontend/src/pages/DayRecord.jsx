@@ -4,6 +4,7 @@ import MascotImage from '../assets/Components/GhostGreeting.svg';
 import RecordImage from '../assets/Components/DayRecord.png';
 import BackForward from '../assets/Icon/BackForward.svg';
 import { getSessionByDate } from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function DayRecord() {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ function DayRecord() {
           <img src={MascotImage} alt="mascot" style={{ width: '251px', marginTop: '50px', marginBottom: '29px' }} />
 
           {loading ? (
-            <p style={{ fontSize: '18px', color: '#8EB3C2' }}>불러오는 중...</p>
+            <LoadingSpinner />
           ) : !session ? (
             <p style={{ fontSize: '18px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>
               이 날은 운동 기록이 없어요 😴

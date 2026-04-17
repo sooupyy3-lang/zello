@@ -11,7 +11,7 @@ function AiCoach(){
     const name = getUserName() || "사용자";
     useEffect(() => {
             const timer = setTimeout(() => {
-          navigate('/AiUpload')
+          navigate('/AiUpload', { state: { name } })
         }, 4000)
         return () => clearTimeout(timer)
       })

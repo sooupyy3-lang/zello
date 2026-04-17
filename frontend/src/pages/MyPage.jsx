@@ -4,6 +4,7 @@ import UserImage from '../assets/Components/MyPage.svg';
 import ModifyIcon from '../assets/Icon/ModifyIcon.svg';
 import Profile from '../assets/Components/Profile.svg';
 import { getMyStats, getUserName } from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function MyPage() {
   const navigate = useNavigate();
@@ -16,6 +17,8 @@ function MyPage() {
       .catch(() => setProfile(null))
       .finally(() => setLoading(false));
   }, []);
+
+  if (loading) return <LoadingSpinner />;
 
   const name = profile?.name || getUserName() || '사용자';
 

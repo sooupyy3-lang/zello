@@ -5,16 +5,19 @@ import StartEx from '../assets/Components/StartEx.png';
 import CalendarIcon from '../assets/Icon/CalendarIcon.png';
 import StartExClick from '../assets/Components/StartExClick.png';
 import { getHome } from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 function Page3({ elapsed = 0 }) {
   const navigate = useNavigate();
   const [isHover, setIsHover] = useState(false);
-  const [homeData, setHomeData] = useState('none');
+  const [homeData, setHomeData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getHome()
       .then(setHomeData)
-      .catch(() => {}); // 미로그인 시 무시
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const formatTime = (seconds) => {
@@ -41,14 +44,19 @@ function Page3({ elapsed = 0 }) {
     }
   } catch (e) {}
 
+  if (loading) return <LoadingSpinner />;
+
   return (
-    <div style={{ width: '100%', height: 'auto%', overflowY: 'auto', overflowX: 'hidden', position: 'relative',backgroundColor:'#F3F4F4' }}>
+    <div style={{ width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden', position: 'relative' }}>
       <img
         src={myImage}
         alt=""
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '800px', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0, pointerEvents: 'none' }}
       />
-      {/* 오늘 날짜 */}
+
+      <div style={{ position: 'relative', zIndex: 1, minHeight: '100%' }}>
+
+        {/* 오늘 날짜 */}
         <div style={{
           position: 'absolute', top: '24px', left: '50%', transform: 'translateX(-50%)',
           fontSize: '18px', fontWeight: '700', color: '#002738', fontFamily: 'inherit',
@@ -61,7 +69,7 @@ function Page3({ elapsed = 0 }) {
         <div style={{
           position: 'absolute', top: '145.33px', left: '50%',
           transform: 'translate(-50%, -50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center',zIndex:'1'
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
         }}>
           <span style={{
             fontSize: '48px', fontWeight: '700', color: '#002738',
@@ -70,7 +78,8 @@ function Page3({ elapsed = 0 }) {
             {formatTime(elapsed)}
           </span>
         </div>
-          {/* 운동 시작하기 버튼 */}
+
+        {/* 운동 시작하기 버튼 */}
         <button
           onClick={() => navigate('/Page4')}
           onMouseEnter={() => setIsHover(true)}
@@ -78,24 +87,19 @@ function Page3({ elapsed = 0 }) {
           onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
           onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           style={{
-            position: 'absolute', left: '120px', top: '232px',
+            position: 'absolute', left: '131.5px', top: '232px',
             padding: 0, background: 'none', border: 'none', cursor: 'pointer',
-            transition: 'transform 0.1s',zIndex:'1'
+            transition: 'transform 0.1s',
           }}
         >
           <img src={isHover ? StartExClick : StartEx} alt="운동 시작하기" style={{ width: '150px', display: 'block' }} />
         </button>
-      <div style={{ position: 'relative', zIndex: 1, minHeight: '100%' }}>
-
-        
-
-        
 
         {/* 카드 영역: 오늘의 목표(위) + AI 추천 루틴(아래) */}
         <div style={{
-          position: 'relative', marginTop: '390px',paddingBottom: '50px', left: '50%', transform: 'translateX(-50%)',
+          position: 'absolute', top: '390px', left: '50%', transform: 'translateX(-50%)',
           width: '316px', display: 'flex', flexDirection: 'column', gap: '12px',
-          paddingBottom: '50px',
+          paddingBottom: '24px',
         }}>
           {/* 오늘의 목표 */}
           <div style={{
@@ -116,13 +120,12 @@ function Page3({ elapsed = 0 }) {
           {/* AI 추천 루틴 */}
           <div style={{
             backgroundColor: '#FFFFFF', borderRadius: '16px',
-            padding: '16px', boxSizing: 'border-box', height:'auto', overflow:'visible',minHeight:'210px', display:'flex',
-            flexDirection: 'column'
+            padding: '16px', boxSizing: 'border-box',
           }}>
             {aiRoutine.length > 0 ? (
               <>
                 <p style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>AI 추천 루틴</p>
-                <div style={{  borderRadius: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF', flex:1, height:'auto' }}>
+                <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#D9D9D9' }}>
                   {aiRoutine.map((item, idx) => (
                     <div key={idx} style={{ textAlign: 'center', marginBottom: idx < aiRoutine.length - 1 ? '8px' : 0 }}>
                       <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#002738' }}>{item.name}</p>
