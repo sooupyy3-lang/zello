@@ -22,12 +22,11 @@ public class AiCoachingService {
     private final UserRepository          userRepo;
     private final RestTemplate            restTemplate;
 
-    @Value("${groq.api-key}")
-    private String groqApiKey;
+    @Value("${openai.api-key}")
+    private String openaiApiKey;
 
-    private static final String GROQ_API_URL  = "https://api.groq.com/openai/v1/chat/completions";
-    private static final String TEXT_MODEL    = "llama-3.3-70b-versatile";
-    private static final String VISION_MODEL  = "meta-llama/llama-4-scout-17b-16e-instruct";
+    private static final String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    private static final String MODEL          = "gpt-4.1-mini";
 
     @Transactional
     public AiCoachingResponse requestCoaching(Long userId, String bodyDescription, MultipartFile image) {
@@ -60,10 +59,9 @@ public class AiCoachingService {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(groqApiKey);
+            headers.setBearerAuth(openaiApiKey);
 
             Object messageContent;
-            String model;
 
             if (image != null && !image.isEmpty()) {
                 String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
@@ -73,10 +71,8 @@ public class AiCoachingService {
                         Map.of("type", "image_url", "image_url",
                                 Map.of("url", "data:" + mimeType + ";base64," + base64Image))
                 );
-                model = VISION_MODEL;
             } else {
                 messageContent = prompt;
-                model = TEXT_MODEL;
             }
 
             Map<String, Object> systemMessage = Map.of(
@@ -86,7 +82,7 @@ public class AiCoachingService {
             Map<String, Object> userMessage = Map.of("role", "user", "content", messageContent);
 
             Map<String, Object> body = Map.of(
-                    "model", model,
+                    "model", MODEL,
                     "messages", List.of(systemMessage, userMessage),
                     "max_tokens", 2048,
                     "temperature", 0.7
@@ -94,17 +90,16 @@ public class AiCoachingService {
 
             HttpEntity<Map<String, Object>> req = new HttpEntity<>(body, headers);
             @SuppressWarnings("rawtypes")
-            ResponseEntity<Map> res = restTemplate.postForEntity(GROQ_API_URL, req, Map.class);
+            ResponseEntity<Map> res = restTemplate.postForEntity(OPENAI_API_URL, req, Map.class);
 
             return extractGroqText(res.getBody());
 
         } catch (Exception e) {
-            log.error("Groq API 호출 실패: {}", e.getMessage(), e);
+            log.error("OpenAI API 호출 실패: {}", e.getMessage(), e);
             throw new RuntimeException("AI 코칭 중 오류가 발생했습니다. 원인: " + e.getMessage());
         }
     }
 
-    // ── Groq 응답 구조에서 텍스트 추출 ─────────────────────────
     @SuppressWarnings({"unchecked", "rawtypes"})
     private String extractGroqText(Map body) {
         try {
@@ -112,7 +107,7 @@ public class AiCoachingService {
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             return (String) message.get("content");
         } catch (Exception e) {
-            log.error("Groq 응답 파싱 에러", e);
+            log.error("OpenAI 응답 파싱 에러", e);
             throw new RuntimeException("AI 응답을 읽을 수 없습니다.");
         }
     }
