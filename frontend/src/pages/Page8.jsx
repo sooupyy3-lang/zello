@@ -96,8 +96,20 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
 
   // 로컬 UI용 items (백엔드 트랙 또는 fallback)
   const displayItems = tracks.length > 0
-    ? tracks.map((t) => ({ id: t.trackId, name: t.exerciseName, calories: t.calories }))
+    ? tracks.map((t) => ({ id: t.trackId, name: t.exerciseName, calories: t.calories, metValue: t.metValue }))
     : (selectedExercise?.items || []).map((name) => ({ id: null, name }));
+
+  // 현재 재생 중인 트랙의 실시간 칼로리 계산
+  const userWeightKg = sessionData?.userWeightKg ?? 60;
+  const currentPlayingItem = displayItems.find((item) => playing[item.id ?? item.name]);
+  const currentCalories = (() => {
+    if (!currentPlayingItem) return null;
+    const key = currentPlayingItem.id ?? currentPlayingItem.name;
+    const elapsedSec = trackElapsed[key] || 0;
+    const met = currentPlayingItem.metValue;
+    if (!met) return null;
+    return met * userWeightKg * 0.0175 * (elapsedSec / 60);
+  })();
 
   return (
     <div style={{ width: '401px', height: '874px', overflow: 'hidden', fontFamily: 'inherit', backgroundColor: '#0a0e1a' }}>
@@ -128,12 +140,19 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           </div>
 
           {/* 칼로리 */}
-          <p style={{ color: '#ffffff', fontSize: '20px', fontWeight: '700', margin: '0 0 6px' }}>
-            {sessionData?.totalCalories ? `${Math.round(sessionData.totalCalories)} Kcal 소모` : '129 Kcal 소모 예상'}
-          </p>
-          <p style={{ color: '#aabbcc', fontSize: '11px', margin: '0 0 22px', textAlign: 'center', padding: '0 20px' }}>
-            칼로리는 추정치이며 실제 소모량과 차이가 있을 수 있습니다.
-          </p>
+          {currentCalories !== null && (
+            <>
+              <p style={{ color: '#ffffff', fontSize: '20px', fontWeight: '700', margin: '0 0 6px' }}>
+                {`${currentCalories.toFixed(1)} Kcal 소모 예상`}
+              </p>
+              <p style={{ color: '#aabbcc', fontSize: '11px', margin: '0 0 22px', textAlign: 'center', padding: '0 20px' }}>
+                칼로리는 추정치이며 실제 소모량과 차이가 있을 수 있습니다.
+              </p>
+            </>
+          )}
+          {currentCalories === null && (
+            <p style={{ margin: '0 0 22px' }} />
+          )}
 
           {/* 운동 끝내기 */}
           <button onClick={handleEnd}
