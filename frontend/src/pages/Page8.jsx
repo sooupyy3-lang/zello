@@ -140,7 +140,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           </div>
 
           {/* 칼로리 */}
-          {currentCalories !== null && (
+          {currentCalories !== null ? (
             <>
               <p style={{ color: '#ffffff', fontSize: '20px', fontWeight: '700', margin: '0 0 6px' }}>
                 {`${currentCalories.toFixed(1)} Kcal 소모 예상`}
@@ -149,9 +149,8 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
                 칼로리는 추정치이며 실제 소모량과 차이가 있을 수 있습니다.
               </p>
             </>
-          )}
-          {currentCalories === null && (
-            <p style={{ margin: '0 0 22px' }} />
+          ) : (
+            <div style={{ margin: '0 0 22px' }} />
           )}
 
           {/* 운동 끝내기 */}
