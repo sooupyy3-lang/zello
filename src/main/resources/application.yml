@@ -18,7 +18,7 @@ jwt:
   expiration: 31536000000   # 1년 (ms) - MVP용
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
-groq:
-  api-key: ${GROQ_API_KEY}
+openai:
+  api-key: ${OPENAI_API_KEY}
