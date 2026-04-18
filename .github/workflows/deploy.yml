@@ -13,13 +13,11 @@ jobs:
       - name: Install dependencies
         working-directory: ./frontend
         run: npm install
-
       - name: Build
         working-directory: ./frontend
         run: npm run build
 
       - name: Deploy to Vercel
-        working-directory: ./frontend
         run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
