@@ -49,9 +49,9 @@ function MyPage() {
 
   return (
     <div style={{ width: '100%', height: '110%', position: 'relative', overflow: 'hidden', fontFamily: 'inherit' }}>
-      <img src={Profile} alt="profile" style={{ position: 'absolute', top: 175, left: 152, width: '70', height: '70', zIndex: 1 }} />
+      <img src={Profile} alt="profile" style={{ position: 'absolute', top: 165, left: 152, width: '70', height: '70', zIndex: 1 }} />
 
-      <h2 style={{ top: '260.5px', left: '153px', position: 'absolute', fontSize: '20px', fontWeight: '700', color: '#002738', margin: '0 0 12px', zIndex: 1 }}>
+      <h2 style={{ top: '250px', left: '157px', position: 'absolute', fontSize: '20px', fontWeight: '700', color: '#002738', margin: '0 0 12px', zIndex: 1 }}>
         {name} &nbsp; 님
       </h2>
 
