@@ -21,7 +21,7 @@ function Home() {
   return (
     <div>
   
-      <img src={myImage} alt="홈화면" />
+      <img src={myImage} alt="홈화면" style={{height:'95%', width:'95%'}} />
       
     </div>
   );
