@@ -35,7 +35,7 @@ function AiUpload() {
 
   return (
     <div style={{ position: 'relative', width: '100%', backgroundColor: '#F3F4F4' }}>
-      <img src={BodyImage} alt="background" style={{ width: '100%', display: 'block', zIndex: 0 }} />
+      <img src={BodyImage} alt="background" style={{ top:'-80px',width: '100%', display: 'block', zIndex: 0 }} />
 
 
       {/* 파일 input */}

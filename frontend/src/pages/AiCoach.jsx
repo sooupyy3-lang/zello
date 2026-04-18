@@ -32,7 +32,7 @@ function AiCoach(){
     alt="background"
     style={{
         position: 'absolute',
-        top: '-10px',
+        top: '-30px',
         left: 0,
         width: '100%',
         zIndex: 0,
