@@ -62,7 +62,8 @@ function Page4({ setSelectedExercise }) {
   };
 
   return (
-    <div style={{ width: '100%', height: '1033.35px', position: 'relative' }}>
+    <div style={{ width: '100%', minHeight: '100dvh',backgroundSize: 'cover',backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',  position: 'relative' }}>
       <div style={{
         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
         backgroundImage: `url(${forthImage})`,
@@ -76,11 +77,11 @@ function Page4({ setSelectedExercise }) {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1, marginTop: '-60px' }}>
-        <div style={{ paddingTop: '90px', textAlign: 'center', marginBottom: '0px' }}>
-          <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '800', color: '#002738' }}>운동 선택하기</h2>
+        <div style={{ paddingTop: '110px', textAlign: 'center', marginBottom: '0px' }}>
+          <h2 style={{ margin: 0, fontSize: 'clamp(20px, 6vw, 24px)', fontWeight: '800', color: '#002738' }}>운동 선택하기</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', padding: '29px 20px 30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)', padding: 'clamp(20px, 5vw, 29px) clamp(16px, 5vw, 20px) 30px',  }}>
           {categories.map((ex) => {
             const isSelected = selected === ex.id;
             const isFullWidth = ex.id === 'etc';
@@ -89,14 +90,14 @@ function Page4({ setSelectedExercise }) {
                 onClick={() => setSelected((prev) => (prev === ex.id ? null : ex.id))}
                 style={{
                   gridColumn: isFullWidth ? '1 / -1' : 'auto',
-                  height: '110px', borderRadius: '9px',
+                  height: 'clamp(90px, 22vw, 110px)', borderRadius: '9px',
                   border: isSelected ? '2px solid #BFE8F8' : '1px solid #e2e8f0',
                   backgroundColor: isSelected ? '#BFE8F8' : '#ffffff',
                   boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)',
                   cursor: 'pointer', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center',
                 }}>
-                <span style={{ fontSize: '20px', fontWeight: '800', color: '#002738' }}>{ex.label}</span>
+                <span style={{ fontSize: 'clamp(11px, 3.5vw, 20px)',  fontWeight: '800', color: '#002738' }}>{ex.label}</span>
                 {ex.sub && <span style={{ fontSize: '14px', fontWeight: '500', color: '#002738' }}>{ex.sub}</span>}
               </button>
             );
@@ -106,9 +107,9 @@ function Page4({ setSelectedExercise }) {
         <div style={{ padding: '20px 20px 100px' }}>
           <button onClick={handleStart} disabled={!selected || loading}
             style={{
-              width: '100%', height: '66px', borderRadius: '20px', border: 'none',
+              width: '100%',height: 'clamp(54px, 13vw, 66px)',  borderRadius: '20px', border: 'none',
               backgroundColor: selected && !loading ? '#BFE8F8' : '#e2e8f0',
-              color: '#002738', fontSize: '22px', fontWeight: '700',
+              color: '#002738', fontSize: 'clamp(18px, 5.5vw, 22px)', fontWeight: '700',
               boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)',
               cursor: selected && !loading ? 'pointer' : 'default',
             }}>

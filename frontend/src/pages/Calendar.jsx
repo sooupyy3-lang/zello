@@ -14,7 +14,6 @@ function Calendar() {
     getHome().then(setHomeData).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  // workedOutDates: ["2025-04-09", ...] 형식
   const workedOutDates = homeData?.workedOutDates || [];
   const streakDays = homeData?.streakDays || 0;
 
@@ -58,35 +57,55 @@ function Calendar() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div style={{ width: '100%', height: '100%', backgroundColor: '#eef1f4', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'inherit' }}>
-      <div style={{ backgroundColor: '#BFE8F8', height: '80px', flexShrink: 0 }} />
+    <div style={{
+      width: '100%',
+      minHeight: '100dvh',
+      backgroundColor: '#eef1f4',
+      display: 'flex', flexDirection: 'column',
+      fontFamily: 'inherit',
+    }}>
+      {/* 상단 파란 영역 */}
+      <div style={{ backgroundColor: '#BFE8F8', height: 'clamp(60px, 10dvh, 80px)', flexShrink: 0 }} />
       <div style={{ height: '1.5px', backgroundColor: '#002738', flexShrink: 0 }} />
+
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-        <div style={{ margin: '24px auto 0', width: '318px', backgroundColor: '#ffffff', borderRadius: '16px', padding: '16px', border: '1.5px solid #8EB3C2', boxSizing: 'border-box' }}>
+
+        {/* 캘린더 카드 */}
+        <div style={{
+          margin: 'clamp(16px, 4vw, 24px) auto 0',
+          width: 'calc(100% - clamp(32px, 10vw, 64px))',
+          maxWidth: '318px',
+          backgroundColor: '#ffffff',
+          borderRadius: '16px',
+          padding: 'clamp(12px, 3.5vw, 16px)',
+          border: '1.5px solid #8EB3C2',
+          boxSizing: 'border-box',
+        }}>
+
           {/* 월/년 헤더 */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(12px, 3.5vw, 18px)' }}>
             <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <img src={BackForward} alt="이전" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+              <img src={BackForward} alt="이전" style={{ width: 'clamp(16px, 5vw, 20px)', height: 'clamp(16px, 5vw, 20px)', objectFit: 'contain' }} />
             </button>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: 'clamp(4px, 2vw, 8px)' }}>
               <select value={currentMonth} onChange={(e) => setCurrentMonth(Number(e.target.value))}
-                style={{ width: 87, height: 28, boxSizing: 'border-box', padding: '0px 6px', borderRadius: '8px', border: '1px solid #8EB3C2', fontSize: '12px', color: '#002738', backgroundColor: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ width: 'clamp(70px, 22vw, 87px)', height: '28px', boxSizing: 'border-box', padding: '0px 6px', borderRadius: '8px', border: '1px solid #8EB3C2', fontSize: 'clamp(10px, 3vw, 12px)', color: '#002738', backgroundColor: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {monthNames.map((m, i) => <option key={i} value={i}>{m}</option>)}
               </select>
               <select value={currentYear} onChange={(e) => setCurrentYear(Number(e.target.value))}
-                style={{ width: 87, height: 28, boxSizing: 'border-box', padding: '0px 6px', borderRadius: '8px', border: '1px solid #8EB3C2', fontSize: '12px', color: '#002738', backgroundColor: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ width: 'clamp(70px, 22vw, 87px)', height: '28px', boxSizing: 'border-box', padding: '0px 6px', borderRadius: '8px', border: '1px solid #8EB3C2', fontSize: 'clamp(10px, 3vw, 12px)', color: '#002738', backgroundColor: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {years.map((y) => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
             <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <img src={BackForward} alt="다음" style={{ width: '20px', height: '20px', objectFit: 'contain', transform: 'scaleX(-1)' }} />
+              <img src={BackForward} alt="다음" style={{ width: 'clamp(16px, 5vw, 20px)', height: 'clamp(16px, 5vw, 20px)', objectFit: 'contain', transform: 'scaleX(-1)' }} />
             </button>
           </div>
 
           {/* 요일 헤더 */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '8px' }}>
             {dayNames.map((d) => (
-              <div key={d} style={{ textAlign: 'center', fontSize: '12px', color: '#8EB3C2', paddingBottom: '4px' }}>{d}</div>
+              <div key={d} style={{ textAlign: 'center', fontSize: 'clamp(10px, 3vw, 12px)', color: '#8EB3C2', paddingBottom: '4px' }}>{d}</div>
             ))}
           </div>
 
@@ -103,10 +122,12 @@ function Calendar() {
                 <div key={idx}
                   onClick={() => isCurrent && navigate('/DayRecord', { state: { day: cell.day, month: currentMonth, year: currentYear } })}
                   style={{
-                    height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    height: 'clamp(28px, 8vw, 36px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                     borderRadius: '8px',
                     backgroundColor: isFirst || isLast ? '#8EB3C2' : isMiddle ? '#F5F5F5' : 'transparent',
-                    fontSize: '11px', fontWeight: isExercised ? '700' : '500',
+                    fontSize: 'clamp(9px, 2.8vw, 11px)',
+                    fontWeight: isExercised ? '700' : '500',
                     color: isFirst || isLast ? '#ffffff' : isMiddle ? '#8EB3C2' : isCurrent ? '#002738' : '#8EB3C2',
                     cursor: isCurrent ? 'pointer' : 'default',
                   }}>
@@ -117,13 +138,17 @@ function Calendar() {
           </div>
         </div>
 
-        <div style={{ height: '1.5px', backgroundColor: '#002738', margin: '24px 0' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '30px' }}>
-          <img src={GhostRunning} alt="character" style={{ width: '186px', marginBottom: '16px' }} />
-          <p style={{ fontSize: '24px', fontWeight: '800', color: '#002738', margin: 0 }}>
+        {/* 구분선 */}
+        <div style={{ height: '1.5px', backgroundColor: '#002738', margin: 'clamp(16px, 4vw, 24px) 0' }} />
+
+        {/* 하단 캐릭터 */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: 'clamp(20px, 5vw, 30px)' }}>
+          <img src={GhostRunning} alt="character" style={{ width: 'clamp(140px, 46vw, 186px)', marginBottom: '16px' }} />
+          <p style={{ fontSize: 'clamp(18px, 6vw, 24px)', fontWeight: '800', color: '#002738', margin: 0 }}>
             {streakDays}일째 운동중
           </p>
         </div>
+
       </div>
     </div>
   );

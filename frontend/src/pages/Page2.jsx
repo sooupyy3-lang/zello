@@ -50,27 +50,34 @@ function Page2() {
   const inputStyle = {
     position: 'absolute',
     background: 'none', border: 'none', outline: 'none',
-    fontSize: '20px', textAlign: 'center',
+    fontSize: 'clamp(16px, 5vw, 20px)', textAlign: 'center',
     color: '#002738', padding: '0',
     fontFamily: 'inherit', fontWeight: '500',
   };
   const goalInputStyle = {
     background: 'none', border: 'none', outline: 'none',
-    fontSize: '20px', fontWeight: '700', textAlign: 'center',
-    color: '#002738', width: '44px', padding: '0', fontFamily: 'inherit',
+    fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', textAlign: 'center',
+    color: '#002738', width: 'clamp(36px, 11vw, 44px)', padding: '0', fontFamily: 'inherit',
   };
   const genderBtnBase = {
-    width: '160px', height: '64px', borderRadius: '15px',
-    fontFamily: 'inherit', fontWeight: '700', fontSize: '20px',
+    height: 'clamp(52px, 13vw, 64px)', width: 'clamp(160px, 13vw, 160px)', borderRadius: '15px',
+    fontFamily: 'inherit', fontWeight: '700',
+    fontSize: 'clamp(16px, 5vw, 20px)',
     color: '#002738', cursor: 'pointer',
     boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s',
   };
 
   return (
-    <div style={{
-      width: '100%', height: '100%',
+     <div style={{
+      width: '100%',
+      minHeight: '100dvh',
       backgroundImage: `url(${bgImage})`,
-      backgroundSize: '100% 100%', position: 'relative',
+      backgroundSize: '100% auto',             // ✅ 100% 100% → cover
+      backgroundPosition: 'top center',
+      backgroundRepeat: 'no-repeat',
+      backgroundColor:'#F3F4F4',
+      position: 'relative',
+      boxSizing: 'border-box',
     }}>
       {/* 뒤로가기 */}
       <div style={{ position: 'sticky', top: 0, width: '100%', height: '60px', display: 'flex', alignItems: 'center', padding: '0 20px', zIndex: 100 }}>
@@ -78,17 +85,26 @@ function Page2() {
           <img src={BackForward} alt="이전" style={{ width: '10px', height: '20px', objectFit: 'contain' }} />
         </button>
       </div>
+      
+       <div style={{
+        position: 'relative',
+        width: '100%',
+        aspectRatio: '402 / 874',  // 원본 디자인 비율 유지
+      }}>
 
       {/* 1. 이름 */}
       <input name="name" value={userInfo.name} onChange={handleChange} placeholder="홍길동"
-        style={{ ...inputStyle, left: '40px', top: '188px', width: '331px', height: '66px' }} />
+        style={{ ...inputStyle, left: '10%', top: '14.5%',
+            width: '80%', height: '7.5%'}} />
 
       {/* 2. 생년월일 */}
       <input name="birth" type="date" value={userInfo.birth} onChange={handleChange}
-        style={{ ...inputStyle, left: '125px', top: '298px', width: '200px', height: '40px', appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer' }} />
+        style={{ ...inputStyle, left: '31%', top: '26.7%',
+            width: '50%', height: '5%',
+            appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer', }} />
 
       {/* 3. 성별 */}
-      <div style={{ position: 'absolute', left: '32px', top: '384px', display: 'flex', gap: '10px' }}>
+      <div style={{ position: 'absolute', left: '8%', top: '37%',width: '84%', display: 'flex', gap: '2.5%' }}>
         {['male', 'female'].map((g) => (
           <button key={g} onClick={() => setUserInfo({ ...userInfo, gender: g })}
             style={{ ...genderBtnBase, border: userInfo.gender === g ? '2px solid #BFE8F8' : '1px solid #ddd', backgroundColor: userInfo.gender === g ? '#BFE8F8' : '#ffffff' }}>
@@ -98,52 +114,74 @@ function Page2() {
       </div>
 
       {/* 4. 키 */}
-      <div style={{ position: 'absolute', left: '15px', top: '496px', width: '200px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-        <span style={{ color: '#002738', fontSize: '20px', fontWeight: '700' }}>키</span>
+      <div style={{ position: 'absolute', left: '4%', top: '49.4%',
+          width: '46%', height: '5%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+        <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)' ,fontWeight: '700' }}>키</span>
         <input name="height" type="number" value={userInfo.height} onChange={handleChange} placeholder="000"
-          style={{ ...inputStyle, position: 'relative', width: '70px', height: '40px' }} />
-        <span style={{ color: '#002738', fontSize: '20px', fontWeight: '500' }}>cm</span>
+          style={{ ...inputStyle, position: 'relative', width: 'clamp(50px, 14vw, 70px)', height: '100%' }} />
+        <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '500' }}>cm</span>
       </div>
 
       {/* 5. 몸무게 */}
-      <div style={{ position: 'absolute', left: '185px', top: '496px', width: '200px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-        <span style={{ color: '#002738', fontSize: '20px', fontWeight: '700' }}>몸무게</span>
-        <input name="weight" type="number" value={userInfo.weight} onChange={handleChange} placeholder="00"
-          style={{ ...inputStyle, position: 'relative', width: '50px', height: '40px' }} />
-        <span style={{ color: '#002738', fontSize: '20px', fontWeight: '500' }}>kg</span>
-      </div>
+      <div style={{ position: 'absolute', left: '48%', top: '49.4%', width: '46%', height: '5%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+         <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700' }}>몸무게</span>
+          <input name="weight" type="number" value={userInfo.weight} onChange={handleChange} placeholder="00"
+            style={{ ...inputStyle, position: 'relative', width: 'clamp(36px, 10vw, 50px)', height: '100%' }} />
+          <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '500' }}>kg</span>
+        </div>
 
       {/* 6. 목표 */}
-      <div style={{ position: 'absolute', left: '35px', top: '620px', width: '331px', height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px', color: '#002738', fontSize: '20px', fontWeight: '700', fontFamily: 'inherit' }}>
-        <span>주</span>
-        <input type="text" placeholder="00" value={userInfo.goalWeek} onChange={(e) => setUserInfo({ ...userInfo, goalWeek: e.target.value })} style={goalInputStyle} />
-        <span>회 _</span>
-        <input type="text" placeholder="00" value={userInfo.goalTime} onChange={(e) => setUserInfo({ ...userInfo, goalTime: e.target.value })} style={goalInputStyle} />
-        <span>시간 _</span>
-        <input type="text" placeholder="000" value={userInfo.goalCal} onChange={(e) => setUserInfo({ ...userInfo, goalCal: e.target.value })} style={{ ...goalInputStyle, width: '52px' }} />
-        <span>칼로리</span>
-      </div>
-
-      {/* 에러 메시지 */}
-      {error && (
-        <p style={{ position: 'absolute', left: '33px', top: '720px', color: '#e53e3e', fontSize: '14px', margin: 0 }}>{error}</p>
-      )}
-
-      {/* 7. 완료 버튼 */}
-      <button onClick={handleConfirm} disabled={loading}
-        onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.97)')}
-        onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-        style={{
-          position: 'absolute', left: '33px', top: '742px', width: '331px', height: '66px',
-          backgroundColor: loading ? '#ccc' : '#BFE8F8', borderRadius: '9px', border: 'none',
-          boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
-          color: '#002738', fontSize: '20px', fontWeight: '700', fontFamily: 'inherit',
-          cursor: loading ? 'default' : 'pointer',
+      <div style={{
+          position: 'absolute', left: '8%', top: '63.4%',
+          width: '84%', height: '9%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.1s ease-in-out',
+          gap: '2px', color: '#002738',
+          fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', fontFamily: 'inherit',
         }}>
-        {loading ? '저장 중...' : '확 인'}
-      </button>
+          <span>주</span>
+          <input type="text" placeholder="00" value={userInfo.goalWeek}
+            onChange={(e) => setUserInfo({ ...userInfo, goalWeek: e.target.value })}
+            style={goalInputStyle} />
+          <span>회 _</span>
+          <input type="text" placeholder="00" value={userInfo.goalTime}
+            onChange={(e) => setUserInfo({ ...userInfo, goalTime: e.target.value })}
+            style={goalInputStyle} />
+          <span>시간 _</span>
+          <input type="text" placeholder="000" value={userInfo.goalCal}
+            onChange={(e) => setUserInfo({ ...userInfo, goalCal: e.target.value })}
+            style={{ ...goalInputStyle, width: 'clamp(42px, 12vw, 52px)' }} />
+          <span>칼로리</span>
+        </div>
+
+      {/* 에러 메시지 - top: 720/874 = 82.4% */}
+        {error && (
+          <p style={{
+            position: 'absolute', left: '8%', top: '73.4%',
+            color: '#e53e3e', fontSize: 'clamp(12px, 3.5vw, 14px)', margin: 0,
+          }}>
+            {error}
+          </p>
+        )}
+
+        {/* 7. 확인 버튼 - top: 742/874 = 84.9% */}
+        <button onClick={handleConfirm} disabled={loading}
+          onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.97)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          style={{
+            position: 'absolute', left: '8%', top: '76.9%',
+            width: '84%', height: '7.5%',
+            backgroundColor: loading ? '#ccc' : '#BFE8F8',
+            borderRadius: '9px', border: 'none',
+            boxShadow: '0px 4px 8px rgba(0,0,0,0.15)',
+            color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)',
+            fontWeight: '700', fontFamily: 'inherit',
+            cursor: loading ? 'default' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.1s ease-in-out',
+          }}>
+          {loading ? '저장 중...' : '확 인'}
+        </button>
+    </div>
     </div>
   );
 }

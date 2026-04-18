@@ -7,6 +7,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const navigate = useNavigate();
   const sessionData = selectedExercise?.sessionData;
   const tracks = sessionData?.tracks || [];
+  const svgSize = 'min(210px, 52vw)';
 
   // trackId → elapsedSec 로컬 타이머
   const [trackElapsed, setTrackElapsed] = useState({});
@@ -112,18 +113,19 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
   })();
 
   return (
-    <div style={{ width: '401px', height: '874px', overflow: 'hidden', fontFamily: 'inherit', backgroundColor: '#0a0e1a' }}>
+    <div style={{ width: '100%', minHeight: '100dvh', overflow: 'hidden', fontFamily: 'inherit', backgroundColor: '#0a0e1a' }}>
       <div style={{ width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
 
         {/* 상단 다크 영역 */}
         <div style={{ backgroundColor: '#0a0e1a', padding: '20px 20px 36px', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* 홈 버튼 */}
           <button onClick={handleEnd} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer', padding: 0 }}>
-            <img src={HomeIcon} alt="홈" style={{ width: '28px', height: '28px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+            <img src={HomeIcon} alt="홈" style={{ width: 'clamp(24px, 7vw, 28px)', height: 'clamp(24px, 7vw, 28px)', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
           </button>
 
           {/* 스톱워치 */}
-          <div style={{ position: 'relative', width: '210px', height: '210px', marginTop: '50px', marginBottom: '28px' }}>
+          <div style={{ position: 'relative', width: svgSize, height: svgSize,               
+            marginBottom: 'clamp(20px, 5vw, 28px)', }}>
             <svg width="210" height="210" style={{ position: 'absolute', top: 0, left: 0 }}>
               <circle cx="105" cy="105" r="90" fill="none" stroke="#ffffff" strokeWidth="18" />
               <circle cx="105" cy="105" r="90" fill="none" stroke="#44CBFF" strokeWidth="18" strokeLinecap="round"
@@ -133,7 +135,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
                 style={{ transition: 'stroke-dashoffset 0.9s linear' }} />
             </svg>
             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: '40px', fontWeight: '700', color: '#ffffff', letterSpacing: '2px', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{fontSize: 'clamp(28px, 9vw, 40px)', fontWeight: '700', color: '#ffffff', letterSpacing: '2px', fontVariantNumeric: 'tabular-nums' }}>
                 {formatTime(elapsed)}
               </span>
             </div>
@@ -142,7 +144,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           {/* 칼로리 */}
           {currentCalories !== null ? (
             <>
-              <p style={{ color: '#ffffff', fontSize: '20px', fontWeight: '700', margin: '0 0 6px' }}>
+              <p style={{ color: '#ffffff', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', margin: '0 0 6px' }}>
                 {`${currentCalories.toFixed(1)} Kcal 소모 예상`}
               </p>
               <p style={{ color: '#aabbcc', fontSize: '11px', margin: '0 0 22px', textAlign: 'center', padding: '0 20px' }}>
@@ -160,7 +162,9 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
             style={{
               borderRadius: '29px', border: '5px solid #ffffff',
               backgroundColor: '#BFE8F8', color: '#002738',
-              width: '124px', height: '51px', fontSize: '16px', fontWeight: '600',
+               width: 'clamp(110px, 30vw, 124px)',            // ✅ 반응형
+              height: 'clamp(44px, 12vw, 51px)',             // ✅ 반응형
+              fontSize: 'clamp(14px, 4vw, 16px)', fontWeight: '600',
               cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s',
             }}>
             운동 끝내기
@@ -175,10 +179,10 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
             return (
               <div key={key} style={{
                 backgroundColor: '#BFE8F8', borderRadius: '15px', border: '8px solid #ffffff',
-                padding: '0 20px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0 20px', height: 'clamp(80px, 20vw, 90px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <div>
-                  <span style={{ fontSize: '20px', fontWeight: '700', color: '#002738' }}>{item.name}</span>
+                  <span style={{ fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', color: '#002738' }}>{item.name}</span>
                   {trackElapsed[key] > 0 && (
                     <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#002738' }}>
                       {formatTime(trackElapsed[key])}
@@ -187,7 +191,8 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
                 </div>
                 <button onClick={() => togglePlay(item.id)}
                   style={{
-                    width: '57px', height: '57px', borderRadius: '50%', border: 'none',
+                    width: 'clamp(48px, 14vw, 57px)',        
+                    height: 'clamp(48px, 14vw, 57px)', borderRadius: '50%', border: 'none',
                     backgroundColor: '#57D0FF', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     boxShadow: '0 2px 8px rgba(91,191,234,0.4)',
@@ -209,7 +214,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
 
           {/* AI 추천 루틴 */}
           <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '20px' }}>
-            <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: '700', color: '#002738', textAlign: 'center' }}>AI 추천 루틴</p>
+            <p style={{ margin: '0 0 12px', fontSize: 'clamp(13px, 3.7vw, 15px)', fontWeight: '700', color: '#002738', textAlign: 'center' }}>AI 추천 루틴</p>
             {aiRoutine.length > 0 ? (
               <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF' }}>
                 {aiRoutine.map((item, idx) => (

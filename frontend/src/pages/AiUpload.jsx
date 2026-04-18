@@ -34,78 +34,107 @@ function AiUpload() {
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', backgroundColor: '#F3F4F4' }}>
-      <img src={BodyImage} alt="background" style={{ top:'-80px',width: '100%', display: 'block', zIndex: 0 }} />
+    <div style={{ position: 'relative', width: '100%', aspectRatio: '402 / 974', backgroundColor: '#F3F4F4' }}>
 
+      {/* 배경 이미지 */}
+      <img src={BodyImage} alt="background"
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }} />
 
       {/* 파일 input */}
       <input id="fileInput" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
 
-      {/* 업로드 버튼 */}
+      {/* 안내 텍스트1 - top: 150/974=15.4% */}
+      <p style={{
+        position: 'absolute', top: '17.4%', left: '7%', right: '7%',
+        textAlign: 'center', color: '#002738',
+        fontSize: 'clamp(13px, 4vw, 16px)', margin: 0, zIndex: 1,
+      }}>
+        {name}님의 체형 사진과 체형 고민을 추가해 주세요
+      </p>
+
+      {/* 안내 텍스트2 - top: 180/974=18.5% */}
+      <p style={{
+        position: 'absolute', top: '20.5%', left: '7%', right: '7%',
+        textAlign: 'center', color: '#002738',
+        fontSize: 'clamp(13px, 4vw, 16px)', margin: 0, zIndex: 1,
+        lineHeight: '1.5',
+      }}>
+        체형이 잘 드러나는 전신 사진을 업로드 하면<br />정확도가 올라가요!
+      </p>
+
+      {/* 업로드 버튼 - top: 575/974=59%, left: 337/402=83.8% */}
       <button onClick={handleUpload} style={{
-        position: 'absolute', top: '575px', left: '337px',
-        width: '50px', height: '50px', background: 'transparent', border: 'none', cursor: 'pointer', color:'black',
+        position: 'absolute', top: '64%', left: '83.8%',
+        width: 'clamp(40px, 12vw, 50px)', height: 'clamp(40px, 12vw, 50px)',
+        background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 1,
       }} />
 
-      {/* 파일 선택 표시 */}
+      {/* 파일 선택 표시 - top: 610/974=62.6% */}
       {selectedFile && (
-        <p style={{ position: 'absolute', top: '610px', left: '20px', right: '20px', fontSize: '13px', color: '#002738', textAlign: 'center', margin: 0 }}>
+        <p style={{
+          position: 'absolute', top: '65%', left: '5%', right: '5%',
+          fontSize: 'clamp(11px, 3.2vw, 13px)', color: '#002738',
+          textAlign: 'center', margin: 0, zIndex: 1,
+        }}>
           📷 {selectedFile.name}
         </p>
       )}
 
-      {/* 체형 설명 입력 */}
-       <p style={{position: 'absolute',textAlign: 'center', top:150, left:'28px',color: '#002738', fontSize:'16px'}}> {name}님의 체형 사진과 체형 고민을 추가해 주세요</p>
+      {/* textarea - top: 650/974=66.7% */}
+      <textarea
+        placeholder={`${name}님의 체형 특징과 고민을 적어주세요`}
+        value={bodyDescription}
+        onChange={(e) => setBodyDescription(e.target.value)}
+        style={{
+          position: 'absolute',
+          top: '69%', left: '10.2%',
+          width: '79.6%',    // 320/402
+          height: '12.3%',   // 120/974
+          backgroundColor: '#BFE8F8',
+          borderRadius: '9px', border: 'none',
+          padding: '16px',
+          fontSize: 'clamp(12px, 3.7vw, 15px)',
+          color: '#002738', fontFamily: 'inherit',
+          resize: 'none', outline: 'none',
+          boxSizing: 'border-box', zIndex: 1,
+        }}
+      />
 
-            <p style={{position: 'absolute',textAlign: 'center', top:180, left:'53px',color: '#002738', fontSize:'16px'}}>체형이 잘 드러나는 전신 사진을 업로드 하면<br />정확도가 올라가요!</p>
-
+      {/* 에러 메시지 - top: 740/974=76% */}
       {error && (
-        <p style={{ position: 'absolute', top: '740px', left: '33px', color: '#e53e3e', fontSize: '14px', margin: 0 }}>{error}</p>
+        <p style={{
+          position: 'absolute', top: '88%', left: '10.2%',
+          color: '#e53e3e', fontSize: 'clamp(12px, 3.5vw, 14px)',
+          margin: 0, zIndex: 1,
+        }}>
+          {error}
+        </p>
       )}
- <textarea
-    placeholder={`${name}님의 체형 특징과 고민을 적어주세요`}
-    value={bodyDescription}
-    onChange={(e) => setBodyDescription(e.target.value)}
-    style={{
-        position: 'absolute',
-        top: '650px',
-        left: '33px',
-        width: '320px',
-        height: '120px',
-        backgroundColor: '#BFE8F8',
-        borderRadius: '9px',
-        border: 'none',
-        padding: '16px',
-        fontSize: '15px',
-        color: '#002738',
-        fontFamily: 'inherit',
-        resize: 'none',
-        outline: 'none',
-        boxSizing: 'border-box',
-    }}
-/>
-      {/* 제출 버튼 */}
+
+      {/* 제출 버튼 - top: 840/974=86.2% */}
       <button
         onClick={handleSubmit}
         disabled={loading}
         onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.97)')}
         onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         style={{
-          position: 'absolute', left: '33px', top: '840px',
-          width: '320px', height: '66px',
+          position: 'absolute', top: '90.2%', left: '10%',
+          width: '79.6%',
+          height: '6.8%',    // 66/974
           backgroundColor: loading ? '#ccc' : '#BFE8F8',
           borderRadius: '9px', border: 'none',
-          boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.15)',
-          color: '#002738', fontSize: '24px', fontWeight: '800',
-          fontFamily: 'inherit', cursor: loading ? 'default' : 'pointer',
+          boxShadow: '0px 4px 8px rgba(0,0,0,0.15)',
+          color: '#002738', fontSize: 'clamp(18px, 6vw, 24px)',
+          fontWeight: '800', fontFamily: 'inherit',
+          cursor: loading ? 'default' : 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.1s ease-in-out',
+          transition: 'all 0.1s ease-in-out', zIndex: 1,
         }}>
         {loading ? '분석 중...' : '제출하기'}
       </button>
+
     </div>
   );
 }
 
 export default AiUpload;
-
