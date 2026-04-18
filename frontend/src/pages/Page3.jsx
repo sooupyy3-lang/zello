@@ -123,7 +123,7 @@ function Page3({ elapsed = 0 }) {
       {/* AI 추천 루틴 */}
       <div style={{
         backgroundColor: '#FFFFFF', borderRadius: '16px',
-        padding: '16px', boxSizing: 'border-box',height:'218px'
+        padding: '16px', boxSizing: 'border-box',height:'auto'
       }}>
         {aiRoutine.length > 0 ? (
           <>
