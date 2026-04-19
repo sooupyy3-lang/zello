@@ -1,38 +1,32 @@
-import { useNavigate } from 'react-router-dom'
-import OnButton from '../assets/Components/OnButton.svg'
-import myImage from '../assets/Components/Start.svg'
+import { useNavigate } from 'react-router-dom';
+import OnButton from '../assets/Components/OnButton.svg';
+import myImage from '../assets/Components/Start.svg';
 
 function Start() {
-  const navigate = useNavigate()
-  
+  const navigate = useNavigate();
+
   return (
     <div style={{
+      position: 'relative',
       width: '100%',
-      minHeight: '100dvh',
-      backgroundImage: `url(${myImage})`, 
-      backgroundSize: '100% 100%',       
-      position: 'relative'
+      aspectRatio: '402 / 874',
     }}>
-      
-      {}
-      <button 
-        onClick={() => navigate('/Page2')} 
-        style={{ 
-          position: 'absolute', 
-          left: '126px',   
-          top: '681px',       
-          padding: 0,       
-          background: 'none', 
-          border: 'none', 
-          cursor: 'pointer' 
+      <img src={myImage} alt="background"
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0 }} />
+
+      {/* 버튼 - top: 681/874=77.9%, left: 126/402=31.3% */}
+      <button
+        onClick={() => navigate('/Page2')}
+        style={{
+          position: 'absolute',
+          left: '31.3%', top: '77.9%',
+          padding: 0, background: 'none', border: 'none', cursor: 'pointer', zIndex: 1,
         }}
       >
-        
-        <img src={OnButton} alt="다음으로 이동" style={{ width: '150px' }} />
+        <img src={OnButton} alt="다음으로 이동" style={{ width: 'clamp(120px, 37vw, 150px)' }} />
       </button>
-
     </div>
-  )
+  );
 }
 
-export default Start
+export default Start;
