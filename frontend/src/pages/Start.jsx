@@ -14,12 +14,12 @@ function Start() {
       <img src={myImage} alt="background"
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', zIndex: 0 }} />
 
-      {/* 버튼 - top: 681/874=77.9%, left: 126/402=31.3% */}
+      {/* 버튼 */}
       <button
         onClick={() => navigate('/Page2')}
         style={{
           position: 'absolute',
-          left: '31.3%', top: '77.9%',
+          left: '31.3%', top: '80.9%',
           padding: 0, background: 'none', border: 'none', cursor: 'pointer', zIndex: 1,
         }}
       >
