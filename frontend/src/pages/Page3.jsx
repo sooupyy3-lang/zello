@@ -143,7 +143,7 @@ onMouseUp={(e) => (e.currentTarget.style.transform = 'translateX(-50%) scale(1)'
         }}>
           {aiRoutine.length > 0 ? (
             <>
-              <p style={{ margin: '0 0 12px', fontSize: 'clamp(12px, 3.5vw, 14px)', fontWeight: '700', color: '#002738', textAlign: 'center' }}>
+              <p style={{ margin: '0 0 11.99px', fontSize: 'clamp(12px, 3.5vw, 14px)', fontWeight: '700', color: '#002738', textAlign: 'center' }}>
                 AI 추천 루틴
               </p>
               <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF' }}>
