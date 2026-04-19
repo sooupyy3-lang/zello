@@ -50,7 +50,7 @@ function Page3({ elapsed = 0 }) {
     <div style={{ width: '100%', position: 'relative', backgroundColor: '#F3F4F4' }}>
 
       {/* 배경 이미지 영역 */}
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '402 / 390' }}>
+      <div style={{ position: 'relative', width:'100%', aspectRatio: '402 / 390' }}>
         
         {/* 배경 이미지 */}
         <img

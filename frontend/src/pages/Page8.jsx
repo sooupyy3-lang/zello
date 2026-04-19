@@ -126,7 +126,10 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           {/* 스톱워치 */}
           <div style={{ position: 'relative', width: svgSize, height: svgSize,               
             marginBottom: 'clamp(20px, 5vw, 28px)', }}>
-            <svg width="210" height="210" style={{ position: 'absolute', top: 0, left: 0 }}>
+            <svg viewBox="0 0 210 210"
+              width="100%"
+              height="100%"
+              style={{ position: 'absolute', top: 0, left: 0 }}>
               <circle cx="105" cy="105" r="90" fill="none" stroke="#ffffff" strokeWidth="18" />
               <circle cx="105" cy="105" r="90" fill="none" stroke="#44CBFF" strokeWidth="18" strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 90}`}
@@ -134,7 +137,15 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
                 transform="rotate(-90 105 105)"
                 style={{ transition: 'stroke-dashoffset 0.9s linear' }} />
             </svg>
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',  // top/left 0 방식 대신 이걸로
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+}}>
               <span style={{fontSize: 'clamp(28px, 9vw, 40px)', fontWeight: '700', color: '#ffffff', letterSpacing: '2px', fontVariantNumeric: 'tabular-nums' }}>
                 {formatTime(elapsed)}
               </span>

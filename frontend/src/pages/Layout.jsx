@@ -16,8 +16,8 @@ function Layout() {
 
   return (
     <div style={{
-      width: '402px',
-      height: '874px',
+      width: '100%',
+      height: '100%',
       margin: '0 auto',
       position: 'relative',
       display: 'flex',
@@ -33,6 +33,7 @@ function Layout() {
       <div style={{
         flexShrink: 0,
         height: '75px',
+        paddingBottom: 'env(safe-area-inset-bottom)',
         backgroundColor: 'rgba(255,255,255,0.9)',
         backdropFilter: 'blur(10px)',
         borderTop: '1px solid #e2e8f0',
