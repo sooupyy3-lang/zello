@@ -63,9 +63,9 @@ function MyPage() {
           src={Profile} alt="profile"
           style={{
             position: 'absolute',
-            top: '18.9%', left: '37.8%',
-            width: 'clamp(60px, 17vw, 70px)',
-            height: 'clamp(60px, 17vw, 70px)',
+            top: `calc(145/874*100%)`, left: `calc(27/402*100%)`,
+            width: 'clamp(60px, 17vw, 65px)',
+            height: 'clamp(60px, 17vw, 65px)',
             zIndex: 1,
           }}
         />
@@ -73,7 +73,7 @@ function MyPage() {
         {/* 이름 - top: 250/874=28.6% */}
         <h2 style={{
           position: 'absolute',
-          top: '28.6%', left: '39%',
+          top: `calc(155.25/874*100%)`, left: `calc(110.5/402*100%)`,
           fontSize: 'clamp(16px, 5vw, 20px)',
           fontWeight: '700', color: '#002738',
           margin: 0, zIndex: 1, whiteSpace: 'nowrap',
@@ -84,7 +84,7 @@ function MyPage() {
         {/* 수정 버튼 - top: 314/874=35.9% */}
         <button onClick={() => navigate('/Page2')}
           style={{
-            position: 'absolute', left: '28.6%', top: '35.9%',
+            position: 'absolute', left: '30%', top: `calc(238/874*100%)`,
             padding: 0, background: 'none', border: 'none', cursor: 'pointer', zIndex: 2,
           }}>
           <img src={ModifyIcon} alt="수정하기"
@@ -93,10 +93,10 @@ function MyPage() {
 
         {/* 기본 정보 - top: 315/874=36% */}
         <div style={{
-          position: 'absolute', top: '36%', left: '8.7%', right: '6%', zIndex: 1,
+          position: 'absolute', top: `calc(240/874*100%)`, left: `calc(30/402*100%)`, right: '6%', zIndex: 1,
         }}>
-          <p style={{ fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '800', color: '#002738', margin: '0 0 6px' }}>기본 정보</p>
-          <div style={{ height: '1px', backgroundColor: '#8EB3C2', marginBottom: '4px' }} />
+          <p style={{ fontSize: 'clamp(18px, 5vw, 18px)', fontWeight: '800', color: '#002738', margin: '0 0 3px' }}>기본 정보</p>
+          <div style={{ height: '1px', backgroundColor: '#8EB3C2', marginBottom: '1px' }} />
           {basicInfo.map(({ label, value }, idx) => (
             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
               <span style={{ fontSize: 'clamp(13px, 3.7vw, 15px)', fontWeight: '700', color: '#002738' }}>{label}</span>
@@ -104,10 +104,10 @@ function MyPage() {
             </div>
           ))}
 
-          <p style={{ fontSize: 'clamp(15px, 4.5vw, 18px)', fontWeight: '800', color: '#002738', margin: 'clamp(16px, 4vw, 33px) 0 8px' }}>
+          <p style={{ fontSize: 'clamp(15px, 4.5vw, 18px)', fontWeight: '800', color: '#002738', margin: 'clamp(16px, 1vw, 39px) 0 3px' }}>
             운동 기록
           </p>
-          <div style={{ height: '1px', backgroundColor: '#8EB3C2', marginBottom: '4px' }} />
+          <div style={{ height: '1px', backgroundColor: '#8EB3C2', marginBottom: '1px' }} />
           {statsInfo.map(({ label, value }, idx) => (
             <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
               <span style={{ fontSize: 'clamp(13px, 3.7vw, 15px)', margin: '3px', fontWeight: '700', color: '#002738' }}>{label}</span>

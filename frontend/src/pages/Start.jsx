@@ -19,11 +19,12 @@ function Start() {
         onClick={() => navigate('/Page2')}
         style={{
           position: 'absolute',
-          left: '31.3%', top: '80.9%',
+          left: '12.5%', top: '80.9%',
           padding: 0, background: 'none', border: 'none', cursor: 'pointer', zIndex: 1,
         }}
       >
-        <img src={OnButton} alt="다음으로 이동" style={{ width: 'clamp(120px, 37vw, 150px)' }} />
+        <img src={OnButton} alt="다음으로 이동" style={{ width: `calc(300 / 402 * 100vw)`,
+    maxWidth: '300px'}} />
       </button>
     </div>
   );

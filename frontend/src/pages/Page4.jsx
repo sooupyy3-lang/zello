@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import forthImage from '../assets/Components/Page4.png';
 import BackForward from '../assets/Icon/BackForward.svg';
 import { getExercises, startSession } from '../api';
 
@@ -66,19 +65,18 @@ function Page4({ setSelectedExercise }) {
       backgroundRepeat: 'no-repeat',  position: 'relative' }}>
       <div style={{
         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-        backgroundImage: `url(${forthImage})`,
         backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', zIndex: 0,
       }} />
 
-      <div style={{ position: 'sticky', top: 0, width: '100%', height: '60px', display: 'flex', alignItems: 'center', padding: '0 20px', zIndex: 100 }}>
+      <div style={{ position: 'sticky', top: `calc(57/874*100vw)`,  display: 'flex', alignItems: 'center', padding: '0 20px', zIndex: 100 }}>
         <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-          <img src={BackForward} alt="이전" style={{ width: '10px', height: '20px', objectFit: 'contain' }} />
+          <img src={BackForward} alt="이전" style={{ width: `calc(8/402*100vw)`, height: `calc(16/874*100vw)`,objectFit: 'contain',BackgroundColor:'#1E1E1E' }} />
         </button>
       </div>
 
       <div style={{ position: 'relative', zIndex: 1, marginTop: '-60px' }}>
-        <div style={{ paddingTop: '110px', textAlign: 'center', marginBottom: '0px' }}>
-          <h2 style={{ margin: 0, fontSize: 'clamp(20px, 6vw, 24px)', fontWeight: '800', color: '#002738' }}>운동 선택하기</h2>
+        <div style={{ paddingTop: '100px', textAlign: 'center', marginBottom: '0px' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#002738' }}>운동 선택하기</h2>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(10px, 3vw, 14px)', padding: 'clamp(20px, 5vw, 29px) clamp(16px, 5vw, 20px) 30px',  }}>
@@ -91,8 +89,8 @@ function Page4({ setSelectedExercise }) {
                 style={{
                   gridColumn: isFullWidth ? '1 / -1' : 'auto',
                   height: 'clamp(90px, 22vw, 110px)', borderRadius: '9px',
-                  border: isSelected ? '2px solid #BFE8F8' : '1px solid #e2e8f0',
-                  backgroundColor: isSelected ? '#BFE8F8' : '#ffffff',
+                  border: isSelected ? '2px solid #E9EAEF' : '1px solid #e2e8f0',
+                  backgroundColor: isSelected ? '#E9EAEF' : '#ffffff',
                   boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)',
                   cursor: 'pointer', display: 'flex', flexDirection: 'column',
                   alignItems: 'center', justifyContent: 'center',
@@ -108,8 +106,8 @@ function Page4({ setSelectedExercise }) {
           <button onClick={handleStart} disabled={!selected || loading}
             style={{
               width: '100%',height: 'clamp(54px, 13vw, 66px)',  borderRadius: '20px', border: 'none',
-              backgroundColor: selected && !loading ? '#BFE8F8' : '#e2e8f0',
-              color: '#002738', fontSize: 'clamp(18px, 5.5vw, 22px)', fontWeight: '700',
+              backgroundColor: selected && !loading ? '#1E59DA' : '#e2e8f0',
+              color:selected && !loading ?  '#ffffff':'#002738', fontSize: 'clamp(18px, 5.5vw, 22px)', fontWeight: '700',
               boxShadow: '0px 4px 4px 0px rgba(0, 0, 0, 0.25)',
               cursor: selected && !loading ? 'pointer' : 'default',
             }}>

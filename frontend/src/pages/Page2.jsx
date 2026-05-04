@@ -67,27 +67,29 @@ function Page2() {
     const inputStyle = {
         position: 'absolute',
         background: 'none', border: 'none', outline: 'none',
-        fontSize: 'clamp(16px, 5vw, 20px)', textAlign: 'center',
-        color: '#002738', padding: '0',
+       fontSize: '15px', textAlign: 'center',
+        color: '#1E59DA', padding: '0',
         fontFamily: 'inherit', fontWeight: '500',
     };
     const selectStyle = {
         background: 'none', border: 'none', outline: 'none',
-        fontSize: 'clamp(14px, 4.5vw, 18px)', fontWeight: '500',
-        color: '#002738', fontFamily: 'inherit', cursor: 'pointer',
-    };
-    const goalInputStyle = {
-        background: 'none', border: 'none', outline: 'none',
-        fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', textAlign: 'center',
-        color: '#002738', width: 'clamp(36px, 11vw, 44px)', padding: '0', fontFamily: 'inherit',
+         fontSize: '15px',fontWeight: '500', 
+        color: '#1E59DA', fontFamily: 'inherit', cursor: 'pointer',
     };
     const genderBtnBase = {
-        height: 'clamp(52px, 13vw, 64px)', width: 'clamp(160px, 13vw, 160px)', borderRadius: '15px',
+        height: `calc(40 / 874 * 100vw)`,  width: `calc(323/402 * 100%)`, borderRadius: '15px',
         fontFamily: 'inherit', fontWeight: '700',
-        fontSize: 'clamp(16px, 5vw, 20px)',
-        color: '#002738', cursor: 'pointer',
+        fontSize: '15px',
+        color: '#000000', cursor: 'pointer',
         boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transition: 'all 0.2s',
     };
+
+    const goalInputStyle = {
+        background: 'none', border: 'none', outline: 'none',
+        fontSize: '15px',fontWeight: '700', textAlign: 'center',
+        color: '#1E59DA', width: `calc(65/402 * 100%)`, padding: '0', fontFamily: 'inherit',
+    };
+    
 
     return (
         <div style={{
@@ -97,122 +99,139 @@ function Page2() {
             backgroundSize: '100% auto',             // ✅ 100% 100% → cover
             backgroundPosition: 'top center',
             backgroundRepeat: 'no-repeat',
-            backgroundColor:'#F3F4F4',
+            backgroundColor:'#E9EAEF',
             position: 'relative',
             boxSizing: 'border-box',
+            
         }}>
-            {/* 뒤로가기 */}
-            <div style={{ position: 'sticky', top: 0, width: '100%', height: '60px', display: 'flex', alignItems: 'center', padding: '0 20px', zIndex: 100 }}>
-                <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '30px', fontWeight: 'bold', color: '#002738' }}>
-                    <img src={BackForward} alt="이전" style={{ width: '10px', height: '20px', objectFit: 'contain' }} />
-                </button>
-            </div>
+           <div style={{ position: 'relative', width: '100%', aspectRatio: '402 / 874' }}>
+  
+  {/* 뒤로가기 바를 absolute로 변경해서 도화지 안으로 편입 */}
+  <div style={{ 
+    position: 'absolute', 
+    top: 0, 
+    width: '100%', 
+    height: '60px', 
+    display: 'flex', 
+    alignItems: 'center', 
+    padding: '0 20px', 
+    zIndex: 100 
+  }}>
+    <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+      <img src={BackForward} alt="이전" style={{ width: '16px', height: '30px' }} />
+    </button>
+  </div>
 
-            <div style={{
-                position: 'relative',
-                width: '100%',
-                aspectRatio: '402 / 874',  // 원본 디자인 비율 유지
-            }}>
+  <input 
+    name="name" 
+    value={userInfo.name} 
+    onChange={handleChange} 
+    placeholder="홍길동"
+    style={{ 
+      ...inputStyle, 
+      position: 'absolute', 
+      top: `calc(290 / 874 * 100%)`, 
+      left: `calc(70 / 402 * 100%)`,
+      fontSize: `calc(15 / 874 * 100vw)`,
+    }}
+  />
 
-                {/* 1. 이름 */}
-                <input name="name" value={userInfo.name} onChange={handleChange} placeholder="홍길동"
-                       style={{ ...inputStyle, left: '10%', top: '14.5%',
-                           width: '80%', height: '7.5%'}} />
+
 
                 {/* 2. 생년월일 */}
-                <div style={{ position: 'absolute', left: '36%', top: '26%', width: '57%', height: '6%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '2px' }}>
-                    <select value={birthYear} onChange={(e) => setBirthYear(e.target.value)} style={{ ...selectStyle, width: '80px' }}>
-                        <option value="">년도</option>
+                <div style={{ position: 'absolute',top: `calc(380 / 874 * 100%)`,left: `calc(50 / 402 * 100%)`,  width: `calc(320 / 402 * 100%)`, height: '6%',gap: `calc(50 / 402 * 100%)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <select value={birthYear} onChange={(e) => setBirthYear(e.target.value)} style={{ ...selectStyle,width: `calc(100 / 402 * 100%)`,color: birthYear === "" ? "#B0B8C1" : "#1E59DA"   }}>
+                        <option value=""disabled hidden>2003년</option>
                         {years.map((y) => <option key={y} value={y}>{y}년</option>)}
                     </select>
-                    <select value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)} style={{ ...selectStyle, width: '60px' }}>
-                        <option value="">월</option>
+                    <select value={birthMonth} onChange={(e) => setBirthMonth(e.target.value)} style={{ ...selectStyle, width: `calc(94 / 402 * 100%)`,color: birthMonth === "" ? "#B0B8C1" : "#1E59DA" }}>
+                        <option value=""disabled hidden>6월</option>
                         {months.map((m) => <option key={m} value={m}>{m}월</option>)}
                     </select>
-                    <select value={birthDay} onChange={(e) => setBirthDay(e.target.value)} style={{ ...selectStyle, width: '60px' }}>
-                        <option value="">일</option>
+                    <select value={birthDay} onChange={(e) => setBirthDay(e.target.value)} style={{ ...selectStyle,  width: `calc(94 / 402 * 100%)`,color: birthDay === "" ? "#B0B8C1" : "#1E59DA" }}>
+                        <option value=""disabled hidden>10일</option>
                         {days.map((d) => <option key={d} value={d}>{d}일</option>)}
                     </select>
                 </div>
 
                 {/* 3. 성별 */}
-                <div style={{ position: 'absolute', left: '8%', top: '37%',width: '84%', display: 'flex', gap: '2.5%' }}>
+                <div style={{ position: 'absolute', top: `calc(476 / 874 * 100%)`,left: `calc(39 / 402 * 100%)`,width: `calc(323 / 402 * 100%)`,  display: 'flex', gap: `calc(27 / 402 * 100%)` }}>
                     {['male', 'female'].map((g) => (
                         <button key={g} onClick={() => setUserInfo({ ...userInfo, gender: g })}
-                                style={{ ...genderBtnBase, border: userInfo.gender === g ? '2px solid #BFE8F8' : '1px solid #ddd', backgroundColor: userInfo.gender === g ? '#BFE8F8' : '#ffffff' }}>
+                                style={{ ...genderBtnBase, border: userInfo.gender === g ? '2px solid #1E59DA' : '1px solid #ddd',color: userInfo.gender === g ? "#ffffff" : "#000000" , backgroundColor: userInfo.gender === g ? '#1E59DA' : '#ffffff' }}>
                             {g === 'male' ? '남성' : '여성'}
                         </button>
                     ))}
                 </div>
 
                 {/* 4. 키 */}
-                <div style={{ position: 'absolute', left: '4%', top: '49.4%',
-                    width: '46%', height: '5%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                    <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)' ,fontWeight: '700' }}>키</span>
-                    <input name="height" type="number" value={userInfo.height} onChange={handleChange} placeholder="000"
-                           style={{ ...inputStyle, position: 'relative', width: 'clamp(50px, 14vw, 70px)', height: '100%' }} />
-                    <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '500' }}>cm</span>
+                <div style={{ position: 'absolute', top: `calc(574 / 874 * 100%)`,left: `calc(38 / 402 * 100%)`,
+                    width: `calc(115 / 402 * 100%)`, height: `calc(40 / 874 * 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)' ,fontWeight: '700' }}></span>
+                    <input name="height" type="number" value={userInfo.height} onChange={handleChange} placeholder="167"
+                           style={{ ...inputStyle, position: 'relative', }} />
+                    <span style={{ color: '#002738'}}></span>
                 </div>
 
                 {/* 5. 몸무게 */}
-                <div style={{ position: 'absolute', left: '48%', top: '49.4%', width: '46%', height: '5%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                    <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700' }}>몸무게</span>
-                    <input name="weight" type="number" value={userInfo.weight} onChange={handleChange} placeholder="00"
-                           style={{ ...inputStyle, position: 'relative', width: 'clamp(36px, 10vw, 50px)', height: '100%' }} />
-                    <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '500' }}>kg</span>
+                <div style={{ position: 'absolute', top: `calc(574 / 874 * 100%)`,left: `calc(214 / 402 * 100%)`, width: `calc(115 / 402 * 100%)`, height: `calc(40 / 874 * 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    <span style={{ color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700' }}></span>
+                    <input name="weight" type="number" value={userInfo.weight} onChange={handleChange} placeholder="52"
+                           style={{ ...inputStyle, position: 'relative' }} />
+                    <span style={{ color: '#002738' }}></span>
                 </div>
 
                 {/* 6. 목표 */}
                 <div style={{
-                    position: 'absolute', left: '8%', top: '63.4%',
-                    width: '84%', height: '9%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: '2px', color: '#002738',
-                    fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', fontFamily: 'inherit',
+                    position: 'absolute',top: `calc(710 / 874 * 100%)`,left: `calc(35/ 402 * 100%)`,
+    
+                    display: 'flex', alignItems: 'center', justifyContent: 'flex-start',
+                    gap: `calc(25/ 402 * 100%)`, color: '#002738',
+                   
                 }}>
-                    <span>주</span>
+                    <span></span>
                     <input type="text" placeholder="00" value={userInfo.goalWeek}
                            onChange={(e) => setUserInfo({ ...userInfo, goalWeek: e.target.value })}
                            style={goalInputStyle} />
-                    <span>회 _</span>
-                    <input type="text" placeholder="00" value={userInfo.goalTime}
+                    <span></span>
+                    <input type="text" placeholder="0" value={userInfo.goalTime}
                            onChange={(e) => setUserInfo({ ...userInfo, goalTime: e.target.value })}
                            style={goalInputStyle} />
-                    <span>시간 _</span>
+                    <span></span>
                     <input type="text" placeholder="000" value={userInfo.goalCal}
                            onChange={(e) => setUserInfo({ ...userInfo, goalCal: e.target.value })}
-                           style={{ ...goalInputStyle, width: 'clamp(42px, 12vw, 52px)' }} />
-                    <span>칼로리</span>
+                           style={{ ...goalInputStyle}} />
+                    <span></span>
                 </div>
 
                 {/* 에러 메시지 - top: 720/874 = 82.4% */}
                 {error && (
                     <p style={{
-                        position: 'absolute', left: '8%', top: '73.4%',
+                        position: 'absolute', left: '8%', top: `calc(750/ 874 * 100%)`,
                         color: '#e53e3e', fontSize: 'clamp(12px, 3.5vw, 14px)', margin: 0,
                     }}>
                         {error}
                     </p>
                 )}
 
-                {/* 7. 확인 버튼 - top: 742/874 = 84.9% */}
+                {/* 7. 확인 버튼  */}
                 <button onClick={handleConfirm} disabled={loading}
                         onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.97)')}
                         onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                         style={{
-                            position: 'absolute', left: '8%', top: '76.9%',
-                            width: '84%', height: '7.5%',
-                            backgroundColor: loading ? '#ccc' : '#BFE8F8',
+                            position: 'absolute', left: `calc(50/402 * 100%)`, top: `calc(780/ 874 * 100%)`,
+                             width: `calc(300 / 402 * 100vw)`,maxWidth: '300px', height:  `calc(57 / 874 * 100vw)`, maxheight:'57px',
+                            backgroundColor: loading ? '#ccc' : '#1E59DA',
                             borderRadius: '9px', border: 'none',
                             boxShadow: '0px 4px 8px rgba(0,0,0,0.15)',
-                            color: '#002738', fontSize: 'clamp(16px, 5vw, 20px)',
-                            fontWeight: '700', fontFamily: 'inherit',
+                            color: '#ffffff', fontSize: `calc(20 / 874 * 100vw)`,
+                            fontWeight: '500', fontFamily: 'inherit',
                             cursor: loading ? 'default' : 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             transition: 'all 0.1s ease-in-out',
                         }}>
-                    {loading ? '저장 중...' : '확 인'}
+                    {loading ? '저장 중...' : '시작하기'}
                 </button>
             </div>
         </div>

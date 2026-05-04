@@ -74,7 +74,7 @@ function AiCoach(){
     zIndex: 1, 
 }}>
                     <p style={{ 
-                        fontSize: '24px', 
+                        fontSize: '20px', 
                         fontWeight: '800', 
                         color: '#002738', 
                         margin: '0 auto',

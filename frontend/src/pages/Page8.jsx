@@ -171,16 +171,18 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
             onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             style={{
-              borderRadius: '29px', border: '5px solid #ffffff',
-              backgroundColor: '#BFE8F8', color: '#002738',
-               width: 'clamp(110px, 30vw, 124px)',            // ✅ 반응형
-              height: 'clamp(44px, 12vw, 51px)',             // ✅ 반응형
-              fontSize: 'clamp(14px, 4vw, 16px)', fontWeight: '600',
+              borderRadius: '29px',
+              backgroundColor: '#E6EEFF', color: '#1E59DA',
+              width: `calc(281/402*100%)`,           
+              height: `calc(51/874*100%)`,             
+              fontSize: `calc(16/402*100%)`, fontWeight: '600',
               cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s',
             }}>
             운동 끝내기
           </button>
         </div>
+        
+    
 
         {/* 하단 운동 카드 */}
         <div style={{ backgroundColor: '#0a0e1a', padding: '20px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -189,7 +191,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
             const isPlaying = playing[key];
             return (
               <div key={key} style={{
-                backgroundColor: '#BFE8F8', borderRadius: '15px', border: '8px solid #ffffff',
+                backgroundColor: '#ffffff', borderRadius: '14px', border: '8px solid #ffffff',
                 padding: '0 20px', height: 'clamp(80px, 20vw, 90px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <div>
