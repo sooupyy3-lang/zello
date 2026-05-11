@@ -114,43 +114,31 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
 
   return (
     <div style={{ width: '100%', minHeight: '100dvh', overflow: 'hidden', fontFamily: 'inherit', backgroundColor: '#0a0e1a' }}>
-      <div style={{ width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+      <div style={{ width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden',display: 'flex', 
+  flexDirection: 'column', }}>
 
-        {/* 상단 다크 영역 */}
-        <div style={{ backgroundColor: '#0a0e1a', padding: '20px 20px 36px', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* 홈 버튼 */}
           <button onClick={handleEnd} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer', padding: 0 }}>
             <img src={HomeIcon} alt="홈" style={{ width: 'clamp(24px, 7vw, 28px)', height: 'clamp(24px, 7vw, 28px)', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
           </button>
 
           {/* 스톱워치 */}
-          <div style={{ position: 'relative', width: svgSize, height: svgSize,               
-            marginBottom: 'clamp(20px, 5vw, 28px)', }}>
-            <svg viewBox="0 0 210 210"
-              width="100%"
-              height="100%"
-              style={{ position: 'absolute', top: 0, left: 0 }}>
-              <circle cx="105" cy="105" r="90" fill="none" stroke="#ffffff" strokeWidth="18" />
-              <circle cx="105" cy="105" r="90" fill="none" stroke="#44CBFF" strokeWidth="18" strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 90}`}
-                strokeDashoffset={`${2 * Math.PI * 90 * (1 - (elapsed % 60) / 60)}`}
-                transform="rotate(-90 105 105)"
-                style={{ transition: 'stroke-dashoffset 0.9s linear' }} />
-            </svg>
+    
+            
             <div style={{
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',  // top/left 0 방식 대신 이걸로
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}}>
-              <span style={{fontSize: 'clamp(28px, 9vw, 40px)', fontWeight: '700', color: '#ffffff', letterSpacing: '2px', fontVariantNumeric: 'tabular-nums' }}>
+        position: 'absolute',
+        top: `calc(98.5/1032*100vh)`,
+        left: '50%',
+        transform: 'translate(-50%, -50%)',  // top/left 0 방식 대신 이걸로
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        }}>
+              <span style={{fontSize: 'clamp(32px, 8vw, 64px)', fontWeight: '600', color: '#ffffff', letterSpacing: '2px',lineHeight:'34.3%', fontVariantNumeric: 'Noto Sans' }}>
                 {formatTime(elapsed)}
               </span>
             </div>
-          </div>
+          
 
           {/* 칼로리 */}
           {currentCalories !== null ? (
@@ -158,7 +146,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
               <p style={{ color: '#ffffff', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', margin: '0 0 6px' }}>
                 {`${currentCalories.toFixed(1)} Kcal 소모 예상`}
               </p>
-              <p style={{ color: '#aabbcc', fontSize: '11px', margin: '0 0 22px', textAlign: 'center', padding: '0 20px' }}>
+              <p style={{ color: '#DBE9F9', fontSize: '11px', margin: '0 0 22px', textAlign: 'center', padding: '0 20px' }}>
                 칼로리는 추정치이며 실제 소모량과 차이가 있을 수 있습니다.
               </p>
             </>
@@ -171,12 +159,19 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
             onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
             style={{
+              display:'flex',
+              alignSelf: 'center',
               borderRadius: '29px',
-              backgroundColor: '#E6EEFF', color: '#1E59DA',
-              width: `calc(281/402*100%)`,           
-              height: `calc(51/874*100%)`,             
-              fontSize: `calc(16/402*100%)`, fontWeight: '600',
-              cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s',
+              alignItems:'center',
+              justifyContent:'center', 
+              marginBottom: '40px',
+              backgroundColor: '#E6EEFF', 
+              color: '#1E59DA',
+              width: '85%',           
+              height: '66px',
+              fontSize:'clamp(13px, 15vw, 16px)', 
+              fontWeight: '600',
+              cursor: 'pointer', fontFamily: 'inherit',lineHeight:'200%', transition: 'transform 0.1s',
             }}>
             운동 끝내기
           </button>
@@ -243,7 +238,6 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           </div>
         </div>
       </div>
-    </div>
   );
 }
 
