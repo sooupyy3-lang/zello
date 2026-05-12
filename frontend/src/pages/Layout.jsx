@@ -1,8 +1,8 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import HomeIcon from '../assets/Icon/HomeIcon.png';
-import CalendarIcon from '../assets/Icon/CalendarIcon.png';
-import AiIcon from '../assets/Icon/AiIcon.png';
-import MypageIcon from '../assets/Icon/MypageIcon.png';
+import HomeIcon from '../assets/Icon/HomeIcon.svg';
+import CalendarIcon from '../assets/Icon/CalendarIcon.svg';
+import AiIcon from '../assets/Icon/AiIcon.svg';
+import MypageIcon from '../assets/Icon/MypageIcon.svg';
 
 function Layout() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ function Layout() {
   const navItems = [
     {  icon: HomeIcon, path: '/Page3', label: '홈' },
     { icon: CalendarIcon, path: '/Calendar', label: '캘린더' },
-    {  icon: AiIcon, path: '/AiCoach', label: 'AI코치'},
+    {  icon: AiIcon, path: '/Friends', label: 'AI코치'},
     {  icon: MypageIcon, path: '/MyPage',label: '마이페이지' },
   ];
 
@@ -58,7 +58,7 @@ function Layout() {
             >
               <img src={item.icon} alt={item.label} style={{ width: '28px', height: '28px', objectFit: 'contain', filter: isActive 
         ? 'brightness(0) saturate(100%) invert(35%) sepia(80%) saturate(500%) hue-rotate(163deg) brightness(90%)'
-        : 'brightness(0) saturate(100%) invert(14%) sepia(29%) saturate(1200%) hue-rotate(163deg) brightness(94%) contrast(97%)'  
+        : 'none'  
     }}  />
               
             </button>

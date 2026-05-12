@@ -15,6 +15,7 @@ import AiUpload from './pages/AiUpload';
 import Analyzing from './pages/Analyzing';
 import AiResult from './pages/AiResult';
 import MyPage from './pages/MyPage';
+import Friends from './pages/Friends';
 import { getToken } from './api';
 
 function App() {
@@ -50,6 +51,8 @@ function App() {
             <Route path="/AiUpload" element={<AiUpload />} />
             <Route path="/AiResult" element={<AiResult />} />
             <Route path="/MyPage" element={<MyPage />} />
+            <Route path="/Friends" element={<Friends />} />
+
           </Route>
 
           {/* 하단바 없는 페이지 */}
