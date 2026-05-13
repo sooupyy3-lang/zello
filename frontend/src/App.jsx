@@ -17,6 +17,7 @@ import AiResult from './pages/AiResult';
 import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
 import { getToken } from './api';
+import AddFriends from './pages/AddFriends.jsx';
 
 function App() {
   const [elapsed, setElapsed] = useState(0);
@@ -54,6 +55,8 @@ function App() {
             <Route path="/AiResult" element={<AiResult />} />
             <Route path="/MyPage" element={<MyPage />} />
             <Route path="/Friends" element={<Friends />} />
+            <Route path="/AddFriends" element={<AddFriends />} />
+
 
           </Route>
 

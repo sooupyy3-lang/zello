@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
+import { useNavigate } from 'react-router-dom';
 
 // ── 더미 데이터 ──────────────────────────────────────
 export const DUMMY_FRIENDS = [
@@ -123,9 +124,9 @@ function FriendPopup({ friend, onClose }) {
 export default function Friends() {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
-    // ✅ position: relative — 모든 absolute 기준점
     <div style={{
       width: '100%', minHeight: '100%',
       backgroundColor: '#F3F4F4',
@@ -144,7 +145,6 @@ export default function Friends() {
   height: '60px',
   boxSizing: 'border-box',
 }}>
-        {/* ✅ 버튼만 헤더 안에 */}
         <HamburgerButton onOpen={() => setMenuOpen(true)} />
 
         <h1 style={{
@@ -175,25 +175,26 @@ export default function Friends() {
 
       {/* ── 친구 추가 버튼 ── */}
       <div style={{ position: 'absolute', right: 20, bottom: 30, zIndex: 99 }}>
-        <button style={{
-          width: 56, height: 56, borderRadius: '50%',
-          backgroundColor: '#1E59DA', color: '#fff',
-          border: 'none', boxShadow: '0 4px 4.5px rgba(0,0,0,0.25)',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'transform 0.1s',
-        }}
-          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.92)'}
-          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <svg width="32.7" height="32.7" viewBox="0 0 18 18" fill="none">
-            <path d="M9 3V15M3 9H15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-        </button>
-      </div>
+  <button 
+    onClick={() => navigate('/AddFriends')} // 3. 클릭 이벤트 추가 (경로는 App.js에 설정한 대로 입력)
+    style={{
+      width: 56, height: 56, borderRadius: '50%',
+      backgroundColor: '#1E59DA', color: '#fff',
+      border: 'none', boxShadow: '0 4px 4.5px rgba(0,0,0,0.25)',
+      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      transition: 'transform 0.1s',
+    }}
+    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.92)'}
+    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+  >
+    <svg width="32.7" height="32.7" viewBox="0 0 18 18" fill="none">
+      <path d="M9 3V15M3 9H15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  </button>
+</div>
 
-      {/* ✅ 페이지 루트 바로 아래 — absolute 기준 올바름 */}
       {menuOpen && (
-        <HamburgerPanel userName="조서영" onClose={() => setMenuOpen(false)} />
+        <HamburgerPanel userName="사용자" onClose={() => setMenuOpen(false)} />
       )}
 
       <FriendPopup friend={selectedFriend} onClose={() => setSelectedFriend(null)} />

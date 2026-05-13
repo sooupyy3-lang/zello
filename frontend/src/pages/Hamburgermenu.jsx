@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
+import dumbbellimg from '../assets/Icon/Dumbbell.svg';
+import Hambuttonimg from '../assets/Icon/Hambutton.svg'
+
 
 function UserIcon() {
   return (
@@ -14,10 +17,10 @@ function UserIcon() {
 }
 
 const NAV_ITEMS = [
-  { label: '친구들 보기',    path: '/Friends' },
-  { label: '나의 운동 모임', path: '/Meeting' },
-  { label: 'AI 운동 코칭',   path: '/AICoach' },
-  { label: '마이페이지',     path: '/MyPage' },
+  {  label: '친구들 보기',    path: '/Friends' },
+  {  label: '나의 운동 모임', path: '/Meeting' },
+  {  label: 'AI 운동 코칭',   path: '/AiCoach' },
+  {  label: '마이페이지',     path: '/MyPage' },
 ];
 
 export function HamburgerButton({ onOpen }) {
@@ -26,11 +29,7 @@ export function HamburgerButton({ onOpen }) {
       onClick={onOpen}
       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}
     >
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-        <rect y="3"  width="22" height="2" rx="1" fill="#555"/>
-        <rect y="10" width="22" height="2" rx="1" fill="#555"/>
-        <rect y="17" width="22" height="2" rx="1" fill="#555"/>
-      </svg>
+      <img src={Hambuttonimg} style={{ width: 26, height:17}}/>
     </button>
   );
 }
@@ -38,7 +37,6 @@ export function HamburgerButton({ onOpen }) {
 export function HamburgerPanel({ userName = '사용자', onClose }) {
   const navigate = useNavigate();
 
-  // ✅ app-container 안에 portal로 렌더
   const container = document.getElementById('app-container');
   if (!container) return null;
 
@@ -94,10 +92,11 @@ export function HamburgerPanel({ userName = '사용자', onClose }) {
             <button
               key={item.label}
               onClick={() => { navigate(item.path); onClose(); }}
-              style={{ width: '100%', padding: '14px 24px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 15, color: '#222' }}
+              style={{ width: '100%', padding: '14px 24px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', fontSize: 16, color: '#222',display: 'flex', alignItems: 'center', gap: 12, }}
               onMouseEnter={e => e.currentTarget.style.background = '#F5F7FF'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >
+            >     <img src={dumbbellimg} alt="" style={{ width: 24, height: 24,flexShrink: 0 }} /> 
+
               {item.label}
             </button>
           ))}
