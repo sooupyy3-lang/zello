@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getHome } from '../api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Backimg from '../assets/Icon/BackForward.svg';
+
 const COLORS = {
   primary: "#1E59DA",
   primaryLight: "#ffffff",
@@ -52,8 +54,34 @@ function Page3({ elapsed = 0 }) {
 
   return (
         <div style={styles.pageWrapper}>
+          <button
+      onClick={() => navigate(-1)}
+      style={{
+        position: 'absolute',
+        top:`calc(36/874*100vh)` , left:`calc(16/402*100%)` ,
+        background: 'none', border: 'none',
+        cursor: 'pointer', padding: 0,
+        zIndex: 10,
+      }}
+    >
+      <img
+        src={Backimg}
+        alt="뒤로"
+        style={{
+          width: 'clamp(4px, 7vw, 16px)',
+          height: 'clamp(14px, 7vw, 16px)',
+          objectFit: 'contain',
+        }}
+      />
+    </button>
+          
+          
+          
         {/*영역1*/}
-        <div style={styles.timerSection}>        
+        <div style={styles.timerSection}>    
+          
+
+              
 
         {/* 오늘 날짜 */}
                 <p style={styles.timerDate}>{formattedDate}</p>

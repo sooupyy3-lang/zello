@@ -35,7 +35,9 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div style={{
+      <div 
+      id="app-container"
+      style={{
         width: '402px', height: '874px', margin: '0 auto',
         position: 'relative', backgroundColor: 'white',
         overflowX: 'hidden', overflowY: 'auto',
@@ -67,9 +69,12 @@ function App() {
               setIsRunning={setIsRunning}
               selectedExercise={selectedExercise}
             />
+            
           } />
+
           <Route path="/Analyzing" element={<Analyzing />} />
         </Routes>
+        
       </div>
     </BrowserRouter>
   );
