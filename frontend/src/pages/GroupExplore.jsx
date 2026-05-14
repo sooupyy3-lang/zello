@@ -1,0 +1,183 @@
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+// ── 더미 멤버 데이터 ──────────────────────────────────
+const DUMMY_MEMBERS = Array.from({ length: 12 }, (_, i) => ({
+  id: i + 1,
+  name: '홍남민성',
+  time: '1:56:12',
+  kcal: '472kcal',
+}));
+
+// ── 아바타 아이콘 ─────────────────────────────────────
+function Avatar({ size = 52 }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      backgroundColor: '#E8EDF5',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden',
+    }}>
+      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="8" r="4" fill="#B0BEC5" />
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="#B0BEC5" />
+      </svg>
+    </div>
+  );
+}
+
+// ── 가입 완료 중앙 모달 ───────────────────────────────
+function JoinModal({ groupName, onConfirm }) {
+  return (
+    <>
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        zIndex: 200, animation: 'fadeIn 0.2s ease',
+      }} />
+      <div style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: '32px 24px 24px',
+        zIndex: 201,
+        width: '75%',
+        textAlign: 'center',
+        animation: 'popIn 0.22s cubic-bezier(0.34,1.56,0.64,1)',
+      }}>
+        <p style={{ margin: '0 0 8px', fontSize: 17, fontWeight: '700', color: '#191F28' }}>
+          운동 그룹 가입
+        </p>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1', lineHeight: 1.6 }}>
+          {groupName}에 가입되었습니다
+        </p>
+        {/* 닫기 / 상세 보기 */}
+          <button onClick={onClose} style={{
+            flex: 1, padding: '14px 0', backgroundColor: '#F3F4F6',
+            color: '#8B95A1', border: 'none', borderRadius: 14,
+            fontSize: 15, fontWeight: '700', cursor: 'pointer',
+          }}>닫기</button>
+          <button onClick={() => onExplore(group)} style={{
+            flex: 1, padding: '14px 0', backgroundColor: '#1E59DA',
+            color: '#fff', border: 'none', borderRadius: 14,
+            fontSize: 15, fontWeight: '700', cursor: 'pointer',
+          }}>상세 보기</button>
+        
+      </div>
+      <style>{`
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.85); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
+    </>
+  );
+}
+
+// ── 메인 페이지 ──────────────────────────────────────
+export default function GroupExplore() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const group = location.state?.group ?? {
+    name: '하체 집중 모임', type: '헬스', people: '3/8', goal: '주 2회', desc: '이피구 저피구구 아라아라',
+  };
+
+  const [showJoinModal, setShowJoinModal] = useState(false);
+
+  const handleJoinConfirm = () => {
+    setShowJoinModal(false);
+    navigate(-2); // Group 페이지로 복귀
+  };
+
+  return (
+    <div style={{
+      width: '100%', height: '100%', backgroundColor: '#F3F4F4',
+      display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden',
+    }}>
+      {/* ── 헤더 ── */}
+      <div style={{
+        padding: '0 20px', backgroundColor: '#FFFFFF',
+        display: 'flex', alignItems: 'center',
+        borderBottom: '1px solid #F0F0F0', height: '60px',
+        boxSizing: 'border-box', flexShrink: 0, position: 'relative',
+      }}>
+        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px 4px 0', zIndex: 1 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M15 19L8 12L15 5" stroke="#333D4B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <h1 style={{
+          position: 'absolute', left: 0, right: 0, textAlign: 'center',
+          margin: 0, fontSize: 18, fontWeight: '700', color: '#333D4B', pointerEvents: 'none',
+        }}>{group.name}</h1>
+      </div>
+
+      {/* ── 스크롤 콘텐츠 ── */}
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 100 }}>
+
+        {/* 그룹 소개/규칙 배너 */}
+        <div style={{ margin: '16px 20px 0' }}>
+          <div style={{
+            backgroundColor: '#EBF0FF', borderRadius: 12, padding: '14px 16px',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ fontSize: 14, fontWeight: '600', color: '#1E59DA' }}>그룹 소개/규칙</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 4L10 8L6 12" stroke="#1E59DA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        {/* 멤버 그리드 */}
+        <div style={{
+          margin: '16px 20px 0',
+          backgroundColor: '#fff',
+          borderRadius: 20,
+          padding: '20px 12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '20px 4px',
+        }}>
+          {DUMMY_MEMBERS.map(member => (
+            <div key={member.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <Avatar size={52} />
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: '600', color: '#333D4B' }}>{member.name}</p>
+                <p style={{ margin: '2px 0 0', fontSize: 10, color: '#8B95A1' }}>{member.time}</p>
+                <p style={{ margin: '1px 0 0', fontSize: 10, fontWeight: '600', color: '#191F28' }}>{member.kcal}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 가입하기 버튼 (하단 고정) ── */}
+      <div style={{
+        position: 'absolute', left: 0, right: 0, bottom: '5%',
+        padding: '12px 20px 28px',
+        borderTop: '1px solid #F0F0F0',
+      }}>
+        <button
+          onClick={() => setShowJoinModal(true)}
+          style={{
+            width: '100%', padding: '15px 0',
+            backgroundColor: '#1E59DA', color: '#fff',
+            border: 'none', borderRadius: 14,
+            fontSize: 16, fontWeight: '700', cursor: 'pointer',
+            transition: 'transform 0.1s',
+          }}
+          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
+          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          가입하기
+        </button>
+      </div>
+
+      {/* ── 가입 완료 모달 ── */}
+      {showJoinModal && (
+        <JoinModal groupName={group.name} onConfirm={handleJoinConfirm} />
+      )}
+    </div>
+  );
+}

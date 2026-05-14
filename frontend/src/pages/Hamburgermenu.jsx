@@ -18,7 +18,7 @@ function UserIcon() {
 
 const NAV_ITEMS = [
   {  label: '친구들 보기',    path: '/Friends' },
-  {  label: '나의 운동 모임', path: '/Meeting' },
+  {  label: '나의 운동 모임', path: '/Group' },
   {  label: 'AI 운동 코칭',   path: '/AiCoach' },
   {  label: '마이페이지',     path: '/MyPage' },
 ];

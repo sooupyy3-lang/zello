@@ -10,7 +10,7 @@ function Layout() {
   const navItems = [
     {  icon: HomeIcon, path: '/Page3', label: '홈' },
     { icon: CalendarIcon, path: '/Calendar', label: '캘린더' },
-    {  icon: AiIcon, path: '/Friends', label: '운동모임'},
+    {  icon: AiIcon, path: '/Group', label: '운동모임'},
     {  icon: MypageIcon, path: '/MyPage',label: '마이페이지' },
   ];
 

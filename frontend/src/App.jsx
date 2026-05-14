@@ -18,6 +18,11 @@ import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
 import { getToken } from './api';
 import AddFriends from './pages/AddFriends.jsx';
+import Group from './pages/Group.jsx';
+import AddGroup from './pages/AddGroup.jsx';
+import GroupExplore from './pages/GroupExplore.jsx';
+import Groupdetail from './pages/Groupdetail.jsx';
+
 
 function App() {
   const [elapsed, setElapsed] = useState(0);
@@ -56,6 +61,10 @@ function App() {
             <Route path="/MyPage" element={<MyPage />} />
             <Route path="/Friends" element={<Friends />} />
             <Route path="/AddFriends" element={<AddFriends />} />
+            <Route path="/Group" element={<Group />} />
+            <Route path="/AddGroup" element={<AddGroup />} />
+
+
 
 
           </Route>
@@ -76,6 +85,10 @@ function App() {
           } />
 
           <Route path="/Analyzing" element={<Analyzing />} />
+          <Route path="/GroupExplore" element={<GroupExplore />} />
+          <Route path="/Groupdetail" element={<Groupdetail />} />
+
+
         </Routes>
         
       </div>
