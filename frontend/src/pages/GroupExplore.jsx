@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+// ── 더미 데이터 ──────────────────────────────────────
+const DUMMY_GROUP = {
+  name: '하체 집중 모임',
+  desc: '매일 아침 7시, 상쾌한 공기를 마시며 함께 뛰어요! 지각 시 벌금 1,000원입니다.'
+};
+
 // ── 더미 멤버 데이터 ──────────────────────────────────
 const DUMMY_MEMBERS = Array.from({ length: 12 }, (_, i) => ({
   id: i + 1,
-  name: '홍남민성',
+  name: '훈남 민성',
   time: '1:56:12',
   kcal: '472kcal',
 }));
@@ -53,18 +59,17 @@ function JoinModal({ groupName, onConfirm }) {
         <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1', lineHeight: 1.6 }}>
           {groupName}에 가입되었습니다
         </p>
-        {/* 닫기 / 상세 보기 */}
-          <button onClick={onClose} style={{
-            flex: 1, padding: '14px 0', backgroundColor: '#F3F4F6',
-            color: '#8B95A1', border: 'none', borderRadius: 14,
+        <button
+          onClick={onConfirm}
+          style={{
+            width: '100%', padding: '13px 0',
+            backgroundColor: '#1E59DA', color: '#fff',
+            border: 'none', borderRadius: 12,
             fontSize: 15, fontWeight: '700', cursor: 'pointer',
-          }}>닫기</button>
-          <button onClick={() => onExplore(group)} style={{
-            flex: 1, padding: '14px 0', backgroundColor: '#1E59DA',
-            color: '#fff', border: 'none', borderRadius: 14,
-            fontSize: 15, fontWeight: '700', cursor: 'pointer',
-          }}>상세 보기</button>
-        
+          }}
+        >
+          확인
+        </button>
       </div>
       <style>{`
         @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.85); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
@@ -88,6 +93,8 @@ export default function GroupExplore() {
     setShowJoinModal(false);
     navigate(-2); // Group 페이지로 복귀
   };
+    const [isDescOpen, setIsDescOpen] = useState(false);
+
 
   return (
     <div style={{
@@ -115,18 +122,32 @@ export default function GroupExplore() {
       {/* ── 스크롤 콘텐츠 ── */}
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 100 }}>
 
-        {/* 그룹 소개/규칙 배너 */}
-        <div style={{ margin: '16px 20px 0' }}>
-          <div style={{
-            backgroundColor: '#EBF0FF', borderRadius: 12, padding: '14px 16px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            <span style={{ fontSize: 14, fontWeight: '600', color: '#1E59DA' }}>그룹 소개/규칙</span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M6 4L10 8L6 12" stroke="#1E59DA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+        {/* 그룹 소개 영역 */}
+        {!isDescOpen ? (
+          <div onClick={() => setIsDescOpen(true)} style={{ margin: '10px 20px', cursor: 'pointer' }}>
+            <div style={{ 
+              backgroundColor: '#EBF0FF', borderRadius: 12, padding: '14px 16px', 
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center' 
+            }}>
+              <span style={{ fontSize: 14, fontWeight: '600', color: '#1E59DA' }}>그룹 소개/규칙</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4L10 8L6 12" stroke="#1E59DA" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div style={{ animation: 'fadeIn 0.3s ease' }}>
+            <div style={{ padding: '0 20px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ margin: 10, fontSize: 16, fontWeight: '700', color: '#191F28' }}>그룹소개/규칙</p>
+              <span onClick={() => setIsDescOpen(false)} style={{ fontSize: 12, color: '#8B95A1', cursor: 'pointer', padding: '4px' }}>접기</span>
+            </div>
+            <div style={{ padding: '0 20px' }}>
+              <p style={{ margin: 0, fontSize: 14, color: '#8B95A1', lineHeight: 1.6, wordBreak: 'break-all' }}>
+                {DUMMY_GROUP.desc}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 멤버 그리드 */}
         <div style={{

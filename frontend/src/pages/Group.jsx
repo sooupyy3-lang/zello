@@ -141,7 +141,7 @@ export default function Group() {
       {/* ── FAB ── */}
       <div style={{ position: 'absolute', right: 20, bottom: '5%', zIndex: 99 }}>
         <button
-          onClick={() => navigate('/Addgroup')}
+          onClick={() => navigate('/AddGroup')}
           style={{
             width: 56, height: 56, borderRadius: '50%',
             backgroundColor: '#1E59DA', color: '#fff', border: 'none',
