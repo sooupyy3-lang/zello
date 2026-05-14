@@ -13,7 +13,8 @@ import AiCoach from './pages/AiCoach';
 import DayRecord from './pages/DayRecord';
 import AiUpload from './pages/AiUpload';
 import Analyzing from './pages/Analyzing';
-import AiResult from './pages/AiResult';
+import AiResultEx from './pages/AiResultEx';
+import AiResultBody from './pages/AiResultBody';
 import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
 import { getToken } from './api';
@@ -58,8 +59,6 @@ function App() {
             <Route path="/Calendar" element={<Calendar />} />
             <Route path="/AiCoach" element={<AiCoach />} />
             <Route path="/DayRecord" element={<DayRecord />} />
-            <Route path="/AiUpload" element={<AiUpload />} />
-            <Route path="/AiResult" element={<AiResult />} />
             <Route path="/MyPage" element={<MyPage />} />
             <Route path="/Friends" element={<Friends />} />
             <Route path="/AddFriends" element={<AddFriends />} />
@@ -90,6 +89,10 @@ function App() {
           <Route path="/GroupExplore" element={<GroupExplore />} />
           <Route path="/Groupdetail" element={<Groupdetail />} />
           <Route path="/NewGroup" element={<NewGroup />} />
+          <Route path="/AiUpload" element={<AiUpload />} />
+          <Route path="/AiResultEx" element={<AiResultEx />} />
+          <Route path="/AiResultBody" element={<AiResultBody />} />
+
 
 
 
