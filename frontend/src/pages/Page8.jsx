@@ -1,18 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import HomeIcon from '../assets/Icon/HomeIcon.png';
-import { updateTrack, endSession, getLatestCoaching } from '../api';
+import Backimg from '../assets/Icon/BackForward.svg';
+import { updateTrack, endSession, getLatestCoaching, getActiveFriends } from '../api';
+
+// 알림 권한 요청 헬퍼
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendNotification(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '/vite.svg' });
+  }
+}
 
 function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const navigate = useNavigate();
   const sessionData = selectedExercise?.sessionData;
   const tracks = sessionData?.tracks || [];
-  const svgSize = 'min(210px, 52vw)';
+  const goalNotifiedRef = useRef(false);
 
-  // trackId → elapsedSec 로컬 타이머
   const [trackElapsed, setTrackElapsed] = useState({});
   const [playing, setPlaying] = useState({});
   const [aiRoutine, setAiRoutine] = useState([]);
+  const [activeFriends, setActiveFriends] = useState([]);
+
+  // 알림 권한 요청 (운동 시작 시)
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
+  // 운동 중인 친구 목록 (30초마다 갱신)
+  useEffect(() => {
+    const fetchActiveFriends = () => {
+      getActiveFriends().then(setActiveFriends).catch(() => {});
+    };
+    fetchActiveFriends();
+    const interval = setInterval(fetchActiveFriends, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     getLatestCoaching()
@@ -25,16 +53,24 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
       .catch(() => {});
   }, []);
 
+  // 목표 달성 알림 (세션의 목표 시간 도달 시)
   useEffect(() => {
-    // 트랙별 재생 상태로 전체 isRunning 제어
+    const goalSec = sessionData?.goalDurationMin ? sessionData.goalDurationMin * 60 : null;
+    if (goalSec && elapsed >= goalSec && !goalNotifiedRef.current) {
+      goalNotifiedRef.current = true;
+      sendNotification('🎉 목표 달성!', `목표 운동 시간 ${sessionData.goalDurationMin}분을 달성했어요!`);
+    }
+  }, [elapsed]);
+
+  useEffect(() => {
     setIsRunning(Object.values(playing).some((v) => v));
   }, [playing]);
 
-  // 트랙 재생/일시정지 토글 (한 번에 하나만 재생)
-  const togglePlay = async (trackId) => {
+  const togglePlay = async (item) => {
+    // key를 item 객체에서 일관되게 추출
+    const trackId = item.id !== null ? item.id : item.name;
     const nowPlaying = !playing[trackId];
 
-    // 다른 트랙 모두 일시정지
     if (nowPlaying) {
       const pausePromises = Object.keys(playing)
         .filter((id) => playing[id] && id !== String(trackId))
@@ -56,14 +92,13 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
     const currentElapsed = trackElapsed[trackId] || 0;
     const status = nowPlaying ? 'running' : 'paused';
 
-    if (trackId) {
+    if (item.id !== null) {
       try {
-        await updateTrack(trackId, status, currentElapsed);
-      } catch (e) { /* 오프라인 시 무시 */ }
+        await updateTrack(item.id, status, currentElapsed);
+      } catch (e) {}
     }
   };
 
-  // 트랙별 타이머
   useEffect(() => {
     const intervals = {};
     Object.keys(playing).forEach((id) => {
@@ -79,173 +114,274 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const handleEnd = async () => {
     setIsRunning(false);
     try {
-      // 재생 중인 트랙들 먼저 pause 처리 (경과 시간 저장)
       const pausePromises = Object.keys(playing)
         .filter((id) => playing[id] && id !== 'null')
         .map((id) => updateTrack(Number(id), 'paused', trackElapsed[id] || 0).catch(() => {}));
       await Promise.all(pausePromises);
       await endSession();
-    } catch (e) { /* 무시 */ }
+    } catch (e) {}
+    sendNotification('운동 완료! 💪', `${formatTime(elapsed)} 동안 운동했어요. 수고했어요!`);
     navigate('/Page3');
   };
 
   const formatTime = (sec) => {
+    const h = Math.floor(sec / 3600).toString().padStart(2, '0');
     const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
+    return `${h}:${m}:${s}`;
   };
 
-  // 로컬 UI용 items (백엔드 트랙 또는 fallback)
   const displayItems = tracks.length > 0
     ? tracks.map((t) => ({ id: t.trackId, name: t.exerciseName, calories: t.calories, metValue: t.metValue }))
     : (selectedExercise?.items || []).map((name) => ({ id: null, name }));
 
-  // 현재 재생 중인 트랙의 실시간 칼로리 계산
   const userWeightKg = sessionData?.userWeightKg ?? 60;
-  const currentPlayingItem = displayItems.find((item) => playing[item.id ?? item.name]);
-  const currentCalories = (() => {
-    if (!currentPlayingItem) return null;
-    const key = currentPlayingItem.id ?? currentPlayingItem.name;
+
+  // 모든 항목의 누적 시간 합산 칼로리 (재생/정지와 무관하게 계속 증가)
+  const totalCalories = displayItems.reduce((sum, item) => {
+    const key = item.id !== null ? item.id : item.name;
     const elapsedSec = trackElapsed[key] || 0;
-    const met = currentPlayingItem.metValue;
-    if (!met) return null;
-    return met * userWeightKg * 0.0175 * (elapsedSec / 60);
-  })();
+    const met = item.metValue || 3.5;
+    return sum + met * userWeightKg * 0.0175 * (elapsedSec / 60);
+  }, 0);
 
   return (
-    <div style={{ width: '100%', minHeight: '100dvh', overflow: 'hidden', fontFamily: 'inherit', backgroundColor: '#0a0e1a' }}>
-      <div style={{ width: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
+    <div style={{
+      width: '100%',
+      minHeight: '100dvh',
+      backgroundColor: '#0a0e1a',
+      fontFamily: 'inherit',
+      display: 'flex',
+      flexDirection: 'column',
+      overflowX: 'hidden',
+    }}>
 
-        {/* 상단 다크 영역 */}
-        <div style={{ backgroundColor: '#0a0e1a', padding: '20px 20px 36px', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* 홈 버튼 */}
-          <button onClick={handleEnd} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#FFFFFF', cursor: 'pointer', padding: 0 }}>
-            <img src={HomeIcon} alt="홈" style={{ width: 'clamp(24px, 7vw, 28px)', height: 'clamp(24px, 7vw, 28px)', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
-          </button>
+      {/* 영역 1: 상단 헤더 */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        paddingTop: 56,
+        paddingBottom: 32,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 16,
+        flexShrink: 0,
+      }}>
 
-          {/* 스톱워치 */}
-          <div style={{ position: 'relative', width: svgSize, height: svgSize,               
-            marginBottom: 'clamp(20px, 5vw, 28px)', }}>
-            <svg viewBox="0 0 210 210"
-              width="100%"
-              height="100%"
-              style={{ position: 'absolute', top: 0, left: 0 }}>
-              <circle cx="105" cy="105" r="90" fill="none" stroke="#ffffff" strokeWidth="18" />
-              <circle cx="105" cy="105" r="90" fill="none" stroke="#44CBFF" strokeWidth="18" strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 90}`}
-                strokeDashoffset={`${2 * Math.PI * 90 * (1 - (elapsed % 60) / 60)}`}
-                transform="rotate(-90 105 105)"
-                style={{ transition: 'stroke-dashoffset 0.9s linear' }} />
-            </svg>
-            <div style={{
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',  // top/left 0 방식 대신 이걸로
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}}>
-              <span style={{fontSize: 'clamp(28px, 9vw, 40px)', fontWeight: '700', color: '#ffffff', letterSpacing: '2px', fontVariantNumeric: 'tabular-nums' }}>
-                {formatTime(elapsed)}
-              </span>
-            </div>
-          </div>
-
-          {/* 칼로리 */}
-          {currentCalories !== null ? (
-            <>
-              <p style={{ color: '#ffffff', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', margin: '0 0 6px' }}>
-                {`${currentCalories.toFixed(1)} Kcal 소모 예상`}
-              </p>
-              <p style={{ color: '#aabbcc', fontSize: '11px', margin: '0 0 22px', textAlign: 'center', padding: '0 20px' }}>
-                칼로리는 추정치이며 실제 소모량과 차이가 있을 수 있습니다.
-              </p>
-            </>
-          ) : (
-            <div style={{ margin: '0 0 22px' }} />
-          )}
-
-          {/* 운동 끝내기 */}
-          <button onClick={handleEnd}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
-            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        <button
+          onClick={handleEnd}
+          style={{
+            position: 'absolute',
+            top: 16, left: 16,
+            background: 'none', border: 'none',
+            cursor: 'pointer', padding: 0,
+          }}
+        >
+          <img
+            src={Backimg}
+            alt="뒤로"
             style={{
-              borderRadius: '29px',
-              backgroundColor: '#E6EEFF', color: '#1E59DA',
-              width: `calc(281/402*100%)`,           
-              height: `calc(51/874*100%)`,             
-              fontSize: `calc(16/402*100%)`, fontWeight: '600',
-              cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.1s',
-            }}>
-            운동 끝내기
-          </button>
-        </div>
-        
-    
+              width: 'clamp(24px, 7vw, 28px)',
+              height: 'clamp(24px, 7vw, 28px)',
+              objectFit: 'contain',
+              filter: 'brightness(0) invert(1)',
+            }}
+          />
+        </button>
 
-        {/* 하단 운동 카드 */}
-        <div style={{ backgroundColor: '#0a0e1a', padding: '20px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {displayItems.map((item) => {
-            const key = item.id ?? item.name;
-            const isPlaying = playing[key];
-            return (
-              <div key={key} style={{
-                backgroundColor: '#ffffff', borderRadius: '14px', border: '8px solid #ffffff',
-                padding: '0 20px', height: 'clamp(80px, 20vw, 90px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <div>
-                  <span style={{ fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', color: '#002738' }}>{item.name}</span>
-                  {trackElapsed[key] > 0 && (
-                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#002738' }}>
-                      {formatTime(trackElapsed[key])}
-                    </p>
-                  )}
+        <span style={{
+          fontSize: 'clamp(32px, 8vw, 64px)',
+          fontWeight: '600',
+          color: '#ffffff',
+          letterSpacing: '2px',
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          {formatTime(elapsed)}
+        </span>
+
+        {/* 한 번이라도 운동하면 총 소모 칼로리 표시, 이후 정지해도 유지 */}
+        {totalCalories > 0 ? (
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: '#ffffff', fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', margin: '0 0 6px' }}>
+              {totalCalories.toFixed(1)} Kcal 소모 예상
+            </p>
+            <p style={{ color: '#DBE9F9', fontSize: 11, margin: 0, padding: '0 20px' }}>
+              칼로리는 추정치이며 실제 소모량과 차이가 있을 수 있습니다.
+            </p>
+          </div>
+        ) : (
+          <div style={{ height: 22 }} />
+        )}
+
+        <button
+          onClick={handleEnd}
+          onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.97)')}
+          onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          style={{
+            width: '85%',
+            height: 66,
+            borderRadius: 29,
+            border: 'none',
+            backgroundColor: '#E6EEFF',
+            color: '#1E59DA',
+            fontSize: 'clamp(13px, 4vw, 16px)',
+            fontWeight: '600',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            transition: 'transform 0.1s',
+          }}
+        >
+          운동 끝내기
+        </button>
+      </div>
+
+      {/* 영역 2: 운동 카드 목록 */}
+      <div style={{
+        width: '100%',
+        padding: '0 20px 12px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}>
+        {displayItems.map((item) => {
+          // ✅ Fix 2: togglePlay와 동일한 방식으로 key 추출
+          const key = item.id !== null ? item.id : item.name;
+          const isPlaying = !!playing[key];
+          const timeRecorded = trackElapsed[key] || 0;
+
+          return (
+            <div
+              key={key}
+              style={{
+                backgroundColor: '#ffffff',
+                borderRadius: 14,
+                padding: '0 20px',
+                height: 'clamp(80px, 20vw, 90px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: 'clamp(16px, 5vw, 20px)', fontWeight: '700', color: '#002738' }}>
+                  {item.name}
+                </span>
+                {timeRecorded > 0 && (
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#002738' }}>
+                    {formatTime(timeRecorded)}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* ✅ Fix 2: 정지 시 누적 시간, 재생 중엔 "진행중" */}
+                <div style={{
+                  backgroundColor: '#E6EEFF',
+                  display: 'flex',
+                  width: 70,
+                  height: 29,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flexShrink: 0,
+                  borderRadius: 20,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  color: '#1E59DA',
+                }}>
+                  {isPlaying ? '진행중' : formatTime(timeRecorded)}
                 </div>
-                <button onClick={() => togglePlay(item.id)}
+
+                {/* ✅ Fix 3: background / backgroundColor 모두 transparent, appearance 초기화 */}
+                <button
+                  onClick={() => togglePlay(item)}
                   style={{
-                    width: 'clamp(48px, 14vw, 57px)',        
-                    height: 'clamp(48px, 14vw, 57px)', borderRadius: '50%', border: 'none',
-                    backgroundColor: '#57D0FF', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(91,191,234,0.4)',
-                  }}>
+                    border: 'none',
+                    background: 'transparent',
+                    backgroundColor: 'transparent',
+                    borderRadius: '50%',
+                    width: 44,
+                    height: 44,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                    WebkitAppearance: 'none',
+                    appearance: 'none',
+                    boxShadow: 'none',
+                    outline: 'none',
+                  }}
+                >
                   {isPlaying ? (
-                    <svg width="41" height="41" viewBox="0 0 20 20" fill="none">
-                      <rect x="3" y="3" width="5" height="14" rx="2" fill="white" />
-                      <rect x="12" y="3" width="5" height="14" rx="2" fill="white" />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2C6.49 2 2 6.49 2 12C2 17.51 6.49 22 12 22C17.51 22 22 17.51 22 12C22 6.49 17.51 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="#1E59DA"/>
+                      <path d="M8 8H16V16H8V8Z" fill="#1E59DA"/>
                     </svg>
                   ) : (
-                    <svg width="41" height="41" viewBox="0 0 20 20" fill="none">
-                      <path d="M5 3.5C5 2.7 5.87 2.23 6.53 2.66L17.06 9.16C17.67 9.56 17.67 10.44 17.06 10.84L6.53 17.34C5.87 17.77 5 17.3 5 16.5V3.5Z" fill="white" />
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2C6.49 2 2 6.49 2 12C2 17.51 6.49 22 12 22C17.51 22 22 17.51 22 12C22 6.49 17.51 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="#1E59DA"/>
+                      <path d="M10 17L16 12L10 7V17Z" fill="#1E59DA"/>
                     </svg>
                   )}
                 </button>
               </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 영역 3: 운동 중인 친구 */}
+      <div style={{
+        width: '100%',
+        padding: '0 20px 40px',
+        boxSizing: 'border-box',
+      }}>
+        <p style={{ margin: '0 0 12px 4px', fontSize: 15, fontWeight: '500', color: '#ffffff' }}>
+          운동 중인 친구
+        </p>
+
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: 24,
+          padding: '24px 16px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '20px 8px',
+        }}>
+          {activeFriends.length === 0 ? (
+            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#ADB5BD', fontSize: 13, margin: 0 }}>
+              운동 중인 친구가 없어요
+            </p>
+          ) : activeFriends.slice(0, 8).map((friend) => {
+            const workoutSec = Math.floor((Date.now() - new Date(friend.startedAt).getTime()) / 1000);
+            return (
+              <div key={friend.userId} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+              }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: '50%',
+                  backgroundColor: '#1E59DA',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 20, fontWeight: '700', color: '#ffffff',
+                }}>
+                  {friend.name[0]}
+                </div>
+                <span style={{ fontSize: 11, fontWeight: '600', color: '#1E59DA', whiteSpace: 'nowrap' }}>
+                  {friend.name}
+                </span>
+                <span style={{ fontSize: 10, fontWeight: '700', color: '#1E59DA' }}>
+                  {formatTime(workoutSec)}
+                </span>
+              </div>
             );
           })}
-
-          {/* AI 추천 루틴 */}
-          <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '20px' }}>
-            <p style={{ margin: '0 0 12px', fontSize: 'clamp(13px, 3.7vw, 15px)', fontWeight: '700', color: '#002738', textAlign: 'center' }}>AI 추천 루틴</p>
-            {aiRoutine.length > 0 ? (
-              <div style={{ border: '1.5px solid #002738', borderRadius: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF' }}>
-                {aiRoutine.map((item, idx) => (
-                  <div key={idx} style={{ textAlign: 'center', marginBottom: idx < aiRoutine.length - 1 ? '8px' : 0 }}>
-                    <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#002738' }}>{item.name}</p>
-                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#002738' }}>{item.sets}세트 × {item.reps}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ margin: 0, fontSize: '13px', color: '#8EB3C2', textAlign: 'center' }}>AI 코치 탭에서 맞춤 루틴을 받아보세요</p>
-            )}
-          </div>
         </div>
       </div>
+
     </div>
   );
 }
 
 export default Page8;
-

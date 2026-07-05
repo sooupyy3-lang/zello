@@ -31,6 +31,9 @@ public class User {
     @Column(name = "weight_kg", nullable = false)
     private Float weightKg;
 
+    @Column(name = "kakao_id", unique = true)
+    private String kakaoId;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import bgImage from '../assets/Components/Page2.svg';
 import BackForward from '../assets/Icon/BackForward.svg';
-import { register, updateProfile, getToken } from '../api';
+import { register, updateProfile, getToken, checkNickname } from '../api';
 
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: currentYear - 1949 }, (_, i) => currentYear - i);
@@ -11,10 +11,13 @@ const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
 function Page2() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const kakaoId   = location.state?.kakaoId || null;
+    const kakaoName = location.state?.name    || '';
     const isEdit = !!getToken(); // 토큰 있으면 수정 모드
 
     const [userInfo, setUserInfo] = useState({
-        name: '',
+        name: kakaoName,
         birth: '',
         height: '',
         weight: '',
@@ -37,15 +40,35 @@ function Page2() {
     }, [birthYear, birthMonth, birthDay]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [nicknameStatus, setNicknameStatus] = useState(null); // null | 'available' | 'taken'
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setUserInfo({ ...userInfo, [name]: value });
+        if (name === 'name') setNicknameStatus(null);
+    };
+
+    const handleNameBlur = async () => {
+        if (!userInfo.name.trim()) return;
+        try {
+            const { available } = await checkNickname(userInfo.name.trim());
+            setNicknameStatus(available ? 'available' : 'taken');
+        } catch {
+            setNicknameStatus(null);
+        }
     };
 
     const handleConfirm = async () => {
         if (!userInfo.name || !userInfo.birth || !userInfo.gender || !userInfo.height || !userInfo.weight) {
             setError('모든 기본 정보를 입력해주세요');
+            return;
+        }
+        if (!isEdit && nicknameStatus === 'taken') {
+            setError('이미 사용 중인 닉네임이에요');
+            return;
+        }
+        if (!isEdit && nicknameStatus !== 'available') {
+            setError('닉네임 중복 확인이 필요해요');
             return;
         }
         setLoading(true);
@@ -54,7 +77,7 @@ function Page2() {
             if (isEdit) {
                 await updateProfile(userInfo);
             } else {
-                await register(userInfo);
+                await register({ ...userInfo, kakaoId });
             }
             navigate('/Page3');
         } catch (e) {
@@ -122,19 +145,33 @@ function Page2() {
     </button>
   </div>
 
-  <input 
-    name="name" 
-    value={userInfo.name} 
-    onChange={handleChange} 
+  <input
+    name="name"
+    value={userInfo.name}
+    onChange={handleChange}
+    onBlur={handleNameBlur}
     placeholder="홍길동"
-    style={{ 
-      ...inputStyle, 
-      position: 'absolute', 
-      top: `calc(290 / 874 * 100%)`, 
+    style={{
+      ...inputStyle,
+      position: 'absolute',
+      top: `calc(290 / 874 * 100%)`,
       left: `calc(70 / 402 * 100%)`,
       fontSize: `calc(15 / 874 * 100vw)`,
     }}
   />
+  {nicknameStatus && (
+    <p style={{
+      position: 'absolute',
+      top: `calc(315 / 874 * 100%)`,
+      left: `calc(70 / 402 * 100%)`,
+      margin: 0,
+      fontSize: `calc(11 / 874 * 100vw)`,
+      fontWeight: '600',
+      color: nicknameStatus === 'available' ? '#1E59DA' : '#e53e3e',
+    }}>
+      {nicknameStatus === 'available' ? '✓ 사용 가능한 닉네임이에요' : '✗ 이미 사용 중인 닉네임이에요'}
+    </p>
+  )}
 
 
 

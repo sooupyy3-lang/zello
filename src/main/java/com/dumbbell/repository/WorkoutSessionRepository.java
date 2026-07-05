@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.dumbbell.dto.RankingResponse;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,4 +36,35 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
     List<WorkoutSession> findActiveFriendSessions(@Param("userId") Long userId);
 
     Optional<WorkoutSession> findByUserIdAndIsActiveTrue(Long userId);
+
+    // 시간순 랭킹 (총 운동 시간)
+    @Query("""
+        SELECT new com.dumbbell.dto.RankingResponse(0, s.user.id, s.user.name, SUM(s.totalDurationSec))
+        FROM WorkoutSession s
+        WHERE s.isActive = false
+        GROUP BY s.user.id, s.user.name
+        ORDER BY SUM(s.totalDurationSec) DESC
+        """)
+    List<RankingResponse> findRankingByTotalTime();
+
+    // 목표 달성순 랭킹 (목표 달성한 세션 수)
+    @Query("""
+        SELECT new com.dumbbell.dto.RankingResponse(0, s.user.id, s.user.name, COUNT(s))
+        FROM WorkoutSession s
+        JOIN UserGoal g ON g.user.id = s.user.id
+        WHERE s.isActive = false AND s.totalDurationSec >= g.durationMin * 60
+        GROUP BY s.user.id, s.user.name
+        ORDER BY COUNT(s) DESC
+        """)
+    List<RankingResponse> findRankingByGoalAchievement();
+
+    // 운동 지속일 랭킹 (총 운동한 날 수)
+    @Query("""
+        SELECT new com.dumbbell.dto.RankingResponse(0, s.user.id, s.user.name, COUNT(DISTINCT FUNCTION('DATE', s.startedAt)))
+        FROM WorkoutSession s
+        WHERE s.isActive = false
+        GROUP BY s.user.id, s.user.name
+        ORDER BY COUNT(DISTINCT FUNCTION('DATE', s.startedAt)) DESC
+        """)
+    List<RankingResponse> findRankingByAttendance();
 }

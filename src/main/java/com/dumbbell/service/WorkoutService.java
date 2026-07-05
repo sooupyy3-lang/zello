@@ -171,6 +171,12 @@ public class WorkoutService {
                 : exerciseTypeRepo.findAll();
     }
 
+    // ── 카테고리 목록 ──────────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<String> getCategories() {
+        return exerciseTypeRepo.findAllCategories();
+    }
+
     // ── 내부 헬퍼: 연속 운동 일수 계산 ──────────────────
     private int calcStreak(List<String> dates, LocalDate today) {
         Set<LocalDate> dateSet = dates.stream()

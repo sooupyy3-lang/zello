@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../api';
+import { login, getKakaoLoginUrl } from '../api';
 
 function Login() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleKakaoLogin = async () => {
+    try {
+      const redirectUri = `${window.location.origin}/kakao/callback`;
+      const { url } = await getKakaoLoginUrl(redirectUri);
+      window.location.href = url;
+    } catch (e) {
+      setError('카카오 로그인을 시작할 수 없어요.');
+    }
+  };
 
   const handleLogin = async () => {
     if (!userId) { setError('유저 ID를 입력해주세요'); return; }
@@ -57,6 +67,14 @@ function Login() {
         fontFamily: 'inherit',
       }}>
         {loading ? '로그인 중...' : '로그인'}
+      </button>
+      <button onClick={handleKakaoLogin} style={{
+        width: '100%', height: '56px', borderRadius: '12px', border: 'none',
+        backgroundColor: '#FEE500', color: '#191919',
+        fontSize: '18px', fontWeight: '700', cursor: 'pointer',
+        fontFamily: 'inherit', marginTop: '12px',
+      }}>
+        카카오로 로그인
       </button>
       <button onClick={() => navigate('/Page2')} style={{
         marginTop: '16px', background: 'none', border: 'none',

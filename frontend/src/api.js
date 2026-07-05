@@ -37,12 +37,13 @@ export async function register(userInfo) {
   const data = await request('POST', '/api/auth/register', {
     name: userInfo.name,
     birthDate: userInfo.birth,
-    gender: userInfo.gender,          // 'male' | 'female'
+    gender: userInfo.gender,
     heightCm: parseFloat(userInfo.height),
     weightKg: parseFloat(userInfo.weight),
     weeklyCount: parseInt(userInfo.goalWeek) || 3,
     durationMin: parseInt(userInfo.goalTime) * 60 || 60,
     calorieTarget: parseInt(userInfo.goalCal) || 500,
+    kakaoId: userInfo.kakaoId || null,
   });
   setToken(data.token);
   setUserId(data.userId);
@@ -85,6 +86,9 @@ export const endSession = () => request('POST', '/api/workouts/sessions/end');
 export const getExercises = (category) =>
   request('GET', `/api/exercises${category ? `?category=${category}` : ''}`);
 
+// GET /api/exercises/categories
+export const getExerciseCategories = () => request('GET', '/api/exercises/categories');
+
 // ── Calendar ───────────────────────────────────────────
 // GET /api/workouts/sessions?date=  (날짜별)
 export const getSessionsByMonth = async (year, month) => {
@@ -126,3 +130,31 @@ export const updateProfile = async (userInfo) => {
 
 // ── Stats ──────────────────────────────────────────────
 export const getMyStats = () => request('GET', '/api/stats/me');
+
+// ── Nickname ───────────────────────────────────────────
+export const checkNickname = (name) =>
+  request('GET', `/api/auth/check-nickname?name=${encodeURIComponent(name)}`);
+
+// ── Kakao ──────────────────────────────────────────────
+export async function getKakaoLoginUrl(redirectUri) {
+  return request('GET', `/api/auth/kakao/url?redirectUri=${encodeURIComponent(redirectUri)}`);
+}
+
+export async function kakaoLogin(code, redirectUri) {
+  const data = await request('POST', `/api/auth/kakao/login?code=${encodeURIComponent(code)}&redirectUri=${encodeURIComponent(redirectUri)}`);
+  if (!data.isNewUser) {
+    setToken(data.token);
+    setUserId(data.userId);
+    setUserName(data.name);
+  }
+  return data;
+}
+
+// ── AI History ─────────────────────────────────────────
+export const getCoachingHistory = () => request('GET', '/api/ai/coaching/history');
+
+// ── Rankings ───────────────────────────────────────────
+export const getRankings = (type = 'time') => request('GET', `/api/rankings?type=${type}`);
+
+// ── Friends Active ─────────────────────────────────────
+export const getActiveFriends = () => request('GET', '/api/friends/active');

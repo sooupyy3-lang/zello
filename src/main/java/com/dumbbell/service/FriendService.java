@@ -13,8 +13,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FriendService {
 
-    private final FriendshipRepository friendshipRepo;
-    private final UserRepository       userRepo;
+    private final FriendshipRepository      friendshipRepo;
+    private final UserRepository            userRepo;
+    private final WorkoutSessionRepository  sessionRepo;
 
     // ── 친구 요청 보내기 ──────────────────────────────────
     @Transactional
@@ -85,6 +86,22 @@ public class FriendService {
     public List<FriendResponse> getPendingRequests(Long userId) {
         return friendshipRepo.findByFriendIdAndStatus(userId, Friendship.FriendStatus.pending)
                 .stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    // ── 현재 운동 중인 친구 목록 ──────────────────────────
+    @Transactional(readOnly = true)
+    public List<ActiveFriendResponse> getActiveFriends(Long userId) {
+        return sessionRepo.findActiveFriendSessions(userId).stream()
+                .map(s -> ActiveFriendResponse.builder()
+                        .userId(s.getUser().getId())
+                        .name(s.getUser().getName())
+                        .startedAt(s.getStartedAt())
+                        .exerciseNames(s.getTracks().stream()
+                                .map(t -> t.getExerciseType().getName())
+                                .distinct()
+                                .collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
     }
 
     private FriendResponse toDto(Friendship f) {

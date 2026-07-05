@@ -1,5 +1,6 @@
 package com.dumbbell.controller;
 
+import com.dumbbell.dto.ActiveFriendResponse;
 import com.dumbbell.dto.FriendResponse;
 import com.dumbbell.service.FriendService;
 import lombok.RequiredArgsConstructor;
@@ -7,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.List;
 
 // ── FriendController ────────────────────────────────────
@@ -17,6 +17,13 @@ import java.util.List;
 public class FriendController {
 
     private final FriendService friendService;
+
+    // GET /api/friends/active — 현재 운동 중인 친구 목록
+    @GetMapping("/active")
+    public ResponseEntity<List<ActiveFriendResponse>> getActiveFriends(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(friendService.getActiveFriends(userId));
+    }
 
     // GET /api/friends — 친구 목록
     @GetMapping
