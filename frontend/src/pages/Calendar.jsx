@@ -11,19 +11,21 @@ function Calendar() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getHome().then(setHomeData).catch(() => {}).finally(() => setLoading(false));
+    getHome()
+      .then(setHomeData)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const workedOutDates = homeData?.workedOutDates || [];
   const streakDays = homeData?.streakDays || 0;
 
-  const today = new Date();
+  const today = new Date(); // 실제 오늘 날짜
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 
-  const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  const dayNames = ['일','월','화','수','목','금','토'];
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
+  // 날짜 계산 로직
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
   const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
   const prevLastDate = new Date(currentYear, currentMonth, 0).getDate();
@@ -34,15 +36,6 @@ function Calendar() {
   const totalCells = cells.length <= 35 ? 35 : 42;
   for (let i = 1; i <= totalCells - cells.length; i++) cells.push({ day: i, type: 'next' });
 
-  const isExercisedDate = (day) => {
-    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return workedOutDates.includes(dateStr);
-  };
-
-  const exercisedDaysInMonth = cells
-    .filter((c) => c.type === 'current' && isExercisedDate(c.day))
-    .map((c) => c.day);
-
   const prevMonth = () => {
     if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1); }
     else setCurrentMonth((m) => m - 1);
@@ -52,104 +45,102 @@ function Calendar() {
     else setCurrentMonth((m) => m + 1);
   };
 
-  const years = Array.from({ length: 10 }, (_, i) => today.getFullYear() - 5 + i);
+  const arrowBtnStyle = {
+    width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#E8F2FF',
+    border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',color:'#1E59DA'
+  };
 
   if (loading) return <LoadingSpinner />;
 
   return (
     <div style={{
-      width: '100%',
-      minHeight: '100dvh',
-      backgroundColor: '#eef1f4',
-      display: 'flex', flexDirection: 'column',
+      width: '100%', height: '100%',
+      backgroundColor: '#F5F6F8',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '40px 24px', boxSizing: 'border-box',
       fontFamily: 'inherit',
     }}>
-      {/* 상단 파란 영역 */}
-      <div style={{ backgroundColor: '#BFE8F8', height: 'clamp(60px, 10dvh, 80px)', flexShrink: 0 }} />
-      <div style={{ height: '1.5px', backgroundColor: '#002738', flexShrink: 0 }} />
 
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-
-        {/* 캘린더 카드 */}
-        <div style={{
-          margin: 'clamp(16px, 4vw, 24px) auto 0',
-          width: 'calc(100% - clamp(32px, 10vw, 64px))',
-          maxWidth: '318px',
-          backgroundColor: '#ffffff',
-          borderRadius: '16px',
-          padding: 'clamp(12px, 3.5vw, 16px)',
-          border: '1.5px solid #8EB3C2',
-          boxSizing: 'border-box',
-        }}>
-
-          {/* 월/년 헤더 */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(12px, 3.5vw, 18px)' }}>
-            <button onClick={prevMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <img src={BackForward} alt="이전" style={{ width: 'clamp(16px, 5vw, 20px)', height: 'clamp(16px, 5vw, 20px)', objectFit: 'contain' }} />
-            </button>
-            <div style={{ display: 'flex', gap: 'clamp(4px, 2vw, 8px)' }}>
-              <select value={currentMonth} onChange={(e) => setCurrentMonth(Number(e.target.value))}
-                style={{ width: 'clamp(70px, 22vw, 87px)', height: '28px', boxSizing: 'border-box', padding: '0px 6px', borderRadius: '8px', border: '1px solid #8EB3C2', fontSize: 'clamp(10px, 3vw, 12px)', color: '#002738', backgroundColor: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
-                {monthNames.map((m, i) => <option key={i} value={i}>{m}</option>)}
-              </select>
-              <select value={currentYear} onChange={(e) => setCurrentYear(Number(e.target.value))}
-                style={{ width: 'clamp(70px, 22vw, 87px)', height: '28px', boxSizing: 'border-box', padding: '0px 6px', borderRadius: '8px', border: '1px solid #8EB3C2', fontSize: 'clamp(10px, 3vw, 12px)', color: '#002738', backgroundColor: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
-                {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-            <button onClick={nextMonth} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-              <img src={BackForward} alt="다음" style={{ width: 'clamp(16px, 5vw, 20px)', height: 'clamp(16px, 5vw, 20px)', objectFit: 'contain', transform: 'scaleX(-1)' }} />
-            </button>
-          </div>
-
-          {/* 요일 헤더 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '8px' }}>
-            {dayNames.map((d) => (
-              <div key={d} style={{ textAlign: 'center', fontSize: 'clamp(10px, 3vw, 12px)', color: '#8EB3C2', paddingBottom: '4px' }}>{d}</div>
-            ))}
-          </div>
-
-          {/* 날짜 셀 */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
-            {cells.map((cell, idx) => {
-              const isExercised = cell.type === 'current' && isExercisedDate(cell.day);
-              const isCurrent = cell.type === 'current';
-              const sorted = [...exercisedDaysInMonth].sort((a, b) => a - b);
-              const isFirst = isExercised && cell.day === sorted[0];
-              const isLast = isExercised && cell.day === sorted[sorted.length - 1];
-              const isMiddle = isExercised && !isFirst && !isLast;
-              return (
-                <div key={idx}
-                  onClick={() => isCurrent && navigate('/DayRecord', { state: { day: cell.day, month: currentMonth, year: currentYear } })}
-                  style={{
-                    height: 'clamp(28px, 8vw, 36px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    borderRadius: '8px',
-                    backgroundColor: isFirst || isLast ? '#8EB3C2' : isMiddle ? '#F5F5F5' : 'transparent',
-                    fontSize: 'clamp(9px, 2.8vw, 11px)',
-                    fontWeight: isExercised ? '700' : '500',
-                    color: isFirst || isLast ? '#ffffff' : isMiddle ? '#8EB3C2' : isCurrent ? '#002738' : '#8EB3C2',
-                    cursor: isCurrent ? 'pointer' : 'default',
-                  }}>
-                  {cell.day}
-                </div>
-              );
-            })}
-          </div>
+      {/* 1. 상단 타이틀 영역 (오늘 날짜 표시) */}
+      <div style={{ width: '100%', maxWidth: '340px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', margin: '0 0 4px 0', color: '#1A1A1A' }}>
+            {currentYear}년 {currentMonth + 1}월
+          </h1>
+          <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>{streakDays}일째 운동중</p>
         </div>
-
-        {/* 구분선 */}
-        <div style={{ height: '1.5px', backgroundColor: '#002738', margin: 'clamp(16px, 4vw, 24px) 0' }} />
-
-        {/* 하단 캐릭터 */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: 'clamp(20px, 5vw, 30px)' }}>
-          <img src={GhostRunning} alt="character" style={{ width: 'clamp(140px, 46vw, 186px)', marginBottom: '16px' }} />
-          <p style={{ fontSize: 'clamp(18px, 6vw, 24px)', fontWeight: '800', color: '#002738', margin: 0 }}>
-            {streakDays}일째 운동중
-          </p>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button onClick={prevMonth} style={arrowBtnStyle}>
+            <img src={BackForward} alt="이전" style={{ width: '7.4px', height:'12px' }} />
+          </button>
+          <button onClick={nextMonth} style={arrowBtnStyle}>
+            <img src={BackForward} alt="다음" style={{ width: '7.4px', height:'12px', transform: 'rotate(180deg)'}} />
+          </button>
         </div>
-
       </div>
+
+      {/* 2. 캘린더 카드 */}
+      <div style={{
+        width: '100%', maxWidth: '340px',
+        backgroundColor: '#ffffff', borderRadius: '30px',
+        padding: '30px 20px', marginBottom: '32px',
+        boxSizing: 'border-box', boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+      }}>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '20px' }}>
+          {dayNames.map((d, i) => (
+            <div key={d} style={{ 
+              textAlign: 'center', fontSize: '13px', fontWeight: '600', 
+              color: i === 0 ? '#FF8B8B' : i === 6 ? '#8BA7FF' : '#BBB' 
+            }}>{d}</div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', rowGap: '12px' }}>
+          {cells.map((cell, idx) => {
+            const isToday = 
+              cell.type === 'current' &&
+              cell.day === today.getDate() &&
+              currentMonth === today.getMonth() &&
+              currentYear === today.getFullYear();
+
+            return (
+              <div key={idx}
+                onClick={() => cell.type === 'current' && navigate('/DayRecord', { state: { day: cell.day, month: currentMonth, year: currentYear } })}
+                style={{
+                  height: '36px', width: '36px', margin: '0 auto',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: '50%',
+                  backgroundColor: isToday ? '#E6F0FF' : 'transparent',
+                  color: cell.type === 'current' ? (isToday ? '#1A1A1A' : '#333') : '#EEE',
+                  fontSize: '14px', fontWeight: isToday ? '700' : '500',
+                  cursor: cell.type === 'current' ? 'pointer' : 'default'
+                }}>
+                {cell.day}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. 목표 섹션 */}
+      <div style={{ width: '100%', maxWidth: '340px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '12px', color: '#1A1A1A' }}>목표</h3>
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '24px', padding: '24px', boxSizing: 'border-box' }}>
+          <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '700' }}>{streakDays}일째 운동중</h4>
+          <p style={{ margin: 0, fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
+            목표 시간까지 <span style={{ fontWeight: '700' }}>1시간</span> 남았습니다<br />
+            목표 칼로리까지 <span style={{ fontWeight: '700' }}>312칼로리</span> 남았습니다
+          </p>
+          <div style={{ marginTop: '24px' }}>
+            <span style={{ fontSize: '11px', color: '#2563EB', fontWeight: '800' }}>진행률</span>
+            <div style={{ width: '100%', height: '8px', backgroundColor: '#EDF2F7', borderRadius: '4px', marginTop: '8px', overflow: 'hidden' }}>
+              <div style={{ width: '65%', height: '100%', backgroundColor: '#2563EB', borderRadius: '4px' }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

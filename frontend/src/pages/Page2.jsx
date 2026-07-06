@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import bgImage from '../assets/Components/Page2.svg';
 import BackForward from '../assets/Icon/BackForward.svg';
 import { register, updateProfile, getToken, checkNickname } from '../api';
@@ -11,13 +11,10 @@ const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
 function Page2() {
     const navigate = useNavigate();
-    const location = useLocation();
-    const kakaoId   = location.state?.kakaoId || null;
-    const kakaoName = location.state?.name    || '';
     const isEdit = !!getToken(); // 토큰 있으면 수정 모드
 
     const [userInfo, setUserInfo] = useState({
-        name: kakaoName,
+        name: '',
         birth: '',
         height: '',
         weight: '',
@@ -45,7 +42,6 @@ function Page2() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setUserInfo({ ...userInfo, [name]: value });
-        if (name === 'name') setNicknameStatus(null);
     };
 
     const handleNameBlur = async () => {
@@ -77,7 +73,7 @@ function Page2() {
             if (isEdit) {
                 await updateProfile(userInfo);
             } else {
-                await register({ ...userInfo, kakaoId });
+                await register(userInfo);
             }
             navigate('/Page3');
         } catch (e) {
