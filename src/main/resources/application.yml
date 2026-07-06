@@ -1,28 +1,15 @@
 spring:
   datasource:
-    url: jdbc:mysql://root:jJUVGcIdhLsZNoFmqfFiRZDOJEisWssk@metro.proxy.rlwy.net:30823/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: root
-    password: jJUVGcIdhLsZNoFmqfFiRZDOJEisWssk
     driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
-
-jwt:
-  secret: jebal-halsoo-itsuh-1212-gogo-15151717
-  expiration: 31536000000
 
 server:
   port: ${PORT:8080}
 
-openai:
-  api-key: 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
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 31536000000
 
+openai:
+  api-key: ${OPENAI_API_KEY}
 kakao:
-  client-id: 7d65bd6ae7d7f954ccda7742bec89fb0
+  client-id: ${KAKAO_CLIENT_ID}
