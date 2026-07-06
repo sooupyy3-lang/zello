@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:mysql://root:비밀번호@호스트:포트/railway?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: 비밀번호
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+jwt:
+  secret: 아무문자열
+  expiration: 31536000000
+
+server:
+  port: 8080
+
+openai:
+  api-key: sk-proj-...
+
+kakao:
+  client-id: 카카오앱클라이언트ID
