@@ -60,6 +60,43 @@ public class StatsService {
         // 그룹 수
         int groupCount = groupMemberRepo.countByUserId(userId);
 
+        // 이번 주 세션 (월요일 ~ 오늘)
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
+        List<WorkoutSession> weeklySessions = allSessions.stream()
+                .filter(s -> {
+                    LocalDate d = s.getStartedAt().toLocalDate();
+                    return !d.isBefore(weekStart) && !d.isAfter(today);
+                })
+                .collect(Collectors.toList());
+
+        int weeklyWorkoutCount = weeklySessions.size();
+        int weeklyDurationMin = weeklySessions.stream()
+                .mapToInt(s -> s.getTotalDurationSec() != null ? s.getTotalDurationSec() / 60 : 0)
+                .sum();
+        float weeklyCalories = (float) weeklySessions.stream()
+                .mapToDouble(s -> s.getTotalCalories() != null ? s.getTotalCalories() : 0)
+                .sum();
+
+        // 진행률 계산 (횟수/시간/칼로리 평균)
+        int goalProgressPercent = 0;
+        int remainDurationMin = 0;
+        float remainCalories = 0f;
+
+        if (goal != null) {
+            int countGoal   = goal.getWeeklyCount() != null ? goal.getWeeklyCount() : 0;
+            int durationGoal = goal.getDurationMin() != null ? goal.getDurationMin() : 0;
+            int calorieGoal = goal.getCalorieTarget() != null ? goal.getCalorieTarget() : 0;
+
+            int countPercent    = countGoal > 0 ? Math.min(100, weeklyWorkoutCount * 100 / countGoal) : 100;
+            int durationPercent = durationGoal > 0 ? Math.min(100, weeklyDurationMin * 100 / durationGoal) : 100;
+            int caloriePercent  = calorieGoal > 0 ? Math.min(100, (int)(weeklyCalories * 100 / calorieGoal)) : 100;
+
+            goalProgressPercent = (countPercent + durationPercent + caloriePercent) / 3;
+            remainDurationMin   = Math.max(0, durationGoal - weeklyDurationMin);
+            remainCalories      = Math.max(0f, calorieGoal - weeklyCalories);
+        }
+
         return UserProfileResponse.builder()
                 .id(user.getId())
                 .name(user.getName())
@@ -77,6 +114,12 @@ public class StatsService {
                 .avgCalories((float) avgCalories)
                 .friendCount(friendCount)
                 .groupCount(groupCount)
+                .weeklyWorkoutCount(weeklyWorkoutCount)
+                .weeklyDurationMin(weeklyDurationMin)
+                .weeklyCalories(weeklyCalories)
+                .goalProgressPercent(goalProgressPercent)
+                .remainDurationMin(remainDurationMin)
+                .remainCalories(remainCalories)
                 .build();
     }
 
