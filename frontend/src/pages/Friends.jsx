@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 
 // ── 더미 데이터 ──────────────────────────────────────
 export const DUMMY_FRIENDS = [
-  { id: 1, name: '훈남민성',   streak: 12, goal: '다이어트', todayDone: true,  color: '#BFE8F8' },
-  { id: 2, name: '헬스걸',     streak: 8,  goal: '근력 강화', todayDone: true,  color: '#D4F1D4' },
-  { id: 3, name: '집가고싶다', streak: 4,  goal: '유산소',    todayDone: false, color: '#FFE5C4' },
-  { id: 4, name: '운동왕',     streak: 21, goal: '벌크업',    todayDone: true,  color: '#E8E0FF' },
-  { id: 5, name: '새벽러너',   streak: 15, goal: '마라톤',    todayDone: true,  color: '#FFD6E0' },
+  { id: 1, name: '훈남민성',   streak: 12, goal: '다이어트', todayDone: true,  color: '#BFE8F8', isWorkingOut:'true' },
+  { id: 2, name: '헬스걸',     streak: 8,  goal: '근력 강화', todayDone: true,  color: '#D4F1D4', isWorkingOut:'true' },
+  { id: 3, name: '집가고싶다', streak: 4,  goal: '유산소',    todayDone: false, color: '#FFE5C4', isWorkingOut:'true' },
+  { id: 4, name: '운동왕',     streak: 21, goal: '벌크업',    todayDone: true,  color: '#E8E0FF', isWorkingOut:'true' },
+  { id: 5, name: '새벽러너',   streak: 15, goal: '마라톤',    todayDone: true,  color: '#FFD6E0', isWorkingOut:'true' },
 ];
 
 // ── 아바타 ───────────────────────────────────────────
@@ -125,6 +125,8 @@ export default function Friends() {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const workingOutCount = DUMMY_FRIENDS.filter(f => f.isWorkingOut).length; 
+
 
   return (
     <div style={{
@@ -145,6 +147,7 @@ export default function Friends() {
   height: '60px',
   boxSizing: 'border-box',
 }}>
+  
         <HamburgerButton onOpen={() => setMenuOpen(true)} />
 
         <h1 style={{
@@ -156,6 +159,12 @@ export default function Friends() {
           나의 친구들
         </h1>
       </div>
+      
+       {/* ── 현재 운동 중 인원 텍스트  ── */}
+
+      <p style={{ margin: '10px 25px 10px', fontSize: 13, fontWeight: '600', color: '#1E59DA' }}>
+        지금 {workingOutCount}명이 운동 중이에요
+      </p>
 
       {/* ── 친구 목록 그리드 ── */}
       <div style={{
@@ -168,6 +177,7 @@ export default function Friends() {
         gridTemplateColumns: '1fr 1fr 1fr 1fr',
         gap: '16px 8px',
       }}>
+      
         {DUMMY_FRIENDS.map(friend => (
           <FriendCard key={friend.id} friend={friend} onClick={setSelectedFriend} />
         ))}

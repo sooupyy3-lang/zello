@@ -194,8 +194,8 @@ function LogoutModal({ onConfirm, onCancel }) {
         <p style={{ margin: '0 0 8px', fontSize: 17, fontWeight: '700', color: '#191F28' }}>로그아웃</p>
         <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1' }}>로그아웃 하시겠습니까?</p>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onCancel} style={{ flex: 1, height: 44, backgroundColor: '#B0B8C1', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: '600', cursor: 'pointer' }}>아니요</button>
-          <button onClick={onConfirm} style={{ flex: 1, height: 44, backgroundColor: '#1E59DA', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: '600', cursor: 'pointer' }}>예</button>
+          <button onClick={onConfirm} style={{ flex: 1, height: 44, backgroundColor: '#B0B8C1', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: '600', cursor: 'pointer' }}>예</button>
+          <button onClick={onCancel} style={{ flex: 1, height: 44, backgroundColor: '#1E59DA', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: '600', cursor: 'pointer' }}>아니요</button>
         </div>
       </div>
       <style>{`

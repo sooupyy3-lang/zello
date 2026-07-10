@@ -2,21 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { HamburgerButton } from '../pages/HamburgerMenu.jsx'; 
 import { HamburgerPanel } from '../pages/HamburgerMenu.jsx';
 
+const DUMMY_GROUPS = [
+  { name: '하체 집중 모임', code: 'IJ9T1V' },
+  { name: '새벽 러닝 크루', code: 'RN82KQ' },
+  { name: '요가 힐링 모임', code: 'YG73LM' },
+];
+
 function AddFriends() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [name, setName] = useState('');
   const [groupCode, setGroupCode] = useState('');
-  const inviteCode = "IJ9T1V"; // 예시 초대 코드
+  const [groupIndex, setGroupIndex] = useState(0); 
+  const currentGroup = DUMMY_GROUPS[groupIndex]; 
 
   const openModal = (message) => {
     setModalMessage(message);
     setShowModal(true);
   };
 
+  const handlePrevGroup = () => setGroupIndex(i => (i - 1 + DUMMY_GROUPS.length) % DUMMY_GROUPS.length);
+  const handleNextGroup = () => setGroupIndex(i => (i + 1) % DUMMY_GROUPS.length);
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(inviteCode);
+    navigator.clipboard.writeText(currentGroup.code); 
     openModal('코드가 복사되었습니다.');
   };
   const handleSearch = () => {
@@ -84,13 +94,16 @@ function AddFriends() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <h3 style={{ ...labelStyle, marginBottom: 0 }}>그룹 초대 코드</h3>
           <div style={{ fontSize: '12px', color: '#888', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            하체 집중 모임 
-            <span style={{ fontSize: '10px' }}>▼▲</span>
+            {currentGroup.name} 
+            <span style={{ display: 'flex', flexDirection: 'column' }}> 
+              <button onClick={handlePrevGroup} style={arrowButtonStyle}>▲</button>
+              <button onClick={handleNextGroup} style={arrowButtonStyle}>▼</button>
+            </span>
           </div>
         </div>
         <div style={codeBoxStyle}>
           <span style={{ fontSize: '20px', fontWeight: '800', color: '#111', letterSpacing: '1px' }}>
-            {inviteCode}
+            {currentGroup.code} 
           </span>
           <button onClick={handleCopy} style={copyButtonStyle}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
@@ -134,8 +147,9 @@ function AddFriends() {
             top: `calc(670/874*100%)`,
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: '280px',
-            height: '120px',
+            width: '92%',
+            
+            aspectRatio: '386 / 71',
             backgroundColor: '#E1EEFF', 
             borderRadius: '24px',      
             display: 'flex',
@@ -220,6 +234,16 @@ const copyButtonStyle = {
   border: 'none',
   cursor: 'pointer',
   padding: '4px'
+};
+
+const arrowButtonStyle = {
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  padding: 5,
+  fontSize: '15px',
+  lineHeight: '8px',
+  color: '#888'
 };
 
 export default AddFriends;
