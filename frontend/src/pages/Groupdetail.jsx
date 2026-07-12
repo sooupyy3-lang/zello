@@ -23,7 +23,7 @@ export const DUMMY_FRIENDS = [
     rank: '4위', workoutTime: '52M 20S', calories: '410 kcal', startTime: '05:30 AM', endTime: '06:22 AM', maxDuration: '30M 08S' },
 ];
 
-// ── 컴포넌트: 아바타 ───────────────────────────────────────────
+// ── 컴포넌트: 아바타 ──────────────────────────────────────────
 function Avatar({ name, color, size = 52.5 }) {
   return (
     <div style={{
@@ -146,8 +146,8 @@ function KickModal({ friendName, onConfirm, onCancel }) {
   );
 }
 
-// ── 컴포넌트: 삭제 확인 모달 ────────────────────────────────────────
-function DeleteModal({ groupName, onConfirm, onCancel }) {
+// ── 컴포넌트: 모임 설정 모달 ────────────────────────────────────────
+function DeleteModal({ groupName, onDeleteClick, onDelegateClick, onCancel }) {
   return (
     <>
       <div onClick={onCancel} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 200 }} />
@@ -158,21 +158,57 @@ function DeleteModal({ groupName, onConfirm, onCancel }) {
       }}>
         <p style={{ margin: '0 0 8px', fontSize: 17, fontWeight: '700' }}>{groupName} 삭제</p>
         <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1', lineHeight: 1.5 }}>
-          정말로 삭제하시겠습니까?<br/>삭제 후에는 복구할 수 없습니다.
-        </p>
+          모임삭제와 그룹장 권한 위임 중 
+<br/>선택하세요.
+           </p>
         <div style={{ display: 'flex', gap: 12 }}>
           <button 
-            onClick={onCancel} 
+            onClick={onDeleteClick} 
             style={{
               flex: 1, height: '43px', backgroundColor: '#B0B8C1', color: '#fff', 
               border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
-          >취소</button>
+          >그룹 삭제</button>
           <button 
-            onClick={onConfirm} 
+            onClick={onDelegateClick} 
             style={{
               flex: 1, height: '43px', backgroundColor: '#1E59DA', color: '#fff', 
+              border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >권한 위임</button>
+        </div>
+      </div>
+    </>
+  );
+}
+function DeleteConfirmModal({ groupName, onConfirm, onCancel }) {
+  return (
+    <>
+      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 300 }} />
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        backgroundColor: '#fff', borderRadius: 20, padding: '32px 24px 24px',
+        zIndex: 301, width: '75%', textAlign: 'center',
+      }}>
+        <p style={{ margin: '0 0 8px', fontSize: 17, fontWeight: '700' }}>{groupName} 삭제</p>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1', lineHeight: 1.5 }}>
+          정말로 삭제하시겠습니까?<br/>삭제 후에는 되돌릴 수 없습니다.
+        </p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={onCancel}
+            style={{
+              flex: 1, height: '43px', backgroundColor: '#B0B8C1', color: '#fff',
+              border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >취소</button>
+          <button
+            onClick={onConfirm}
+            style={{
+              flex: 1, height: '43px', backgroundColor: '#F04452', color: '#fff',
               border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
@@ -257,19 +293,27 @@ export default function Groupdetail() {
   const [friends, setFriends] = useState(DUMMY_FRIENDS); 
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [kickTarget, setKickTarget] = useState(null); 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+ const [showSettingsModal, setShowSettingsModal] = useState(false); // 그룹 삭제/권한위임 선택 모달
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // 삭제 최종 확인 팝업  
   const [showDetail, setShowDetail] = useState(false); 
   const [desc, setDesc] = useState(DUMMY_GROUP.desc); 
   const navigate = useNavigate();
   const groupName = DUMMY_GROUP.name;
   const workingOutCount = friends.filter(f => f.isWorkingOut).length; 
 
-  const handleDelete = () => {
-    alert('삭제되었습니다.');
-    setShowDeleteModal(false);
-    navigate('/');
+   const handleDeleteClick = () => {
+    setShowSettingsModal(false);
+    setShowDeleteConfirm(true);
   };
-
+  const handleDeleteConfirm = () => {
+    alert('삭제되었습니다.');
+    setShowDeleteConfirm(false);
+    navigate('/Group');
+  };
+ const handleDelegateClick = () => {
+    setShowSettingsModal(false);
+    navigate('/Group');
+  };
   // 친구 내보내기 확정 처리
   const handleKickConfirm = () => {
     setFriends(prev => prev.filter(f => f.id !== kickTarget.id));
@@ -323,25 +367,33 @@ export default function Groupdetail() {
         ))}
       </div>
 
-      {/* ── 삭제하기 버튼 ── */}
-      <div style={{ padding: '0 20px 40px' }}>
+      {/* ── 설정하기 버튼 ── */}
+      <div style={{ padding: '0 20px 40px', justifyContent: 'center', textAlign:'center', }}>
         <button
-          onClick={() => setShowDeleteModal(true)}
+          onClick={() => setShowSettingsModal(true)}
           style={{
-            width: '100%', padding: '15px 0', backgroundColor: '#fff', color: '#F04452',
-            border: '1px solid #F2F4F6', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: 'pointer',
+            width: '80%', padding: '15px 0', backgroundColor: '#1E59DA', color: '#FFFFFF',
+            border: '1px solid #1E59DA', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: 'pointer',
           }}
         >
-          모임 삭제하기
+          모임 설정하기
         </button>
       </div>
 
       {/* ── 모달 및 팝업 ── */}
-      {showDeleteModal && (
+       {showSettingsModal && (
         <DeleteModal 
           groupName={groupName} 
-          onConfirm={handleDelete} 
-          onCancel={() => setShowDeleteModal(false)} 
+          onDeleteClick={handleDeleteClick}
+          onDelegateClick={handleDelegateClick}
+          onCancel={() => setShowSettingsModal(false)} 
+        />
+      )}
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          groupName={groupName}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
 
