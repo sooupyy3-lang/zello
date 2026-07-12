@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // ── 더미 데이터 ──────────────────────────────────────
@@ -218,7 +218,42 @@ function DeleteConfirmModal({ groupName, onConfirm, onCancel }) {
     </>
   );
 }
-
+function ResultModal({ message, onConfirm }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onConfirm();
+    }, 1300);
+   return () => clearTimeout(timer);
+    }, []);
+    return(
+    <>
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 400 }} />
+      <div style={{
+        position: 'absolute', top: '90%', left: '50%', transform: 'translate(-50%, -50%)',
+        display: 'flex',
+        width: '386px',
+        height: '70px',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: '24px',
+        border: '2px solid rgba(30, 89, 218, 0.18)',
+        background: 'rgba(219, 233, 249, 0.84)',
+        zIndex: 401,
+      }}>
+        <div style={{
+          color: '#1E59DA',
+          textAlign: 'center',
+          fontSize: '20px',
+          fontStyle: 'normal',
+          fontWeight: 500,
+          lineHeight: 'normal',
+        }}>
+          {message}
+        </div>
+      </div>
+    </>
+  );
+}
 // ── 그룹 소개 상세 페이지  ──────
 function GroupDetailView({ groupName, category, members, goal, desc, onSave, onClose }) {
   // 💡 true 일 땐 모임장(편집가능), false 일 땐 비소속(열람만 가능)
@@ -297,23 +332,32 @@ export default function Groupdetail() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // 삭제 최종 확인 팝업  
   const [showDetail, setShowDetail] = useState(false); 
   const [desc, setDesc] = useState(DUMMY_GROUP.desc); 
+  const [resultMessage, setResultMessage] = useState(null); 
   const navigate = useNavigate();
   const groupName = DUMMY_GROUP.name;
   const workingOutCount = friends.filter(f => f.isWorkingOut).length; 
 
-   const handleDeleteClick = () => {
+  const handleDeleteClick = () => {
     setShowSettingsModal(false);
     setShowDeleteConfirm(true);
   };
+ 
   const handleDeleteConfirm = () => {
-    alert('삭제되었습니다.');
     setShowDeleteConfirm(false);
-    navigate('/Group');
+    setResultMessage('삭제되었습니다.');
   };
- const handleDelegateClick = () => {
+ 
+  // "권한 위임" 버튼 → 완료 안내 팝업 표시
+  const handleDelegateClick = () => {
     setShowSettingsModal(false);
+    setResultMessage('권한이 위임되었습니다.');
+  };
+ 
+  const handleResultConfirm = () => {
+    setResultMessage(null);
     navigate('/Group');
   };
+ 
   // 친구 내보내기 확정 처리
   const handleKickConfirm = () => {
     setFriends(prev => prev.filter(f => f.id !== kickTarget.id));
@@ -404,6 +448,12 @@ export default function Groupdetail() {
           onKick={(friend) => { setKickTarget(friend); setSelectedFriend(null); }} 
         />
       )}
+      {resultMessage && (
+  <ResultModal
+    message={resultMessage}
+    onConfirm={handleResultConfirm}
+  />
+)}
 
       {kickTarget && ( 
         <KickModal
