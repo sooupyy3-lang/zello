@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/dumbbell
+    username: root
+    password: ${DB_PASSWORD:}   # 없으면 빈 문자열
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

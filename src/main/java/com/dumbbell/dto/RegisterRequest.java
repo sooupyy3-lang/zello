@@ -15,4 +15,5 @@ public class RegisterRequest {
     @NotNull @Min(1) private Integer weeklyCount;
     @NotNull @Min(1) private Integer durationMin;
     @NotNull @Min(1) private Integer calorieTarget;
+    private String kakaoId;
 }

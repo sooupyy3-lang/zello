@@ -1,24 +1,15 @@
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-
-  jpa:
-    hibernate:
-      ddl-auto: update          # 개발 중: update / 운영: validate
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
-
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: 31536000000   # 1년 (ms) - MVP용
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
 server:
   port: ${PORT:8080}
 
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 31536000000
+
 openai:
   api-key: ${OPENAI_API_KEY}
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}

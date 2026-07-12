@@ -384,7 +384,6 @@ function NewGroupSheet({ onClose }) {
 
             animation: 'popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            {/* 요청하신 스타일이 적용된 텍스트 영역 */}
             <div style={{
               display: 'flex',
               width: '100%',     

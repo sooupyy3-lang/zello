@@ -18,9 +18,10 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AiCoachingService {
 
-    private final AiCoachingLogRepository aiLogRepo;
-    private final UserRepository          userRepo;
-    private final RestTemplate            restTemplate;
+    private final AiCoachingLogRepository  aiLogRepo;
+    private final UserRepository           userRepo;
+    private final WorkoutSessionRepository sessionRepo;
+    private final RestTemplate             restTemplate;
 
     @Value("${openai.api-key}")
     private String openaiApiKey;
@@ -33,7 +34,8 @@ public class AiCoachingService {
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없어요"));
 
-        String prompt = buildPrompt(user, bodyDescription);
+        String workoutSummary = buildWorkoutSummary(userId);
+        String prompt = buildPrompt(user, bodyDescription, workoutSummary);
 
         String aiResponse = callGroq(prompt, image);
 
@@ -114,14 +116,41 @@ public class AiCoachingService {
 
     // buildPrompt와 extractRoutineJson 로직은 기존과 동일하게 유지하거나
     // Gemini의 특성에 맞춰 프롬프트를 조금 더 다듬으셔도 됩니다.
-    private String buildPrompt(User user, String bodyDescription) {
+    private String buildWorkoutSummary(Long userId) {
+        List<WorkoutSession> sessions = sessionRepo.findAllByUserId(userId).stream()
+                .filter(s -> !s.getIsActive())
+                .sorted((a, b) -> b.getStartedAt().compareTo(a.getStartedAt()))
+                .limit(10)
+                .toList();
+
+        if (sessions.isEmpty()) return "운동 기록 없음";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("최근 %d회 운동 기록:\n", sessions.size()));
+        for (WorkoutSession s : sessions) {
+            long minutes = s.getTotalDurationSec() / 60;
+            int calories = s.getTotalCalories() != null ? s.getTotalCalories().intValue() : 0;
+            List<String> exerciseNames = s.getTracks().stream()
+                    .map(t -> t.getExerciseType().getName())
+                    .distinct().toList();
+            sb.append(String.format("- %s: %d분, %dkcal, 운동종목: %s\n",
+                    s.getStartedAt().toLocalDate(), minutes, calories,
+                    String.join("/", exerciseNames)));
+        }
+        return sb.toString();
+    }
+
+    private String buildPrompt(User user, String bodyDescription, String workoutSummary) {
         return String.format("""
-        당신은 전문 피트니스 트레이너입니다. 사용자의 신체 정보와 사진(있는 경우)을 바탕으로 아래 형식으로 코칭을 작성하세요.
+        당신은 전문 피트니스 트레이너입니다. 사용자의 신체 정보, 운동 기록, 사진(있는 경우)을 바탕으로 아래 형식으로 코칭을 작성하세요.
 
         [사용자 정보]
         - 성별: %s
         - 키: %.0fcm / 몸무게: %.0fkg
         - 체형 고민: %s
+
+        [최근 운동 데이터]
+        %s
 
         [출력 형식 - 반드시 준수]
         인사말, 전달 멘트 없이 아래 순서대로만 작성하세요.
@@ -130,8 +159,8 @@ public class AiCoachingService {
         사진과 신체 정보를 바탕으로 현재 체형 상태를 2~3문장으로 분석하세요.
 
         **AI 운동 코칭**
-        체형 분석 결과와 사용자가 직접 입력한 체형 고민을 모두 반영하여 추천 운동 방향과 이유를 3~5문장으로 작성하세요.
-        고민사항이 있는 경우 그 부위를 집중 개선할 수 있는 운동을 우선 추천하세요.
+        체형 분석 결과, 운동 기록, 체형 고민을 모두 반영하여 추천 운동 방향과 이유를 3~5문장으로 작성하세요.
+        최근 자주 한 운동과 부족한 부분을 분석해 균형 잡힌 루틴을 추천하세요.
         핵심 운동명은 **운동명** 형식으로 강조하세요.
 
         **추천 운동 루틴**
@@ -143,7 +172,8 @@ public class AiCoachingService {
                 "female".equalsIgnoreCase(user.getGender().name()) ? "여성" : "남성",
                 user.getHeightCm(),
                 user.getWeightKg(),
-                bodyDescription != null && !bodyDescription.isBlank() ? bodyDescription : "없음"
+                bodyDescription != null && !bodyDescription.isBlank() ? bodyDescription : "없음",
+                workoutSummary
         );
     }
 
@@ -155,6 +185,17 @@ public class AiCoachingService {
                         .recommendedRoutine(log.getRecommendedRoutine())
                         .build())
                 .orElseThrow(() -> new RuntimeException("코칭 기록이 없습니다."));
+    }
+
+    public List<AiCoachingResponse> getCoachingHistory(Long userId) {
+        return aiLogRepo.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(log -> AiCoachingResponse.builder()
+                        .logId(log.getId())
+                        .aiResponse(log.getAiResponse())
+                        .recommendedRoutine(log.getRecommendedRoutine())
+                        .createdAt(log.getCreatedAt())
+                        .build())
+                .toList();
     }
 
     private String extractRoutineJson(String aiResponse) {

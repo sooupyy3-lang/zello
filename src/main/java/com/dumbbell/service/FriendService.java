@@ -13,8 +13,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FriendService {
 
-    private final FriendshipRepository friendshipRepo;
-    private final UserRepository       userRepo;
+    private final FriendshipRepository      friendshipRepo;
+    private final UserRepository            userRepo;
+    private final WorkoutSessionRepository  sessionRepo;
+
+    // ── 닉네임으로 친구 요청 보내기 ──────────────────────────
+    @Transactional
+    public FriendResponse sendRequestByNickname(Long userId, String nickname) {
+        User friend = userRepo.findByName(nickname)
+                .orElseThrow(() -> new RuntimeException("해당 닉네임의 유저를 찾을 수 없어요"));
+        return sendRequest(userId, friend.getId());
+    }
 
     // ── 친구 요청 보내기 ──────────────────────────────────
     @Transactional
@@ -36,7 +45,7 @@ public class FriendService {
                 .build();
         friendshipRepo.save(f);
 
-        return toDto(f);
+        return toDto(f, userId);
     }
 
     // ── 친구 요청 수락 ────────────────────────────────────
@@ -61,7 +70,7 @@ public class FriendService {
                 .build();
         friendshipRepo.save(reverse);
 
-        return toDto(f);
+        return toDto(f, userId);
     }
 
     // ── 친구 요청 거절 / 친구 삭제 ───────────────────────
@@ -77,21 +86,39 @@ public class FriendService {
     @Transactional(readOnly = true)
     public List<FriendResponse> getFriends(Long userId) {
         return friendshipRepo.findByUserIdAndStatus(userId, Friendship.FriendStatus.accepted)
-                .stream().map(this::toDto).collect(Collectors.toList());
+                .stream().map(f -> toDto(f, userId)).collect(Collectors.toList());
     }
 
     // ── 받은 친구 요청 목록 ───────────────────────────────
     @Transactional(readOnly = true)
     public List<FriendResponse> getPendingRequests(Long userId) {
         return friendshipRepo.findByFriendIdAndStatus(userId, Friendship.FriendStatus.pending)
-                .stream().map(this::toDto).collect(Collectors.toList());
+                .stream().map(f -> toDto(f, userId)).collect(Collectors.toList());
     }
 
-    private FriendResponse toDto(Friendship f) {
+    // ── 현재 운동 중인 친구 목록 ──────────────────────────
+    @Transactional(readOnly = true)
+    public List<ActiveFriendResponse> getActiveFriends(Long userId) {
+        return sessionRepo.findActiveFriendSessions(userId).stream()
+                .map(s -> ActiveFriendResponse.builder()
+                        .userId(s.getUser().getId())
+                        .name(s.getUser().getName())
+                        .startedAt(s.getStartedAt())
+                        .exerciseNames(s.getTracks().stream()
+                                .map(t -> t.getExerciseType().getName())
+                                .distinct()
+                                .collect(Collectors.toList()))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    // viewerId 기준으로 friendship의 상대방(나 자신이 아닌 쪽) 정보를 반환
+    private FriendResponse toDto(Friendship f, Long viewerId) {
+        User other = f.getUser().getId().equals(viewerId) ? f.getFriend() : f.getUser();
         return FriendResponse.builder()
                 .friendshipId(f.getId())
-                .userId(f.getFriend().getId())
-                .name(f.getFriend().getName())
+                .userId(other.getId())
+                .name(other.getName())
                 .status(f.getStatus().name())
                 .build();
     }

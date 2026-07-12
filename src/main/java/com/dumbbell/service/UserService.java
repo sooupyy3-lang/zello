@@ -16,15 +16,24 @@ public class UserService {
     private final UserGoalRepository   goalRepo;
     private final JwtUtil              jwtUtil;
 
+    // ── 닉네임 중복 체크 ──────────────────────────────────
+    public boolean isNicknameAvailable(String name) {
+        return !userRepo.existsByName(name);
+    }
+
     // ── 회원가입 ──────────────────────────────────────────
     @Transactional
     public TokenResponse register(RegisterRequest req) {
+        if (userRepo.existsByName(req.getName())) {
+            throw new RuntimeException("이미 사용 중인 닉네임이에요");
+        }
         User user = User.builder()
                 .name(req.getName())
                 .birthDate(req.getBirthDate())
                 .gender(req.getGender())
                 .heightCm(req.getHeightCm())
                 .weightKg(req.getWeightKg())
+                .kakaoId(req.getKakaoId())
                 .build();
         userRepo.save(user);
 

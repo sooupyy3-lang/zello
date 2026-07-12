@@ -36,4 +36,11 @@ public class AiCoachingController {
         Long userId = (Long) auth.getPrincipal();
         return ResponseEntity.ok(aiService.getLatestCoaching(userId));
     }
+
+    // GET /api/ai/coaching/history — AI 루틴 이력 전체 조회
+    @GetMapping("/coaching/history")
+    public ResponseEntity<?> getHistory(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(aiService.getCoachingHistory(userId));
+    }
 }

@@ -82,4 +82,10 @@ class ExerciseController {
             @RequestParam(required = false) String category) {
         return ResponseEntity.ok(workoutService.getExerciseTypes(category));
     }
+
+    // GET /api/exercises/categories — 카테고리 목록 조회
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> categories() {
+        return ResponseEntity.ok(workoutService.getCategories());
+    }
 }
