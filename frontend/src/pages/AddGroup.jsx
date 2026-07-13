@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
+import { exploreGroups, createGroup } from '../api';
+
 
 
 
@@ -286,6 +288,7 @@ function NewGroupSheet({ onClose }) {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
 
+  const [submitting, setSubmitting] = useState(false);
   const canSubmit = groupName.trim() && category && goal && members;
 
   const handleSubmit = () => {
