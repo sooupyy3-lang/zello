@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
-import { updateTrack, endSession, getLatestCoaching } from '../api';
-import { DUMMY_FRIENDS } from './Friends';
+import { updateTrack, endSession, getLatestCoaching, getActiveFriends } from '../api';
+function formatElapsedSince(startedAt) {
+  if (!startedAt) return '-';
+  const diffSec = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
+  const h = Math.floor(diffSec / 3600);
+  const m = Math.floor((diffSec % 3600) / 60);
+  const s = diffSec % 60;
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const navigate = useNavigate();
@@ -12,6 +19,8 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const [trackElapsed, setTrackElapsed] = useState({});
   const [playing, setPlaying] = useState({});
   const [aiRoutine, setAiRoutine] = useState([]);
+  const [activeFriends, setActiveFriends] = useState([]);
+
 
   useEffect(() => {
     getLatestCoaching()
@@ -207,7 +216,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
         gap: 12,
       }}>
         {displayItems.map((item) => {
-          // ✅ Fix 2: togglePlay와 동일한 방식으로 key 추출
+          //  togglePlay와 동일한 방식으로 key 추출
           const key = item.id !== null ? item.id : item.name;
           const isPlaying = !!playing[key];
           const timeRecorded = trackElapsed[key] || 0;
@@ -237,7 +246,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {/* ✅ Fix 2: 정지 시 누적 시간, 재생 중엔 "진행중" */}
+                {/* 정지 시 누적 시간, 재생 중엔 "진행중" */}
                 <div style={{
                   backgroundColor: '#E6EEFF',
                   display: 'flex',
@@ -254,7 +263,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
                   {isPlaying ? '진행중' : formatTime(timeRecorded)}
                 </div>
 
-                {/* ✅ Fix 3: background / backgroundColor 모두 transparent, appearance 초기화 */}
+                {/*  background / backgroundColor 모두 transparent, appearance 초기화 */}
                 <button
                   onClick={() => togglePlay(item)}
                   style={{
@@ -311,31 +320,28 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '20px 8px',
         }}>
-          {DUMMY_FRIENDS.slice(0, 8).map((friend, idx) => (
-            <div key={idx} style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 6,
-            }}>
-              <div style={{
-                width: 52, height: 52,
-                borderRadius: '50%',
-                backgroundColor: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}>
-                <svg width="53" height="53" viewBox="0 0 53 53" fill="none">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M52.5 26.25C52.5 40.7479 40.7479 52.5 26.25 52.5C11.7521 52.5 0 40.7479 0 26.25C0 11.7521 11.7521 0 26.25 0C40.7479 0 52.5 11.7521 52.5 26.25ZM34.125 18.375C34.125 20.4636 33.2953 22.4666 31.8185 23.9435C30.3416 25.4203 28.3386 26.25 26.25 26.25C24.1614 26.25 22.1584 25.4203 20.6815 23.9435C19.2047 22.4666 18.375 20.4636 18.375 18.375C18.375 16.2864 19.2047 14.2834 20.6815 12.8065C22.1584 11.3297 24.1614 10.5 26.25 10.5C28.3386 10.5 30.3416 11.3297 31.8185 12.8065C33.2953 14.2834 34.125 16.2864 34.125 18.375ZM26.25 48.5625C30.7552 48.5697 35.1561 47.2065 38.8684 44.6539C40.4539 43.5645 41.1311 41.4907 40.2071 39.8029C38.2987 36.3037 34.3612 34.125 26.25 34.125C18.1388 34.125 14.2013 36.3037 12.2903 39.8029C11.3689 41.4907 12.0461 43.5645 13.6316 44.6539C17.3439 47.2065 21.7448 48.5697 26.25 48.5625Z"
-                    fill={friend.todayDone ? '#1E59DA' : '#D1D8DD'}
-                  />
-                </svg>
-              </div>
+          {activeFriends.length === 0 && (
+  <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: 13, color: '#ADB5BD', margin: 0 }}>
+    지금 운동 중인 친구가 없어요.
+  </p>
+)}
+{activeFriends.slice(0, 8).map((friend) => (
+  <div key={friend.userId} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+    <div style={{ width: 52, height: 52, borderRadius: '50%', backgroundColor: '#ffffff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <svg width="53" height="53" viewBox="0 0 53 53" fill="none">
+<path
+  fillRule="evenodd"
+  clipRule="evenodd"
+  d="M52.5 26.25C52.5 40.7479 40.7479 52.5 26.25 52.5C11.7521 52.5 0 40.7479 0 26.25C0 11.7521 11.7521 0 26.25 0C40.7479 0 52.5 11.7521 52.5 26.25ZM34.125 18.375C34.125 20.4636 33.2953 22.4666 31.8185 23.9435C30.3416 25.4203 28.3386 26.25 26.25 26.25C24.1614 26.25 22.1584 25.4203 20.6815 23.9435C19.2047 22.4666 18.375 20.4636 18.375 18.375C18.375 16.2864 19.2047 14.2834 20.6815 12.8065C22.1584 11.3297 24.1614 10.5 26.25 10.5C28.3386 10.5 30.3416 11.3297 31.8185 12.8065C33.2953 14.2834 34.125 16.2864 34.125 18.375ZM26.25 48.5625C30.7552 48.5697 35.1561 47.2065 38.8684 44.6539C40.4539 43.5645 41.1311 41.4907 40.2071 39.8029C38.2987 36.3037 34.3612 34.125 26.25 34.125C18.1388 34.125 14.2013 36.3037 12.2903 39.8029C11.3689 41.4907 12.0461 43.5645 13.6316 44.6539C17.3439 47.2065 21.7448 48.5697 26.25 48.5625Z"
+  fill="#1E59DA"
+/>      </svg>
+    </div>
+   
+    <span style={{ fontSize: 10, fontWeight: '700', color: '#1E59DA' }}>
+      {formatElapsedSince(friend.startedAt)}
+      </span>
+    
 
               <span style={{
                 fontSize: 11,

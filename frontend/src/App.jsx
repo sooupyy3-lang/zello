@@ -19,10 +19,7 @@ import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
 import { getToken } from './api';
 import AddFriends from './pages/AddFriends.jsx';
-<<<<<<< HEAD
-=======
 import KakaoCallback from './pages/KakaoCallback.jsx';
->>>>>>> adf9cf9c38f534a2d3924cc36834007a0dc7c995
 import Group from './pages/Group.jsx';
 import AddGroup from './pages/AddGroup.jsx';
 import GroupExplore from './pages/GroupExplore.jsx';
@@ -139,10 +136,7 @@ function App() {
           <Route path="/AiUpload" element={<AiUpload />} />
           <Route path="/AiResultEx" element={<AiResultEx />} />
           <Route path="/AiResultBody" element={<AiResultBody />} />
-<<<<<<< HEAD
-=======
           <Route path="/kakao/callback" element={<KakaoCallback />} />
->>>>>>> adf9cf9c38f534a2d3924cc36834007a0dc7c995
 
 
 

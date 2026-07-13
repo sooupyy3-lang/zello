@@ -113,9 +113,9 @@ function Page2() {
     return (
         <div style={{
             width: '100%',
-            minHeight: '100dvh',
+            height: '100%',
             backgroundImage: `url(${bgImage})`,
-            backgroundSize: '100% auto',             // ✅ 100% 100% → cover
+            backgroundSize: '100% auto',             
             backgroundPosition: 'top center',
             backgroundRepeat: 'no-repeat',
             backgroundColor:'#E9EAEF',
@@ -253,8 +253,8 @@ function Page2() {
                         onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.97)')}
                         onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                         style={{
-                            position: 'absolute', left: `calc(50/402 * 100%)`, top: `calc(780/ 874 * 100%)`,
-                             width: `calc(300 / 402 * 100vw)`,maxWidth: '300px', height:  `calc(57 / 874 * 100vw)`, maxheight:'57px',
+                            position: 'absolute', left: `calc(50/402 * 100%)`, top: `calc(785/ 874 * 100%)`,
+                             width: `calc(300 / 402 * 100vw)`,maxWidth: '300px', height:  `calc(45 / 874 * 100vw)`, maxheight:'57px',
                             backgroundColor: loading ? '#ccc' : '#1E59DA',
                             borderRadius: '9px', border: 'none',
                             boxShadow: '0px 4px 8px rgba(0,0,0,0.15)',
