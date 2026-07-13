@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
+import { getMyGroups } from '../api';
 
-// ── 더미 데이터 ──────────────────────────────────────
-export const DUMMY_Group = [
-  { id: 1, name: '하체 집중 모임', type: '헬스',  people: '3/8',  goal: '주 2회', desc: '이피구 저피구구 아라아라' },
-  { id: 2, name: '새벽 러닝 크루', type: '러닝',  people: '5/10', goal: '주 3회', desc: '매일 새벽 한강에서 함께 달려요!' },
-  { id: 3, name: '요가 힐링 모임', type: '요가',  people: '4/6',  goal: '주 2회', desc: '몸과 마음을 함께 가꾸는 요가 모임입니다.' },
-];
+function toViewGroup(g) {
+  return {
+    id: g.id,
+    name: g.name,
+    type: g.category,
+    people: `${g.memberCount}/${g.maxMembers ?? '∞'}`,
+    goal: g.goal,
+    desc: g.description,
+    inviteCode: g.inviteCode,
+    myRole: g.myRole,
+  };
+}
 
 // ── 그룹 카드 ─────────────────────────────────────────
 function GroupCard({ group, onClick }) {
@@ -133,7 +140,14 @@ export default function Group() {
 
       {/* ── 카드 목록 ── */}
       <div style={{ padding: '20px 20px 100px', flex: 1 }}>
-        {DUMMY_Group.map(group => (
+        {loading && <p style={{ textAlign: 'center', fontSize: 13, color: '#8B95A1', padding: '20px 0' }}>불러오는 중...</p>}
+        {!loading && error && <p style={{ textAlign: 'center', fontSize: 13, color: '#F04452', padding: '20px 0' }}>{error}</p>}
+        {!loading && !error && groups.length === 0 && (
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#8B95A1', padding: '20px 0' }}>
+            아직 가입한 모임이 없어요. 새 모임을 만들거나 찾아보세요.
+          </p>
+        )}
+        {!loading && !error && groups.map(group => (
           <GroupCard key={group.id} group={group} onClick={setSelectedGroup} />
         ))}
       </div>
