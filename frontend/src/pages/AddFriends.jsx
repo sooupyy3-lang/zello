@@ -20,8 +20,8 @@ function AddFriends() {
     setShowModal(true);
   };
 
-  const handlePrevGroup = () => setGroupIndex(i => (i - 1 + DUMMY_GROUPS.length) % DUMMY_GROUPS.length);
-  const handleNextGroup = () => setGroupIndex(i => (i + 1) % DUMMY_GROUPS.length);
+  const handlePrevGroup = () => setGroupIndex(i => (i - 1 + myGroups.length) % myGroups.length);
+  const handleNextGroup = () => setGroupIndex(i => (i + 1) % myGroups.length);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(currentGroup.code); 
