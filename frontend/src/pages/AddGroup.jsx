@@ -2,21 +2,34 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
 
-// ── 더미 데이터 ──────────────────────────────────────
-const DUMMY_ALL_GROUPS = [
-  { id: 1, name: '하체 집중 모임', type: '헬스', people: '3/8', goal: '주 2회', createdAt: 1, attendance: 90, memberCount: 3, desc: '이피구 저피구구 아라아라' },
-  { id: 2, name: '새벽 러닝 크루', type: '러닝', people: '5/10', goal: '주 3회', createdAt: 2, attendance: 85, memberCount: 5, desc: '매일 새벽 한강에서 함께 달려요!' },
-  { id: 3, name: '요가 힐링 모임', type: '요가', people: '4/6', goal: '주 2회', createdAt: 3, attendance: 92, memberCount: 4, desc: '몸과 마음을 함께 가꾸는 요가 모임입니다.' },
-  { id: 4, name: '주말 등산 클럽', type: '등산', people: '6/12', goal: '주 1회', createdAt: 4, attendance: 78, memberCount: 6, desc: '주말마다 서울 근교 산을 함께 오릅니다.' },
-  { id: 5, name: '크로스핏 팀', type: '크로스핏', people: '2/8', goal: '주 4회', createdAt: 5, attendance: 88, memberCount: 2, desc: '강도 높은 트레이닝을 함께해요.' },
-  { id: 6, name: '수영 마스터즈', type: '수영', people: '7/10', goal: '주 3회', createdAt: 6, attendance: 95, memberCount: 7, desc: '수영 실력을 함께 키워가는 모임입니다.' },
-];
+
 
 const TABS = [
   { key: 'recent', label: '최신순', sort: (a, b) => b.createdAt - a.createdAt },
   { key: 'attendance', label: '출석순', sort: (a, b) => b.attendance - a.attendance },
   { key: 'members', label: '인원순', sort: (a, b) => b.memberCount - a.memberCount },
 ];
+
+// GroupResponse(백엔드) → 화면에서 쓰는 형태로 변환
+function toViewGroup(g) {
+  return {
+    id: g.id,
+    name: g.name,
+    type: g.category,
+    people: `${g.memberCount}/${g.maxMembers ?? '∞'}`,
+    goal: g.goal,
+    desc: g.description,
+    inviteCode: g.inviteCode,
+    myRole: g.myRole,
+    members: g.members ?? [],
+  };
+}
+
+function parseMaxMembers(label) {
+  if (!label || label === '제한 없음') return null;
+  const n = parseInt(label, 10);
+  return Number.isNaN(n) ? null : n;
+}
 
 // ── 옵션 데이터 (NewGroupSheet용) ────────────────────
 const CATEGORIES = ['헬스', '러닝', '홈트레이닝', '필라테스', '요가', '자전거', '수영', '농구', '축구', '테니스', '배드민턴', '발레', '등산'];
@@ -75,19 +88,25 @@ function GroupPopup({ group, onClose, onExplore }) {
 function SearchModal({ onClose, onSelectGroup }) {
   const [query, setQuery] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   const recommendedKeywords = ['하체', '다이어트', '헬스', '갓생', '하체', '다이어트'];
   const popularKeywords = ['대학생', '직장인', '오운완', '아침운동', '미라클모닝', '홈트'];
 
-  const results = query.length > 0
-    ? DUMMY_ALL_GROUPS.filter(g => g.name?.includes(query) || g.type?.includes(query))
-    : [];
-
-  const handleSearch = (keyword) => {
-    const searchTerm = keyword || query;
-    if (searchTerm.trim().length > 0) {
-      setQuery(searchTerm);
-      setIsSubmitted(true);
+  const handleSearch = async (keyword) => {
+    const searchTerm = (keyword || query).trim();
+    if (!searchTerm) return;
+    setQuery(searchTerm);
+    setIsSubmitted(true);
+    setSearching(true);
+    try {
+      const found = await exploreGroups(searchTerm);
+      setResults((found ?? []).map(toViewGroup));
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -451,10 +470,26 @@ export default function AddGroup() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const currentTab = TABS.find(t => t.key === activeTab);
-  const sorted = [...DUMMY_ALL_GROUPS].sort(currentTab.sort);
 
+  const loadGroups = () => {
+    setLoading(true);
+    setError(null);
+    exploreGroups(null, currentTab.sort)
+      .then(list => setGroups((list ?? []).map(toViewGroup)))
+      .catch(e => setError(e.message || '모임 목록을 불러오지 못했어요.'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+  
   const handleExplore = (group) => {
     setSelectedGroup(null);
     navigate('/GroupExplore', { state: { group } });
