@@ -2,11 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HamburgerButton } from '../pages/HamburgerMenu.jsx'; 
 import { HamburgerPanel } from '../pages/HamburgerMenu.jsx';
 
-const DUMMY_GROUPS = [
-  { name: '하체 집중 모임', code: 'IJ9T1V' },
-  { name: '새벽 러닝 크루', code: 'RN82KQ' },
-  { name: '요가 힐링 모임', code: 'YG73LM' },
-];
+
 
 function AddFriends() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,7 +11,9 @@ function AddFriends() {
   const [name, setName] = useState('');
   const [groupCode, setGroupCode] = useState('');
   const [groupIndex, setGroupIndex] = useState(0); 
-  const currentGroup = DUMMY_GROUPS[groupIndex]; 
+  const [myGroups, setMyGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const currentGroup = myGroups[groupIndex] ?? null; 
 
   const openModal = (message) => {
     setModalMessage(message);

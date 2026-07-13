@@ -1,15 +1,15 @@
 import { useState } from 'react';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 import { useNavigate } from 'react-router-dom';
+import { getFriends, getActiveFriends } from '../api';
 
-// ── 더미 데이터 ──────────────────────────────────────
-export const DUMMY_FRIENDS = [
-  { id: 1, name: '훈남민성',   streak: 12, goal: '다이어트', todayDone: true,  color: '#BFE8F8', isWorkingOut:'true' },
-  { id: 2, name: '헬스걸',     streak: 8,  goal: '근력 강화', todayDone: true,  color: '#D4F1D4', isWorkingOut:'true' },
-  { id: 3, name: '집가고싶다', streak: 4,  goal: '유산소',    todayDone: false, color: '#FFE5C4', isWorkingOut:'true' },
-  { id: 4, name: '운동왕',     streak: 21, goal: '벌크업',    todayDone: true,  color: '#E8E0FF', isWorkingOut:'true' },
-  { id: 5, name: '새벽러너',   streak: 15, goal: '마라톤',    todayDone: true,  color: '#FFD6E0', isWorkingOut:'true' },
-];
+
+const AVATAR_COLORS = ['#BFE8F8', '#D4F1D4', '#FFE5C4', '#E8E0FF', '#FFD6E0'];
+function formatTime(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
 
 // ── 아바타 ───────────────────────────────────────────
 function Avatar({ name, color, size = 52.5 }) {
@@ -122,10 +122,55 @@ function FriendPopup({ friend, onClose }) {
 
 // ── 메인 페이지 ──────────────────────────────────────
 export default function Friends() {
+  const [friends, setFriends] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const workingOutCount = DUMMY_FRIENDS.filter(f => f.isWorkingOut).length; 
+  const workingOutCount = friends.filter(f => f.isWorkingOut).length; 
+
+useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        // 친구 목록과 "현재 운동 중" 목록을 병렬로 가져와서 합침
+        const [friendList, activeList] = await Promise.all([
+          getFriends(),
+          getActiveFriends(),
+        ]);
+        if (cancelled) return;
+
+        const activeMap = new Map((activeList ?? []).map(a => [a.userId, a]));
+
+        const merged = (friendList ?? [])
+          .filter(f => f.status === 'accepted') // 수락된 친구만 표시 (요청 대기중 제외)
+          .map((f, i) => {
+            const active = activeMap.get(f.userId);
+            return {
+              id: f.userId,
+              name: f.name,
+              color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+              isWorkingOut: Boolean(active),
+              startedAt: active?.startedAt ?? null,
+              exerciseNames: active?.exerciseNames ?? [],
+            };
+          });
+
+        setFriends(merged);
+      } catch (e) {
+        if (!cancelled) setError(e.message || '친구 목록을 불러오지 못했어요.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
 
   return (
@@ -178,7 +223,25 @@ export default function Friends() {
         gap: '16px 8px',
       }}>
       
-        {DUMMY_FRIENDS.map(friend => (
+        {loading && (
+          <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: 13, color: '#8B95A1', padding: '20px 0' }}>
+            불러오는 중...
+          </p>
+        )}
+
+        {!loading && error && (
+          <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: 13, color: '#F04452', padding: '20px 0' }}>
+            {error}
+          </p>
+        )}
+
+        {!loading && !error && friends.length === 0 && (
+          <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: 13, color: '#8B95A1', padding: '20px 0' }}>
+            아직 등록된 친구가 없어요. 친구를 추가해보세요!
+          </p>
+        )}
+
+        {!loading && !error && friends.map(friend => (
           <FriendCard key={friend.id} friend={friend} onClick={setSelectedFriend} />
         ))}
       </div>
