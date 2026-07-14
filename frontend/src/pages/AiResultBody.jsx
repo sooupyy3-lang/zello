@@ -4,8 +4,6 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 import { getLatestCoaching, getMyProfile, applyCoachingRoutine } from '../api';
 
-
-
 function renderResponse(text) {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
@@ -41,40 +39,58 @@ function AiResultBody() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [coaching, setCoaching] = useState(null);
   const [loading, setLoading] = useState(true);
-  const name = location.state?.name || '조서영';
+  const [error, setError] = useState('');
+  const [name, setName] = useState(location.state?.name || '사용자');
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setCoaching(DUMMY_COACHING);
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    let cancelled = false;
+
+    // 이름은 location.state로 이미 넘어왔으면 그대로 쓰고, 없으면 내 프로필에서 가져와요.
+    if (!location.state?.name) {
+      getMyProfile()
+        .then(profile => { if (!cancelled && profile?.name) setName(profile.name); })
+        .catch(() => {});
+    }
+
+    getLatestCoaching()
+      .then(data => {
+        if (cancelled) return;
+        if (!data) {
+          setError('아직 AI 코칭 결과가 없어요.');
+        } else {
+          setCoaching(data);
+        }
+      })
+      .catch(e => { if (!cancelled) setError(e.message || 'AI 코칭 결과를 불러오지 못했어요.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, []);
 
   let routine = [];
   if (coaching?.recommendedRoutine) {
     try {
       const parsed = JSON.parse(coaching.recommendedRoutine);
-    routine = parsed.routines || [];
-  } catch (e) {}
-}
-const handleApplyRoutine = async () => {
-  if (!coaching?.logId) return;
-  setApplying(true);
-  try {
-    await applyCoachingRoutine(coaching.logId);
-    navigate('/Page3');
-  } catch (e) {
-    alert(e.message || '루틴 연동에 실패했어요. (백엔드 엔드포인트가 아직 준비되지 않았을 수 있어요)');
-  } finally {
-    setApplying(false);
+      routine = parsed.routines || [];
+    } catch (e) {}
   }
-};
-const [applying, setApplying] = useState(false);
 
+  const handleApplyRoutine = async () => {
+    if (!coaching?.logId) return;
+    setApplying(true);
+    try {
+      await applyCoachingRoutine(coaching.logId);
+      navigate('/Page3');
+    } catch (e) {
+      alert(e.message || '루틴 연동에 실패했어요. (백엔드 엔드포인트가 아직 준비되지 않았을 수 있어요)');
+    } finally {
+      setApplying(false);
+    }
+  };
 
   return (
     <div style={{
@@ -110,6 +126,10 @@ const [applying, setApplying] = useState(false);
 
       {loading ? (
         <LoadingSpinner />
+      ) : error ? (
+        <div style={{ padding: '60px 20px', textAlign: 'center', color: '#8B95A1', fontSize: 14 }}>
+          {error}
+        </div>
       ) : (
         <div style={{ padding: '0 4px' }}>
           {/* ── 2. 본문 리포트  ── */}
@@ -163,39 +183,40 @@ const [applying, setApplying] = useState(false);
       )}
 
       {/* ── 4. 하단 버튼 ── */}
-<div style={{ 
-  width: '100%', 
-  display: 'flex', 
-  justifyContent: 'center', 
-  padding: '40px 0 60px' 
-}}>
-  <button
-    onClick={handleApplyRoutine}
-    disabled={applying || !coaching}
-    style={{
-      width: 'calc(343/402*100%)',
-      minWidth: '343px',
-      height: '51px',
-      backgroundColor: applying ? '#9DB8E8' : '#1E59DA', 
-      borderRadius: '14px',
-      border: 'none',
-      color: '#fff',
-      fontSize: '17px',
-      fontWeight: '600',
-      cursor: applying ? 'default' : 'pointer',
-      boxShadow: '0 6px 16px rgba(30, 89, 218, 0.25)',
-      zIndex: 10
-    }}
-  >
-    {applying ? '연동 중...' : '마이페이지에 추천 운동 루틴 연동하기'}
-  </button>
-</div>
+      <div style={{ 
+        width: '100%', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        padding: '40px 0 60px' 
+      }}>
+        <button
+          onClick={handleApplyRoutine}
+          disabled={applying || !coaching}
+          style={{
+            width: 'calc(343/402*100%)',
+            minWidth: '343px',
+            height: '51px',
+            backgroundColor: applying ? '#9DB8E8' : '#1E59DA', 
+            borderRadius: '14px',
+            border: 'none',
+            color: '#fff',
+            fontSize: '17px',
+            fontWeight: '600',
+            cursor: applying ? 'default' : 'pointer',
+            boxShadow: '0 6px 16px rgba(30, 89, 218, 0.25)',
+            zIndex: 10
+          }}
+        >
+          {applying ? '연동 중...' : '마이페이지에 추천 운동 루틴 연동하기'}
+        </button>
+      </div>
+      
 
-{menuOpen && (
-  <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
-)}
-</div>
-);
+      {menuOpen && (
+        <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
+      )}
+    </div>
+  );
 }
 
 export default AiResultBody;
