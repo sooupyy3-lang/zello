@@ -1,39 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BackForward from '../assets/Icon/BackForward.svg';
-// import { getSessionByDate } from '../api'; 
+import { getSessionByDate } from '../api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function DayRecord() {
   const navigate = useNavigate();
   const location = useLocation();
   const { day, month, year } = location.state || { day: 15, month: 2, year: 2026 };
-  
+
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const dummyData = {
-      totalDurationSec: 10020,
-      totalCalories: 797,
-      tracks: [
-        { exerciseName: '러닝', elapsedSec: 3600, calories: 512 },
-        { exerciseName: '걷기', elapsedSec: 6420, calories: 285 },
-      ]
-    };
+    let cancelled = false;
+    setLoading(true);
+    setError('');
 
-    const timer = setTimeout(() => {
-      setSession(dummyData);
-      setLoading(false);
-    }, 500);
+    // month는 화면에서 0-indexed로 다루고 있어서(달력 등) +1 해서 실제 월로 변환
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-    return () => clearTimeout(timer);
+    getSessionByDate(dateStr)
+      .then(data => { if (!cancelled) setSession(data); })
+      .catch(e => { if (!cancelled) setError(e.message || '운동 기록을 불러오지 못했어요.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [day, month, year]);
 
   const totalSec = session?.totalDurationSec || 0;
   const totalHour = Math.floor(totalSec / 3600);
   const totalMin = Math.floor((totalSec % 3600) / 60);
   const totalCal = Math.round(session?.totalCalories || 0);
+  const tracks = session?.tracks || [];
+
+  const formatDuration = (sec) => {
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    if (h > 0) return `${h}시간 ${m}분`;
+    return `${m}분`;
+  };
 
   // 1. Badge 컴포넌트 (오류 수정 및 로직 정리)
   const Badge = ({ children, type }) => {
@@ -71,6 +78,17 @@ function DayRecord() {
 
   if (loading) return <LoadingSpinner />;
 
+  if (error) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, backgroundColor: '#FFF' }}>
+        <p style={{ color: '#8B95A1', fontSize: 14 }}>{error}</p>
+        <button onClick={() => navigate(-1)} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', backgroundColor: '#1E59DA', color: '#fff', cursor: 'pointer' }}>
+          돌아가기
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: '100%', height:'100%', backgroundColor: '#FFF', display: 'flex', flexDirection: 'column' }}>
       
@@ -91,19 +109,29 @@ function DayRecord() {
 
       {/* 상세 데이터 리스트 */}
       <div style={{ flex: 1, padding: '20px 24px' }}>
-        <div style={{ borderBottom: '1px solid #F0F0F0', paddingBottom: '10px', marginBottom: '24px' }}>
-          <DataRow label="총 운동 시간" value={`${totalHour}시간 ${totalMin}분`} isMain />
-          <DataRow label="러닝" value="1시간" />
-          <DataRow label="걷기" value="1시간 47분" />
-        </div>
+        {tracks.length === 0 ? (
+          <p style={{ textAlign: 'center', color: '#AAA', fontSize: 14, padding: '40px 0' }}>
+            이 날의 운동 기록이 없어요.
+          </p>
+        ) : (
+          <>
+            <div style={{ borderBottom: '1px solid #F0F0F0', paddingBottom: '10px', marginBottom: '24px' }}>
+              <DataRow label="총 운동 시간" value={`${totalHour}시간 ${totalMin}분`} isMain />
+              {tracks.map(t => (
+                <DataRow key={t.trackId ?? t.exerciseName} label={t.exerciseName} value={formatDuration(t.elapsedSec || 0)} />
+              ))}
+            </div>
 
-        <div style={{ borderBottom: '1px solid #F0F0F0', paddingBottom: '10px', marginBottom: '24px' }}>
-          <DataRow label="소모 칼로리" value="" isMain />
-          <DataRow label="러닝" value="512 kcal" />
-          <DataRow label="걷기" value="285 kcal" />
-        </div>
+            <div style={{ borderBottom: '1px solid #F0F0F0', paddingBottom: '10px', marginBottom: '24px' }}>
+              <DataRow label="소모 칼로리" value="" isMain />
+              {tracks.map(t => (
+                <DataRow key={t.trackId ?? t.exerciseName} label={t.exerciseName} value={`${Math.round(t.calories || 0)} kcal`} />
+              ))}
+            </div>
 
-        <DataRow label="총 소모 칼로리" value={`${totalCal} kcal`} isMain />
+            <DataRow label="총 소모 칼로리" value={`${totalCal} kcal`} isMain />
+          </>
+        )}
       </div>
 
       {/* 하단 버튼 */}
