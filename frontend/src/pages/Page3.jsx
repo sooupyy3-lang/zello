@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { getHome } from '../api';
+import { getHome, getRankings } from '../api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Backimg from '../assets/Icon/BackForward.svg';
 
@@ -9,12 +9,24 @@ const COLORS = {
   primaryLight: "#ffffff",
   primaryText: "#1E59DA",
 };
-const TABS = ["시간순", "목표 달성순", "운동 지속일순"];
-const RANKING_DATA = [
-  { rank: 1, name: "훈남민성 님", days: 12 },
-  { rank: 2, name: "헬스걸 님", days: 8 },
-  { rank: 3, name: "집가고싶다 님", days: 4 },
+// 탭 라벨 ↔ 백엔드 type 파라미터 매핑
+const TABS = [
+  { label: "시간순", type: "time" },
+  { label: "목표 달성순", type: "goal" },
+  { label: "운동 지속일순", type: "attendance" },
 ];
+
+// type별로 value(Long) 필드의 의미가 달라서 표시 형식을 따로 처리
+function formatRankingValue(type, value) {
+  const v = value ?? 0;
+  if (type === 'time') {
+    const h = Math.floor(v / 3600);
+    const m = Math.floor((v % 3600) / 60);
+    return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
+  }
+  if (type === 'goal') return `목표 ${v}회 달성`;
+  return `총 ${v}일 운동`; // attendance
+}
 
 function Page3({ elapsed = 0 }) {
   const navigate = useNavigate();
@@ -22,6 +34,8 @@ function Page3({ elapsed = 0 }) {
   const [homeData, setHomeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const [rankings, setRankings] = useState([]);
+  const [rankingLoading, setRankingLoading] = useState(true);
 
   useEffect(() => {
     getHome()
@@ -29,6 +43,16 @@ function Page3({ elapsed = 0 }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRankingLoading(true);
+    getRankings(TABS[activeTab].type)
+      .then(list => { if (!cancelled) setRankings(list ?? []); })
+      .catch(() => { if (!cancelled) setRankings([]); })
+      .finally(() => { if (!cancelled) setRankingLoading(false); });
+    return () => { cancelled = true; };
+  }, [activeTab]);
 
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
@@ -117,25 +141,31 @@ function Page3({ elapsed = 0 }) {
           <div style={styles.tabs}>
             {TABS.map((tab, i) => (
               <button
-                key={tab}
+                key={tab.label}
                 onClick={() => setActiveTab(i)}
                 style={{
                   ...styles.tab,
                   ...(activeTab === i ? styles.tabActive : {}),
                 }}
               >
-                {tab}
+                {tab.label}
               </button>
             ))}
           </div>
-          {RANKING_DATA.map((item, i) => (
-            <div key={i} style={{...styles.rankItem, borderBottom: i < RANKING_DATA.length - 1 ? "0.5px solid #e5e7eb" : "none"}}>
-              <span style={styles.rankNum}>{item.rank}</span>
-              <div style={styles.avatar}>👤</div>
-              <span style={styles.rankName}>{item.name}</span>
-              <span style={styles.rankDays}>{item.days}일째 운동 중</span>
-            </div>
-          ))}
+          {rankingLoading ? (
+            <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', padding: '16px 0' }}>불러오는 중...</p>
+          ) : rankings.length === 0 ? (
+            <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', padding: '16px 0' }}>아직 랭킹 데이터가 없어요.</p>
+          ) : (
+            rankings.slice(0, 3).map((item, i) => (
+              <div key={item.userId ?? i} style={{...styles.rankItem, borderBottom: i < Math.min(rankings.length, 3) - 1 ? "0.5px solid #e5e7eb" : "none"}}>
+                <span style={styles.rankNum}>{item.rank}</span>
+                <div style={styles.avatar}>👤</div>
+                <span style={styles.rankName}>{item.userName} 님</span>
+                <span style={styles.rankDays}>{formatRankingValue(TABS[activeTab].type, item.value)}</span>
+              </div>
+            ))
+          )}
           <button style={styles.moreBtn}> +더보기</button>
         </div>
  {/* 영역 3: AI 추천 루틴 */}
@@ -198,9 +228,6 @@ export default Page3;
     borderRadius: '39px',
     boxSizing: 'border-box',
     marginBottom: '19px',
-
-    
-
   },
   
   timerDate: {
@@ -210,7 +237,6 @@ export default Page3;
     color: '#ffffff',
     marginBottom: 24,
     textAlign: 'center',
-
   },
   timerDisplay: {
     position: 'relative', 
@@ -224,7 +250,6 @@ export default Page3;
     fontfamily:'inherit',
     lineHeight:'66.667%',
     textAlign: 'center',
-
   },
 
   timerBtn: {
@@ -244,10 +269,10 @@ export default Page3;
     boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
   },
   timerBtnText: {
-    color: '#1441A2', // 파란색 테마
+    color: '#1441A2',
     fontSize: '15px',
     fontWeight: '600',
-    letterSpacing: '1px', // 자간을 살짝 좁혀서 세련되게
+    letterSpacing: '1px',
     textAlign: 'center',
     lineHeight:'213.333%'
   },
@@ -273,7 +298,6 @@ export default Page3;
     marginBottom:'17px',
     display: 'flex',
     flexDirection: 'column',
-
   },
   sectionTitle: { fontSize: '16px', fontWeight: '700', color: '#111827', marginBottom: '10px' },
  
@@ -300,48 +324,4 @@ export default Page3;
   chipName: { fontSize: 12, fontWeight: 700, color: COLORS.primary },
   chipDetail: { fontSize: 11, color: COLORS.primary },
   aiEmptyText: { color: "#9ca3af", textAlign: 'center', padding: '20px 0', fontSize: '13px' },
- 
- 
-  aiCard: {
-    width: '100%',               
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 30,
-    boxSizing: 'border-box',
-  },
-  aiCardTitle: {
-    margin: '0 0 12px',
-    fontSize: 'clamp(12px, 3.5vw, 14px)',
-    fontWeight: '700',
-    color: '#002738',
-    textAlign: 'center',
-  },
-  aiRoutineBox: {
-    border: '1.5px solid #002738',
-    borderRadius: 12,
-    padding: '14px 16px',
-    backgroundColor: '#FFFFFF',
-  },
-  aiRoutineItem: {
-    textAlign: 'center',
-  },
-  aiRoutineName: {
-    margin: 0,
-    fontSize: 'clamp(11px, 3.2vw, 13px)',
-    fontWeight: '700',
-    color: '#002738',
-  },
-  aiRoutineDetail: {
-    margin: '2px 0 0',
-    fontSize: 'clamp(10px, 3vw, 12px)',
-    color: '#002738',
-  },
-  aiEmptyText: {
-    margin: 0,
-    fontSize: 'clamp(11px, 3.2vw, 13px)',
-    color: '#8EB3C2',
-    textAlign: 'center',
-    paddingTop: 40,
-    paddingBottom: 40,
-  },
 };

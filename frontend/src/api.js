@@ -9,6 +9,11 @@ export const setUserId = (id) => localStorage.setItem('userId', String(id));
 export const getUserName = () => localStorage.getItem('userName');
 export const setUserName = (name) => localStorage.setItem('userName', name);
 
+export const logout = () => {
+  removeToken();
+  localStorage.removeItem('userId');
+  localStorage.removeItem('userName');
+};
 // ── 공통 fetch 래퍼 ────────────────────────────────────
 async function request(method, path, body = null, isFormData = false) {
   const headers = {};
@@ -107,7 +112,8 @@ export async function requestAiCoaching(bodyDescription, imageFile) {
 
 // GET /api/ai/coaching/latest
 export const getLatestCoaching = () => request('GET', '/api/ai/coaching/latest');
-
+export const applyCoachingRoutine = (logId) =>
+  request('POST', `/api/ai/coaching/${logId}/apply`);
 // ── User ───────────────────────────────────────────────
 // GET /api/users/me
 export const getMyProfile = () => request('GET', '/api/users/me');
@@ -158,3 +164,94 @@ export const getRankings = (type = 'time') => request('GET', `/api/rankings?type
 
 // ── Friends Active ─────────────────────────────────────
 export const getActiveFriends = () => request('GET', '/api/friends/active');
+
+// ── Friends ────────────────────────────────────────────
+// GET /api/friends — 친구 목록(수락된 친구)
+export const getFriends = () => request('GET', '/api/friends');
+
+// GET /api/friends/requests — 받은 친구 요청 목록
+export const getFriendRequests = () => request('GET', '/api/friends/requests');
+
+// POST /api/friends/by-nickname?nickname= — 닉네임으로 친구 요청 보내기
+export const sendFriendRequestByNickname = (nickname) =>
+  request('POST', `/api/friends/by-nickname?nickname=${encodeURIComponent(nickname)}`);
+
+// POST /api/friends/:targetId — userId로 친구 요청 보내기
+export const sendFriendRequest = (targetId) =>
+  request('POST', `/api/friends/${targetId}`);
+
+// PATCH /api/friends/:requesterId/accept — 친구 요청 수락
+export const acceptFriendRequest = (requesterId) =>
+  request('PATCH', `/api/friends/${requesterId}/accept`);
+
+// DELETE /api/friends/:targetId — 친구 삭제 / 요청 거절
+export const deleteFriend = (targetId) =>
+  request('DELETE', `/api/friends/${targetId}`);
+
+// DELETE /api/groups/:groupId — 그룹 삭제 (방장만)
+// ⚠️ 아직 백엔드에 없는 엔드포인트예요. 백엔드팀에 추가 요청 필요.
+// 구현되기 전까지는 404/에러가 나고, 호출부에서 에러 메시지로 안내해요.
+export const deleteGroup = (groupId) =>
+  request('DELETE', `/api/groups/${groupId}`);
+
+// PATCH /api/groups/:groupId/owner — 방장 권한을 다른 멤버에게 위임 (방장만)
+// ⚠️ 아직 백엔드에 없는 엔드포인트예요. 백엔드팀에 추가 요청 필요.
+// 요청 바디 제안: { newOwnerId: number }
+export const delegateGroupOwner = (groupId, newOwnerId) =>
+  request('PATCH', `/api/groups/${groupId}/owner`, { newOwnerId });
+
+// GET /api/groups/:groupId/active — 그룹 멤버 중 현재 운동 중인 사람 목록
+// ⚠️ 아직 백엔드에 구현되어 있지 않은 엔드포인트예요.
+// 백엔드팀에 추가 요청 필요. 구현되기 전까지는 항상 404/에러가 나고,
+// 호출부에서 catch로 조용히 무시하도록 되어 있어서 다른 기능엔 영향 없어요.
+// 응답 형태 제안: [{ userId, startedAt, exerciseNames }] (ActiveFriendResponse와 동일 형태 추천)
+export const getGroupActiveMembers = (groupId) =>
+  request('GET', `/api/groups/${groupId}/active`);
+
+// ── Groups ─────────────────────────────────────────────
+// POST /api/groups — 그룹 생성
+export const createGroup = (group) =>
+  request('POST', '/api/groups', {
+    name: group.name,
+    description: group.description,
+    category: group.category,
+    goal: group.goal,
+    maxMembers: group.maxMembers ?? null,
+  });
+
+// GET /api/groups?keyword=&sort=recent|members — 그룹 탐색
+export const exploreGroups = (keyword, sort) => {
+  const params = new URLSearchParams();
+  if (keyword) params.set('keyword', keyword);
+  if (sort) params.set('sort', sort);
+  const qs = params.toString();
+  return request('GET', `/api/groups${qs ? `?${qs}` : ''}`);
+};
+
+// GET /api/groups/my — 내 그룹 목록
+export const getMyGroups = () => request('GET', '/api/groups/my');
+
+// GET /api/groups/:groupId — 그룹 상세
+export const getGroup = (groupId) => request('GET', `/api/groups/${groupId}`);
+
+// POST /api/groups/join?inviteCode= — 초대 코드로 가입
+export const joinGroupByCode = (inviteCode) =>
+  request('POST', `/api/groups/join?inviteCode=${encodeURIComponent(inviteCode)}`);
+
+// DELETE /api/groups/:groupId/leave — 그룹 탈퇴
+export const leaveGroup = (groupId) =>
+  request('DELETE', `/api/groups/${groupId}/leave`);
+
+// PUT /api/groups/:groupId — 그룹 정보 수정 (방장만)
+export const updateGroup = (groupId, group) =>
+  request('PUT', `/api/groups/${groupId}`, {
+    name: group.name,
+    description: group.description,
+    category: group.category,
+    goal: group.goal,
+    maxMembers: group.maxMembers ?? null,
+  });
+
+// DELETE /api/groups/:groupId/members/:targetUserId — 그룹원 내보내기 (방장만)
+export const kickGroupMember = (groupId, targetUserId) =>
+  request('DELETE', `/api/groups/${groupId}/members/${targetUserId}`);

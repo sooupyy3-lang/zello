@@ -99,7 +99,6 @@ export default function GroupExplore() {
     setShowJoinModal(false);
     navigate(-2); // Group 페이지로 복귀
   };
-    const [isDescOpen, setIsDescOpen] = useState(false);
 
 
   return (

@@ -168,12 +168,12 @@ function Page2() {
 
   <div style={{
     position: 'absolute',
-    top: `calc(290 / 874 * 100%)`,
-    left: `calc(70 / 402 * 100%)`,
+    top: `calc(288 / 874 * 100%)`,
+    left: `calc(130 / 402 * 100%)`,
     width: `calc(300 / 402 * 100%)`,
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '30px',
   }}>
     <input
       name="name"
@@ -196,7 +196,7 @@ function Page2() {
       disabled={checkingNickname || !userInfo.name.trim()}
       style={{
         flexShrink: 0,
-        padding: '6px 12px',
+        padding: '6px 10px',
         fontSize: '12px',
         fontWeight: '600',
         color: '#1E59DA',
@@ -213,10 +213,10 @@ function Page2() {
   {nicknameStatus && (
     <p style={{
       position: 'absolute',
-      top: `calc(315 / 874 * 100%)`,
-      left: `calc(70 / 402 * 100%)`,
+      top: `calc(325 / 874 * 100%)`,
+      left: `calc(45 / 402 * 100%)`,
       margin: 0,
-      fontSize: `calc(11 / 874 * 100vw)`,
+      fontSize: `calc(10 / 874 * 100vw)`,
       fontWeight: '600',
       color: nicknameStatus === 'available' ? '#1E59DA' : '#e53e3e',
     }}>
@@ -226,10 +226,10 @@ function Page2() {
   {nicknameError && (
     <p style={{
       position: 'absolute',
-      top: `calc(315 / 874 * 100%)`,
-      left: `calc(70 / 402 * 100%)`,
+      top: `calc(325 / 874 * 100%)`,
+      left: `calc(45 / 402 * 100%)`,
       margin: 0,
-      fontSize: `calc(11 / 874 * 100vw)`,
+      fontSize: `calc(10 / 874 * 100vw)`,
       fontWeight: '600',
       color: '#e53e3e',
     }}>
@@ -321,8 +321,8 @@ function Page2() {
                         onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.97)')}
                         onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                         style={{
-                            position: 'absolute', left: `calc(50/402 * 100%)`, top: `calc(780/ 874 * 100%)`,
-                             width: `calc(300 / 402 * 100vw)`,maxWidth: '300px', height:  `calc(57 / 874 * 100vw)`, maxheight:'57px',
+                            position: 'absolute', left: `calc(50/402 * 100%)`, top: `calc(775/ 874 * 100%)`,
+                             width: `calc(300 / 402 * 100vw)`,maxWidth: '300px', height:  `calc(44 / 874 * 100vw)`, maxheight:'57px',
                             backgroundColor: loading ? '#ccc' : '#1E59DA',
                             borderRadius: '9px', border: 'none',
                             boxShadow: '0px 4px 8px rgba(0,0,0,0.15)',

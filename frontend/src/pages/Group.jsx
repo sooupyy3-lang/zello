@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 import { getMyGroups } from '../api';
@@ -111,13 +111,25 @@ function GroupPopup({ group, onClose, onExplore }) {
 
 // ── 메인 페이지 ──────────────────────────────────────
 export default function Group() {
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    let cancelled = false;
+    getMyGroups()
+      .then(list => { if (!cancelled) setGroups((list ?? []).map(toViewGroup)); })
+      .catch(e => { if (!cancelled) setError(e.message || '그룹 목록을 불러오지 못했어요.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
   const handleExplore = (group) => {
     setSelectedGroup(null);
-    navigate('/Groupdetail', { state: { group } });
+    navigate('/Groupdetail', { state: { groupId: group.id, group } });
   };
 
   return (

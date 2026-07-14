@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 import { useNavigate } from 'react-router-dom';
 import { getFriends, getActiveFriends } from '../api';
@@ -38,11 +38,12 @@ function FriendCard({ friend, onClick }) {
         alignItems: 'center', gap: 8,
       }}
     >
-      <Avatar name={friend.name} color={friend.color} size={60} />
+       <Avatar name={friend.name} color={friend.color} size={60} />
       <div style={{ textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 14, fontWeight: '700', color: '#333D4B' }}>{friend.name}</p>
-        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#8B95A1' }}>65분</p>
-        <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: '600', color: '#191F28' }}>450kcal</p>
+        <p style={{ margin: '4px 0 0', fontSize: 12, color: friend.isWorkingOut ? '#1E59DA' : '#8B95A1' }}>
+          {friend.isWorkingOut ? '운동 중' : '운동 전'}
+        </p>
       </div>
     </button>
   );
@@ -85,7 +86,9 @@ function FriendPopup({ friend, onClose }) {
             <Avatar name={friend.name} color={friend.color} size={56} />
             <div>
               <p style={{ margin: 0, fontSize: 17, fontWeight: '700', color: '#002738' }}>{friend.name} 님</p>
-              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#8EB3C2' }}>{friend.streak}일째 운동 중</p>
+              <p style={{ margin: '4px 0 0', fontSize: 13, color: '#8EB3C2' }}>
+                {friend.isWorkingOut ? '지금 운동 중이에요' : '지금은 운동 중이 아니에요'}
+              </p>
             </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
@@ -98,11 +101,8 @@ function FriendPopup({ friend, onClose }) {
         {/* 스탯 */}
         <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
-            { label: '오늘의 운동 시간', value: '65분' },
-            { label: '총 소모 칼로리',   value: '450kcal' },
-            { label: '시작 시간',         value: '오전 07:30' },
-            { label: '종료 시간',         value: '오전 08:35' },
-            { label: '최대 지속 시간',    value: `${friend.streak}일` },
+            { label: '시작 시간', value: friend.startedAt ? formatTime(friend.startedAt) : '-' },
+            { label: '운동 종목', value: friend.exerciseNames?.length ? friend.exerciseNames.join(', ') : '-' },
           ].map(({ label, value }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px' }}>
               <p style={{ margin: 0, fontSize: 15, fontWeight: '500', color: '#8E8E8E' }}>{label}</p>
