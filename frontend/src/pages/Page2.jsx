@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import bgImage from '../assets/Components/Page2.svg';
 import BackForward from '../assets/Icon/BackForward.svg';
 import { register, updateProfile, getToken, checkNickname } from '../api';
@@ -11,10 +11,12 @@ const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
 function Page2() {
     const navigate = useNavigate();
+    const location = useLocation();
     const isEdit = !!getToken(); // 토큰 있으면 수정 모드
 
+    // 카카오 회원가입 흐름(KakaoCallback.jsx)에서 넘어온 경우 kakaoId/name을 미리 채워둠
     const [userInfo, setUserInfo] = useState({
-        name: '',
+        name: location.state?.name || '',
         birth: '',
         height: '',
         weight: '',
@@ -22,6 +24,7 @@ function Page2() {
         goalWeek: '',
         goalTime: '',
         goalCal: '',
+        kakaoId: location.state?.kakaoId || null,
     });
 
     const [birthYear, setBirthYear] = useState('');
@@ -38,20 +41,42 @@ function Page2() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [nicknameStatus, setNicknameStatus] = useState(null); // null | 'available' | 'taken'
+    const [checkingNickname, setCheckingNickname] = useState(false);
+    const [nicknameError, setNicknameError] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setUserInfo({ ...userInfo, [name]: value });
+        if (name === 'name') {
+            // 닉네임을 다시 수정하면 이전 확인 결과는 무효화
+            setNicknameStatus(null);
+            setNicknameError('');
+        }
     };
 
-    const handleNameBlur = async () => {
-        if (!userInfo.name.trim()) return;
-        try {
-            const { available } = await checkNickname(userInfo.name.trim());
-            setNicknameStatus(available ? 'available' : 'taken');
-        } catch {
-            setNicknameStatus(null);
+    const handleCheckNickname = async () => {
+        const name = userInfo.name.trim();
+        if (!name) {
+            setNicknameError('닉네임을 먼저 입력해주세요');
+            return;
         }
+        setCheckingNickname(true);
+        setNicknameError('');
+        try {
+            const { available } = await checkNickname(name);
+            setNicknameStatus(available ? 'available' : 'taken');
+        } catch (e) {
+            setNicknameStatus(null);
+            setNicknameError(e.message || '중복 확인에 실패했어요. 다시 시도해주세요.');
+        } finally {
+            setCheckingNickname(false);
+        }
+    };
+
+    // 입력창 포커스 아웃 시에도 보조적으로 자동 확인 (버튼을 못 누르고 넘어간 경우 대비)
+    const handleNameBlur = () => {
+        if (!userInfo.name.trim() || nicknameStatus || checkingNickname) return;
+        handleCheckNickname();
     };
 
     const handleConfirm = async () => {
@@ -64,7 +89,7 @@ function Page2() {
             return;
         }
         if (!isEdit && nicknameStatus !== 'available') {
-            setError('닉네임 중복 확인이 필요해요');
+            setError('닉네임 중복 확인 버튼을 눌러주세요');
             return;
         }
         setLoading(true);
@@ -115,7 +140,7 @@ function Page2() {
             width: '100%',
             height: '100%',
             backgroundImage: `url(${bgImage})`,
-            backgroundSize: '100% auto',             
+            backgroundSize: '100% auto',
             backgroundPosition: 'top center',
             backgroundRepeat: 'no-repeat',
             backgroundColor:'#E9EAEF',
@@ -141,20 +166,50 @@ function Page2() {
     </button>
   </div>
 
-  <input
-    name="name"
-    value={userInfo.name}
-    onChange={handleChange}
-    onBlur={handleNameBlur}
-    placeholder="홍길동"
-    style={{
-      ...inputStyle,
-      position: 'absolute',
-      top: `calc(290 / 874 * 100%)`,
-      left: `calc(70 / 402 * 100%)`,
-      fontSize: `calc(15 / 874 * 100vw)`,
-    }}
-  />
+  <div style={{
+    position: 'absolute',
+    top: `calc(290 / 874 * 100%)`,
+    left: `calc(70 / 402 * 100%)`,
+    width: `calc(300 / 402 * 100%)`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  }}>
+    <input
+      name="name"
+      value={userInfo.name}
+      onChange={handleChange}
+      onBlur={handleNameBlur}
+      placeholder="홍길동"
+      style={{
+        ...inputStyle,
+        position: 'relative',
+        top: 'auto',
+        left: 'auto',
+        width: '120px',
+        fontSize: `calc(15 / 874 * 100vw)`,
+      }}
+    />
+    <button
+      type="button"
+      onClick={handleCheckNickname}
+      disabled={checkingNickname || !userInfo.name.trim()}
+      style={{
+        flexShrink: 0,
+        padding: '6px 12px',
+        fontSize: '12px',
+        fontWeight: '600',
+        color: '#1E59DA',
+        backgroundColor: '#E8F0FE',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: checkingNickname ? 'default' : 'pointer',
+        opacity: checkingNickname || !userInfo.name.trim() ? 0.5 : 1,
+      }}
+    >
+      {checkingNickname ? '확인 중...' : '중복확인'}
+    </button>
+  </div>
   {nicknameStatus && (
     <p style={{
       position: 'absolute',
@@ -166,6 +221,19 @@ function Page2() {
       color: nicknameStatus === 'available' ? '#1E59DA' : '#e53e3e',
     }}>
       {nicknameStatus === 'available' ? '✓ 사용 가능한 닉네임이에요' : '✗ 이미 사용 중인 닉네임이에요'}
+    </p>
+  )}
+  {nicknameError && (
+    <p style={{
+      position: 'absolute',
+      top: `calc(315 / 874 * 100%)`,
+      left: `calc(70 / 402 * 100%)`,
+      margin: 0,
+      fontSize: `calc(11 / 874 * 100vw)`,
+      fontWeight: '600',
+      color: '#e53e3e',
+    }}>
+      {nicknameError}
     </p>
   )}
 
@@ -253,8 +321,8 @@ function Page2() {
                         onMouseDown={(e) => !loading && (e.currentTarget.style.transform = 'scale(0.97)')}
                         onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                         style={{
-                            position: 'absolute', left: `calc(50/402 * 100%)`, top: `calc(785/ 874 * 100%)`,
-                             width: `calc(300 / 402 * 100vw)`,maxWidth: '300px', height:  `calc(45 / 874 * 100vw)`, maxheight:'57px',
+                            position: 'absolute', left: `calc(50/402 * 100%)`, top: `calc(780/ 874 * 100%)`,
+                             width: `calc(300 / 402 * 100vw)`,maxWidth: '300px', height:  `calc(57 / 874 * 100vw)`, maxheight:'57px',
                             backgroundColor: loading ? '#ccc' : '#1E59DA',
                             borderRadius: '9px', border: 'none',
                             boxShadow: '0px 4px 8px rgba(0,0,0,0.15)',
