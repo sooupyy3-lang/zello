@@ -1,21 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getMyProfile, updateProfile, logout } from '../api';
+import LoadingSpinner from '../components/LoadingSpinner';
 
-// ── 더미 데이터 ───────────────────────────────────────
-const DUMMY_PROFILE = {
-  name: '조서영',
-  birthYear: '2003', birthMonth: '03', birthDay: '22',
-  gender: 'female',
-  height: '167', weight: '52',
-  weeklyCount: '2', durationHour: '1', calorieTarget: '243',
-  maxDuration: '2:41:27',
-  maxWorkoutDays: 12,
-  maxCalories: 894,
-  avgDuration: '1:14:52',
-  avgCalories: 416,
-  groupCount: 2,
-  friendCount: 17,
-};
+// UserProfileResponse(백엔드) → EditSheet가 쓰는 폼 형태(연/월/일 분리 등)로 변환
+function toEditForm(profile) {
+  const [birthYear = '', birthMonth = '', birthDay = ''] = (profile.birthDate || '').split('-');
+  return {
+    name: profile.name || '',
+    birthYear, birthMonth, birthDay,
+    gender: profile.gender === 'MALE' ? 'male' : profile.gender === 'FEMALE' ? 'female' : (profile.gender || ''),
+    height: profile.heightCm != null ? String(profile.heightCm) : '',
+    weight: profile.weightKg != null ? String(profile.weightKg) : '',
+    weeklyCount: profile.weeklyCount != null ? String(profile.weeklyCount) : '',
+    durationHour: profile.durationMin != null ? String(Math.round(profile.durationMin / 60)) : '',
+    calorieTarget: profile.calorieTarget != null ? String(profile.calorieTarget) : '',
+  };
+}
 
 // ── 수정 시트 ─────────────────────────────────────────
 function EditSheet({ profile, onClose, onSave }) {
@@ -218,13 +219,42 @@ function InfoRow({ label, value }) {
 // ── 메인 페이지 ──────────────────────────────────────
 export default function MyPage() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(DUMMY_PROFILE);
+  const [profile, setProfile] = useState(null); // UserProfileResponse 원본 그대로 보관
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const genderLabel = profile.gender === 'male' ? '남성' : profile.gender === 'female' ? '여성' : '-';
-  const birthDate = [profile.birthYear, profile.birthMonth, profile.birthDay].filter(Boolean).join('. ');
-  const goalLabel = `주 ${profile.weeklyCount}회, ${profile.durationHour}시간, ${profile.calorieTarget}칼로리 소모 목표`;
+  const loadProfile = () => {
+    setLoading(true);
+    setError('');
+    getMyProfile()
+      .then(setProfile)
+      .catch(e => setError(e.message || '프로필을 불러오지 못했어요.'))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { loadProfile(); }, []);
+
+  if (loading) return <LoadingSpinner />;
+
+  if (error || !profile) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, backgroundColor: '#F3F4F4' }}>
+        <p style={{ color: '#8B95A1', fontSize: 14 }}>{error || '프로필을 불러오지 못했어요.'}</p>
+        <button onClick={loadProfile} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', backgroundColor: '#1E59DA', color: '#fff', cursor: 'pointer' }}>
+          다시 시도
+        </button>
+      </div>
+    );
+  }
+
+  const genderLabel = profile.gender === 'male' || profile.gender === 'MALE' ? '남성'
+    : profile.gender === 'female' || profile.gender === 'FEMALE' ? '여성' : '-';
+  const birthDate = (profile.birthDate || '').split('-').join('. ');
+  const goalHour = profile.durationMin != null ? Math.round(profile.durationMin / 60) : null;
+  const goalLabel = `주 ${profile.weeklyCount ?? '-'}회, ${goalHour ?? '-'}시간, ${profile.calorieTarget ?? '-'}칼로리 소모 목표`;
 
   const basicInfo = [
     { label: '닉네임',   value: profile.name },
@@ -236,16 +266,39 @@ export default function MyPage() {
   const statsInfo = [
     { label: '최대 운동 지속 기록', value: profile.maxDuration },
     { label: '최대 운동 일수',     value: profile.maxWorkoutDays != null ? `${profile.maxWorkoutDays}일` : '-' },
-    { label: '최대 소모 칼로리',   value: profile.maxCalories != null ? `${profile.maxCalories}kcal` : '-' },
+    { label: '최대 소모 칼로리',   value: profile.maxCalories != null ? `${Math.round(profile.maxCalories)}kcal` : '-' },
     { label: '평균 운동 지속 시간', value: profile.avgDuration },
-    { label: '평균 소모 칼로리',   value: profile.avgCalories != null ? `${profile.avgCalories}kcal` : '-' },
+    { label: '평균 소모 칼로리',   value: profile.avgCalories != null ? `${Math.round(profile.avgCalories)}kcal` : '-' },
     { label: '속한 그룹 수',       value: profile.groupCount != null ? `${profile.groupCount}개` : '-' },
     { label: '친구들 수',          value: profile.friendCount != null ? `${profile.friendCount}명` : '-' },
   ];
 
+  const handleSaveProfile = async (form) => {
+    setSaving(true);
+    try {
+      const birth = `${form.birthYear}-${String(form.birthMonth).padStart(2, '0')}-${String(form.birthDay).padStart(2, '0')}`;
+      await updateProfile({
+        name: form.name,
+        birth,
+        gender: form.gender,
+        height: form.height,
+        weight: form.weight,
+        goalWeek: form.weeklyCount,
+        goalTime: form.durationHour,
+        goalCal: form.calorieTarget,
+      });
+      loadProfile(); // 서버가 응답 본문을 안 주는 PUT이라, 수정 후 최신 데이터로 다시 조회
+    } catch (e) {
+      alert(e.message || '프로필 저장에 실패했어요.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleLogout = () => {
     setLogoutOpen(false);
-    navigate('/login');
+    logout();
+    navigate('/Login'); // 라우트 대소문자 일치 (예전: '/login' → 실제 라우트는 '/Login')
   };
 
   return (
@@ -330,9 +383,9 @@ export default function MyPage() {
       {/* ── 수정 시트 ── */}
       {editOpen && (
         <EditSheet
-          profile={profile}
+          profile={toEditForm(profile)}
           onClose={() => setEditOpen(false)}
-          onSave={(updated) => setProfile(updated)}
+          onSave={handleSaveProfile}
         />
       )}
 
