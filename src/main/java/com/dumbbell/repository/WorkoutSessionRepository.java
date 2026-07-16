@@ -35,6 +35,15 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
         """)
     List<WorkoutSession> findActiveFriendSessions(@Param("userId") Long userId);
 
+    @Query("""
+        SELECT s FROM WorkoutSession s
+        WHERE s.isActive = true
+          AND s.user.id IN (
+              SELECT m.user.id FROM GroupMember m WHERE m.group.id = :groupId
+          )
+        """)
+    List<WorkoutSession> findActiveGroupMemberSessions(@Param("groupId") Long groupId);
+
     Optional<WorkoutSession> findByUserIdAndIsActiveTrue(Long userId);
 
     // 시간순 랭킹 (총 운동 시간)

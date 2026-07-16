@@ -1,13 +1,16 @@
 package com.dumbbell.service;
 
+import com.dumbbell.dto.ActiveFriendResponse;
 import com.dumbbell.dto.GroupRequest;
 import com.dumbbell.dto.GroupResponse;
 import com.dumbbell.entity.Group;
 import com.dumbbell.entity.GroupMember;
 import com.dumbbell.entity.User;
+import com.dumbbell.entity.WorkoutSession;
 import com.dumbbell.repository.GroupMemberRepository;
 import com.dumbbell.repository.GroupRepository;
 import com.dumbbell.repository.UserRepository;
+import com.dumbbell.repository.WorkoutSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ public class GroupService {
     private final GroupRepository groupRepo;
     private final GroupMemberRepository groupMemberRepo;
     private final UserRepository userRepo;
+    private final WorkoutSessionRepository sessionRepo;
 
     // ── 그룹 생성 ─────────────────────────────────────────
     @Transactional
@@ -150,6 +154,63 @@ public class GroupService {
                 .orElseThrow(() -> new RuntimeException("해당 멤버가 없어요"));
 
         groupMemberRepo.delete(member);
+    }
+
+    // ── 그룹 삭제 (방장만) ────────────────────────────────
+    @Transactional
+    public void deleteGroup(Long groupId, Long userId) {
+        Group group = groupRepo.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("그룹을 찾을 수 없어요"));
+
+        checkOwner(groupId, userId);
+
+        groupMemberRepo.deleteByGroupId(groupId);
+        groupRepo.delete(group);
+    }
+
+    // ── 방장 권한 위임 (방장만) ───────────────────────────
+    @Transactional
+    public GroupResponse delegateOwner(Long groupId, Long userId, Long newOwnerId) {
+        checkOwner(groupId, userId);
+
+        if (userId.equals(newOwnerId))
+            throw new RuntimeException("본인에게는 위임할 수 없어요");
+
+        GroupMember currentOwner = groupMemberRepo.findByGroupIdAndUserId(groupId, userId)
+                .orElseThrow(() -> new RuntimeException("그룹 멤버가 아니에요"));
+        GroupMember newOwner = groupMemberRepo.findByGroupIdAndUserId(groupId, newOwnerId)
+                .orElseThrow(() -> new RuntimeException("위임 대상이 그룹 멤버가 아니에요"));
+
+        currentOwner.setRole(GroupMember.MemberRole.member);
+        newOwner.setRole(GroupMember.MemberRole.owner);
+        groupMemberRepo.save(currentOwner);
+        groupMemberRepo.save(newOwner);
+
+        Group group = groupRepo.findById(groupId).orElseThrow();
+        return toDto(group, userId);
+    }
+
+    // ── 그룹 멤버 중 현재 운동 중인 사람 목록 ─────────────
+    @Transactional(readOnly = true)
+    public List<ActiveFriendResponse> getActiveMembers(Long groupId, Long userId) {
+        if (!groupMemberRepo.existsByGroupIdAndUserId(groupId, userId))
+            throw new RuntimeException("그룹 멤버가 아니에요");
+
+        return sessionRepo.findActiveGroupMemberSessions(groupId).stream()
+                .map(this::toActiveMemberDto)
+                .collect(Collectors.toList());
+    }
+
+    private ActiveFriendResponse toActiveMemberDto(WorkoutSession s) {
+        return ActiveFriendResponse.builder()
+                .userId(s.getUser().getId())
+                .name(s.getUser().getName())
+                .startedAt(s.getStartedAt())
+                .exerciseNames(s.getTracks().stream()
+                        .map(t -> t.getExerciseType().getName())
+                        .distinct()
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     // ── 방장 확인 ────────────────────────────────────────

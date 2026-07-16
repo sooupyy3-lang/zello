@@ -1,5 +1,7 @@
 package com.dumbbell.controller;
 
+import com.dumbbell.dto.ActiveFriendResponse;
+import com.dumbbell.dto.DelegateOwnerRequest;
 import com.dumbbell.dto.GroupRequest;
 import com.dumbbell.dto.GroupResponse;
 import com.dumbbell.service.GroupService;
@@ -83,5 +85,31 @@ public class GroupController {
         Long userId = (Long) auth.getPrincipal();
         groupService.kickMember(groupId, userId, targetUserId);
         return ResponseEntity.ok().build();
+    }
+
+    // DELETE /api/groups/{groupId} — 그룹 삭제 (방장만)
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<Void> deleteGroup(Authentication auth,
+                                            @PathVariable Long groupId) {
+        Long userId = (Long) auth.getPrincipal();
+        groupService.deleteGroup(groupId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    // PATCH /api/groups/{groupId}/owner — 방장 권한 위임 (방장만)
+    @PatchMapping("/{groupId}/owner")
+    public ResponseEntity<GroupResponse> delegateOwner(Authentication auth,
+                                                        @PathVariable Long groupId,
+                                                        @RequestBody DelegateOwnerRequest req) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(groupService.delegateOwner(groupId, userId, req.getNewOwnerId()));
+    }
+
+    // GET /api/groups/{groupId}/active — 그룹 멤버 중 현재 운동 중인 사람 목록
+    @GetMapping("/{groupId}/active")
+    public ResponseEntity<List<ActiveFriendResponse>> getActiveMembers(Authentication auth,
+                                                                        @PathVariable Long groupId) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(groupService.getActiveMembers(groupId, userId));
     }
 }
