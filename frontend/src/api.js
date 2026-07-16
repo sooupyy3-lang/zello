@@ -1,4 +1,4 @@
-const BASE_URL = 'https://yeol-poom-dum-production.up.railway.app';
+const BASE_URL = 'https://dgc2o9mw3cae4.cloudfront.net';
 
 // ── 토큰 관리 ──────────────────────────────────────────
 export const getToken = () => localStorage.getItem('token');
