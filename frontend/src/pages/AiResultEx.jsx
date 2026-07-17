@@ -4,6 +4,12 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 import { requestAiCoaching, getUserName, applyCoachingRoutine } from '../api';
 
+
+function stripJsonBlock(text) {
+  if (!text) return text;
+  return text.replace(/```json[\s\S]*?```/g, '').trim();
+}
+
 function renderResponse(text) {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
