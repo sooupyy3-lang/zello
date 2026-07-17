@@ -1,9 +1,20 @@
 import { useNavigate } from 'react-router-dom';
 import OnButton from '../assets/Components/OnButton.svg';
 import myImage from '../assets/Components/Start.svg';
+import { getKakaoLoginUrl } from '../api';
 
 function Start() {
   const navigate = useNavigate();
+   const handleKakaoLogin = async () => {
+    try {
+      const redirectUri = `${window.location.origin}/kakao/callback`;
+      const { url } = await getKakaoLoginUrl(redirectUri);
+      window.location.href = url;
+    } catch (e) {
+      console.error(e);
+      alert('카카오 로그인을 시작할 수 없어요.');
+    }
+  };
 
   return (
     <div style={{
@@ -16,14 +27,14 @@ function Start() {
 
       {/* 버튼 */}
       <button
-        onClick={() => navigate('/Page2')}
+        onClick={handleKakaoLogin}
         style={{
           position: 'absolute',
           left: '12.5%', top: '80.9%',
           padding: 0, background: 'none', border: 'none', cursor: 'pointer', zIndex: 1,
         }}
       >
-        <img src={OnButton} alt="다음으로 이동" style={{ width: `calc(300 / 402 * 100vw)`,
+        <img src={OnButton} alt="카카오로 시작하기" style={{ width: `calc(300 / 402 * 100vw)`,
     maxWidth: '300px'}} />
       </button>
     </div>
