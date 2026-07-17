@@ -21,6 +21,18 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const [aiRoutine, setAiRoutine] = useState([]);
   const [activeFriends, setActiveFriends] = useState([]);
 
+  // 서버에서 복원된 세션(새로고침/재실행 포함)의 트랙별 진행 상태 반영
+  useEffect(() => {
+    if (!tracks.length) return;
+    const initialElapsed = {};
+    const initialPlaying = {};
+    tracks.forEach((t) => {
+      initialElapsed[t.trackId] = t.elapsedSec || 0;
+      initialPlaying[t.trackId] = t.status === 'running';
+    });
+    setTrackElapsed(initialElapsed);
+    setPlaying(initialPlaying);
+  }, [sessionData?.sessionId]);
 
   useEffect(() => {
     getLatestCoaching()
