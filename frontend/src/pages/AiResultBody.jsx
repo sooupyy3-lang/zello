@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 import { getLatestCoaching, getMyProfile, applyCoachingRoutine } from '../api';
+import { getUserName } from '../api';
+
 
 function renderResponse(text) {
   if (!text) return null;

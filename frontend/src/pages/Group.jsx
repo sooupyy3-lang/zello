@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
-import { getMyGroups, getUserName } from '../api';
+import { getMyGroups } from '../api';
+import { getUserName } from '../api';
+
 
 function toViewGroup(g) {
   return {
@@ -117,7 +119,7 @@ export default function Group() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const userName = getUserName() || '사용자';
+  const username = location.state?.name || getUserName() || '사용자';
 
   useEffect(() => {
     let cancelled = false;

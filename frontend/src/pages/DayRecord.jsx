@@ -150,13 +150,8 @@ function DayRecord() {
       {/* 헤더 */}
       <div style={{ padding: '60px 24px 20px', display: 'flex', alignItems: 'center', position: 'relative' }}>
         <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <div style={{
-            width: '10px', height: '18px', backgroundColor: '#1E59DA',
-            maskImage: `url(${BackForward})`, WebkitMaskImage: `url(${BackForward})`,
-            maskRepeat: 'no-repeat', WebkitMaskRepeat: 'no-repeat',
-            maskSize: 'contain', WebkitMaskSize: 'contain'
-          }} />
-        </button>
+  <img src={BackForward} alt="뒤로가기" style={{ width: '10px', height: '18px' }} />
+</button>
         <h1 style={{ flex: 1, textAlign: 'center', margin: 0, fontSize: '20px', fontWeight: '800', color: '#1A1A1A', transform: 'translateX(-5px)' }}>
           {year}년 {month + 1}월 {day}일 운동 기록
         </h1>
