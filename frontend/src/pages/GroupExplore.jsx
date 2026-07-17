@@ -100,6 +100,19 @@ export default function GroupExplore() {
     navigate(-2); // Group 페이지로 복귀
   };
 
+  const handleJoinClick = async () => {
+    if (joining) return;
+    setJoining(true);
+    try {
+      await joinGroupByCode(group.inviteCode);
+      setShowJoinModal(true);
+    } catch (e) {
+      alert(e.message || '가입에 실패했어요.');
+    } finally {
+      setJoining(false);
+    }
+  };
+
 
   return (
     <div style={{
@@ -188,12 +201,13 @@ export default function GroupExplore() {
         borderTop: '1px solid #F0F0F0',
       }}>
         <button
-          onClick={() => setShowJoinModal(true)}
+          onClick={handleJoinClick}
+          disabled={joining}
           style={{
             width: '100%', padding: '15px 0',
             backgroundColor: '#1E59DA', color: '#fff',
             border: 'none', borderRadius: 14,
-            fontSize: 16, fontWeight: '700', cursor: 'pointer',
+            fontSize: 16, fontWeight: '700', cursor: joining ? 'not-allowed' : 'pointer',
             transition: 'transform 0.1s',
           }}
           onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}

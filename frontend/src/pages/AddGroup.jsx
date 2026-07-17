@@ -277,7 +277,7 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
 }
 
 // ── 운동 모임 만들기 하단 시트 ────────────────────────
-function NewGroupSheet({ onClose }) {
+function NewGroupSheet({ onClose, onCreated }) {
   const [groupName, setGroupName] = useState('');
   const [category,  setCategory]  = useState('');
   const [goal,      setGoal]      = useState('');
@@ -291,9 +291,24 @@ function NewGroupSheet({ onClose }) {
   const [submitting, setSubmitting] = useState(false);
   const canSubmit = groupName.trim() && category && goal && members;
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    setShowSuccessPopup(true);
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    try {
+      await createGroup({
+        name: groupName,
+        category,
+        goal,
+        maxMembers: parseMaxMembers(members),
+        description: desc,
+      });
+      setShowSuccessPopup(true);
+      onCreated?.();
+    } catch (e) {
+      alert(e.message || '모임 생성에 실패했어요.');
+    } finally {
+      setSubmitting(false);
+    }
   };
   useEffect(() => {
     if (showSuccessPopup) {
@@ -365,8 +380,8 @@ function NewGroupSheet({ onClose }) {
           
 
           {/* 생성하기 버튼 */}
-          <button onClick={handleSubmit} style={{ width: '100%', marginTop: 14, padding: '15px 0', backgroundColor: canSubmit ? '#1E59DA' : '#B0BEC5', color: '#fff', border: 'none', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: canSubmit ? 'pointer' : 'not-allowed', transition: 'background-color 0.2s' }}>
-            생성하기
+          <button onClick={handleSubmit} disabled={!canSubmit || submitting} style={{ width: '100%', marginTop: 14, padding: '15px 0', backgroundColor: canSubmit ? '#1E59DA' : '#B0BEC5', color: '#fff', border: 'none', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: canSubmit && !submitting ? 'pointer' : 'not-allowed', transition: 'background-color 0.2s' }}>
+            {submitting ? '생성 중...' : '생성하기'}
           </button>
           
         </div>
@@ -540,7 +555,7 @@ export default function AddGroup() {
 
       {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} onSelectGroup={setSelectedGroup} />}
       <GroupPopup group={selectedGroup} onClose={() => setSelectedGroup(null)} onExplore={handleExplore} />
-      {newGroupOpen && <NewGroupSheet onClose={() => setNewGroupOpen(false)} />}
+      {newGroupOpen && <NewGroupSheet onClose={() => setNewGroupOpen(false)} onCreated={loadGroups} />}
 
       <style>{`
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
