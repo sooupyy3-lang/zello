@@ -191,20 +191,46 @@ public class WorkoutService {
     }
 
     // ── 특정 날 운동 기록 조회 ────────────────────────────
+    // 하루에 "운동 시작하기"를 여러 번 눌러 세션이 여러 개 생겼을 수 있어서,
+    // 그날 해당하는 모든 세션을 합산해서 보여준다 (하나만 고르면 나머지가 누락됨).
     @Transactional(readOnly = true)
     public SessionResponse getSessionByDate(Long userId, LocalDate date) {
         List<WorkoutSession> sessions = sessionRepo.findByUserAndMonth(
-                userId, date.getYear(), date.getMonthValue());
-        return sessions.stream()
+                        userId, date.getYear(), date.getMonthValue())
+                .stream()
                 .filter(s -> s.getStartedAt().toLocalDate().equals(date))
-                .findFirst()
-                .map(this::toSessionResponse)
-                .orElseGet(() -> SessionResponse.builder()
-                        .isActive(false)
-                        .totalDurationSec(0)
-                        .totalCalories(0f)
-                        .tracks(List.of())
-                        .build());
+                .toList();
+
+        if (sessions.isEmpty()) {
+            return SessionResponse.builder()
+                    .isActive(false)
+                    .totalDurationSec(0)
+                    .totalCalories(0f)
+                    .tracks(List.of())
+                    .build();
+        }
+
+        int totalDurationSec = sessions.stream()
+                .mapToInt(s -> s.getTotalDurationSec() == null ? 0 : s.getTotalDurationSec())
+                .sum();
+        float totalCalories = (float) sessions.stream()
+                .mapToDouble(s -> s.getTotalCalories() == null ? 0f : s.getTotalCalories())
+                .sum();
+        List<SessionResponse.TrackDto> tracks = sessions.stream()
+                .flatMap(s -> s.getTracks().stream())
+                .map(this::toTrackDto)
+                .collect(Collectors.toList());
+        // findByUserAndMonth는 startedAt DESC 정렬이라, 필터링 후 마지막 원소가 그날 중 가장 이른 세션
+        WorkoutSession earliest = sessions.get(sessions.size() - 1);
+
+        return SessionResponse.builder()
+                .isActive(sessions.stream().anyMatch(WorkoutSession::getIsActive))
+                .totalDurationSec(totalDurationSec)
+                .totalCalories(totalCalories)
+                .startedAt(earliest.getStartedAt())
+                .tracks(tracks)
+                .userWeightKg(earliest.getUser().getWeightKg())
+                .build();
     }
 
     // ── 운동 종류 목록 (카테고리별) ───────────────────────
@@ -234,20 +260,25 @@ public class WorkoutService {
         return streak;
     }
 
+    // ── 내부 헬퍼: Track → DTO ──────────────────────────
+    private SessionResponse.TrackDto toTrackDto(WorkoutTrack t) {
+        return SessionResponse.TrackDto.builder()
+                .trackId(t.getId())
+                .exerciseTypeId(t.getExerciseType().getId())
+                .exerciseName(t.getExerciseType().getName())
+                .category(t.getExerciseType().getCategory())
+                .trackOrder(t.getTrackOrder())
+                .status(t.getStatus().name())
+                .elapsedSec(t.getElapsedSec())
+                .calories(t.getCalories())
+                .metValue(t.getExerciseType().getMetValue())
+                .build();
+    }
+
     // ── 내부 헬퍼: Session → DTO ──────────────────────────
     private SessionResponse toSessionResponse(WorkoutSession s) {
         List<SessionResponse.TrackDto> trackDtos = s.getTracks().stream()
-                .map(t -> SessionResponse.TrackDto.builder()
-                        .trackId(t.getId())
-                        .exerciseTypeId(t.getExerciseType().getId())
-                        .exerciseName(t.getExerciseType().getName())
-                        .category(t.getExerciseType().getCategory())
-                        .trackOrder(t.getTrackOrder())
-                        .status(t.getStatus().name())
-                        .elapsedSec(t.getElapsedSec())
-                        .calories(t.getCalories())
-                        .metValue(t.getExerciseType().getMetValue())
-                        .build())
+                .map(this::toTrackDto)
                 .collect(Collectors.toList());
 
         return SessionResponse.builder()
