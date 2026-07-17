@@ -320,8 +320,8 @@ export default Page3;
   aiHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   moreLink: { fontSize: 12, color: COLORS.primary, background: "none", border: "none", cursor: 'pointer' },
   workoutScroll: { display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 },
-  workoutChip: { flexShrink: 0, background: COLORS.primaryLight, borderRadius: 20, padding: "10px 16px", display: "flex", flexDirection: "column", alignItems: "center", minWidth: 100 },
-  chipName: { fontSize: 12, fontWeight: 700, color: COLORS.primary },
+  workoutChip: { flexShrink: 0, background: COLORS.primaryLight, borderRadius: 20, padding: "10px 16px", display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 140 },
+  chipName: { fontSize: 12, fontWeight: 700, whiteSpace:'normal', wordBreak:'keep-all', color: COLORS.primary },
   chipDetail: { fontSize: 11, color: COLORS.primary },
   aiEmptyText: { color: "#9ca3af", textAlign: 'center', padding: '20px 0', fontSize: '13px' },
 };
