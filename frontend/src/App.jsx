@@ -17,7 +17,10 @@ import AiResultEx from './pages/AiResultEx';
 import AiResultBody from './pages/AiResultBody';
 import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
-import { getToken } from './api';
+import { getToken, getTodaySession, endSession } from './api';
+
+// 이 시간(초) 이상 연속으로 켜져 있으면 타이머를 강제 정지한다 (백엔드의 좀비 세션 자동 종료 기준과 동일)
+const MAX_CONTINUOUS_SEC = 3 * 60 * 60;
 import AddFriends from './pages/AddFriends.jsx';
 import KakaoCallback from './pages/KakaoCallback.jsx';
 import Group from './pages/Group.jsx';
@@ -36,6 +39,27 @@ function App() {
   const timerRef    = useRef(null);
   const wakeLockRef = useRef(null);
 
+  // ── 앱 재실행 시 서버의 진행 중인 세션 기준으로 타이머 복원 ──
+  // (탭을 완전히 닫았다 열거나 새로고침해도, 서버의 started_at으로 정확한 경과시간을 계산)
+  useEffect(() => {
+    getTodaySession()
+      .then(session => {
+        if (!session?.isActive || !session.startedAt) return;
+        const start = new Date(session.startedAt).getTime();
+        const secs = Math.floor((Date.now() - start) / 1000);
+        if (secs >= MAX_CONTINUOUS_SEC) {
+          // 3시간 넘게 방치된 세션 — 서버 스케줄러를 기다리지 않고 바로 종료 처리
+          endSession().catch(() => {});
+          return;
+        }
+        startTimeRef.current = start;
+        setElapsed(secs);
+        setSelectedExercise(prev => ({ ...(prev || {}), sessionData: session }));
+        setIsRunning(true);
+      })
+      .catch(() => {});
+  }, []);
+
   // ── 정확한 Date 기반 타이머 (백그라운드에서도 시간 유지) ──
   useEffect(() => {
     if (isRunning) {
@@ -48,7 +72,14 @@ function App() {
         localStorage.setItem('workoutStartTime', String(startTimeRef.current));
       }
       timerRef.current = setInterval(() => {
-        setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+        const secs = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        if (secs >= MAX_CONTINUOUS_SEC) {
+          setElapsed(MAX_CONTINUOUS_SEC);
+          setIsRunning(false);
+          endSession().catch(() => {});
+          return;
+        }
+        setElapsed(secs);
       }, 1000);
 
       // 화면 켜짐 유지 (Screen Wake Lock)
@@ -73,7 +104,14 @@ function App() {
   useEffect(() => {
     const onVisible = () => {
       if (!document.hidden && isRunning && startTimeRef.current) {
-        setElapsed(Math.floor((Date.now() - startTimeRef.current) / 1000));
+        const secs = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        if (secs >= MAX_CONTINUOUS_SEC) {
+          setElapsed(MAX_CONTINUOUS_SEC);
+          setIsRunning(false);
+          endSession().catch(() => {});
+          return;
+        }
+        setElapsed(secs);
         // Wake Lock은 화면 복귀 시 재취득 필요
         if ('wakeLock' in navigator && !wakeLockRef.current) {
           navigator.wakeLock.request('screen')
