@@ -4,6 +4,8 @@ import com.dumbbell.dto.*;
 import com.dumbbell.entity.*;
 import com.dumbbell.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
@@ -11,9 +13,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorkoutService {
+
+    // 이 시간(시) 이상 연속으로 켜져 있으면 좀비 세션으로 간주해 자동 종료하고 랭킹에서 제외
+    private static final int MAX_CONTINUOUS_HOURS = 3;
 
     private final WorkoutSessionRepository sessionRepo;
     private final WorkoutTrackRepository   trackRepo;
@@ -145,10 +151,43 @@ public class WorkoutService {
     public SessionResponse endSession(Long userId) {
         WorkoutSession session = sessionRepo.findByUserIdAndIsActiveTrue(userId)
                 .orElseThrow(() -> new RuntimeException("진행 중인 세션이 없어요"));
-        session.setIsActive(false);
-        session.setEndedAt(LocalDateTime.now());
-        sessionRepo.save(session);
+        closeSession(session, LocalDateTime.now());
         return toSessionResponse(session);
+    }
+
+    // ── 3시간 이상 방치된 세션 자동 종료 (좀비 세션 정리) ──
+    // 5분마다 실행: 앱을 안 끄고 계속 켜둔 채 잊어버린 세션을 찾아 자동으로 마감한다.
+    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Transactional
+    public void autoEndStaleSessions() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(MAX_CONTINUOUS_HOURS);
+        List<WorkoutSession> stale = sessionRepo.findActiveSessionsStartedBefore(cutoff);
+        for (WorkoutSession session : stale) {
+            closeSession(session, session.getStartedAt().plusHours(MAX_CONTINUOUS_HOURS));
+            log.info("좀비 세션 자동 종료: sessionId={}, userId={}", session.getId(), session.getUser().getId());
+        }
+    }
+
+    // 세션을 종료 처리한다. 시작 시각부터 MAX_CONTINUOUS_HOURS를 넘겼다면
+    // 그 시점에서 기록을 끊고(더 이상 누적되지 않게) 랭킹 집계에서 제외한다.
+    private void closeSession(WorkoutSession session, LocalDateTime endedAt) {
+        LocalDateTime cap = session.getStartedAt().plusHours(MAX_CONTINUOUS_HOURS);
+        boolean tooLong = endedAt.isAfter(cap);
+
+        session.setIsActive(false);
+        session.setEndedAt(tooLong ? cap : endedAt);
+
+        if (tooLong) {
+            session.setExcludedFromRanking(true);
+            for (WorkoutTrack track : session.getTracks()) {
+                if (track.getStatus() == WorkoutTrack.TrackStatus.running) {
+                    track.setStatus(WorkoutTrack.TrackStatus.paused);
+                    track.setPausedAt(cap);
+                    trackRepo.save(track);
+                }
+            }
+        }
+        sessionRepo.save(session);
     }
 
     // ── 특정 날 운동 기록 조회 ────────────────────────────

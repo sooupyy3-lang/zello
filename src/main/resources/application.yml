@@ -1,6 +1,10 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
 
 server:
   port: ${PORT:8080}
