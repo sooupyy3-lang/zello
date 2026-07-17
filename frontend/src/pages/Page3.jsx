@@ -197,13 +197,12 @@ export default Page3;
   /* 페이지 전체 */
   pageWrapper: {
     width: '100%',
-    height:'100vh',
+    minHeight:'100dvh',
     backgroundColor: '#E9EAEF',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     paddingTop: '98px',
-    overflowY:'auto',
   },
  
   /* ── 영역 1: 타이머 (고정 높이) ── */
