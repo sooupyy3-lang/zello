@@ -40,7 +40,7 @@ function AddFriends() {
     if (!name.trim()) return;
     try {
       await sendFriendRequestByNickname(name.trim());
-      openModal(`${name}님에게 친구 요청을 보냈어요.`);
+      openModal(`${name}님과 친구가 되었어요.`);
       setName('');
     } catch (e) {
       openModal(e.message || '친구 요청에 실패했어요.');
@@ -106,7 +106,7 @@ function AddFriends() {
             onChange={(e) => setName(e.target.value)}
             style={inputStyle}
           />
-<button onClick={handleSearch} style={actionButtonStyle}>검색</button>          
+<button onClick={handleSearch} style={actionButtonStyle}>추가</button>          
         </div>
       </section>
 
