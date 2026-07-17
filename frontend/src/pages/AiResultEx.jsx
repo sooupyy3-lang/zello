@@ -88,14 +88,10 @@ const username = location.state?.name || getUserName() || "사용자";  useEffec
 
   return (
     <div style={{
-      width: '100%',
-      maxWidth: '450px',
-      margin: '0 auto',
-      height: '100%',
-      backgroundColor: '#fff',
-      padding: '20px 20px 140px', 
-      boxSizing: 'border-box',
-      position: 'relative'
+      width: '100%', minHeight: '100%',
+      backgroundColor: '#F3F4F4',
+      display: 'flex', flexDirection: 'column',
+      position: 'relative',
     }}>
 
       {/* ── 1. 헤더 영역 (카드 스타일 제거) ── */}
