@@ -117,6 +117,7 @@ export default function Group() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const name = location.state?.name || getUserName() || '사용자';
 
   useEffect(() => {
     let cancelled = false;
@@ -183,8 +184,8 @@ export default function Group() {
         </button>
       </div>
 
-      {menuOpen && <HamburgerPanel userName="사용자" onClose={() => setMenuOpen(false)} />}
-      <GroupPopup group={selectedGroup} onClose={() => setSelectedGroup(null)} onExplore={handleExplore} />
-    </div>
+      {menuOpen && (
+  <HamburgerPanel userName={userName} onClose={() => setMenuOpen(false)} />
+)} </div>
   );
 }

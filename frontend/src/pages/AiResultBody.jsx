@@ -45,7 +45,7 @@ function AiResultBody() {
   const [error, setError] = useState('');
   const [name, setName] = useState(location.state?.name || '사용자');
   const [applying, setApplying] = useState(false);
-
+const name = location.state?.name || getUserName() || "사용자";
   useEffect(() => {
     let cancelled = false;
 
@@ -134,7 +134,7 @@ function AiResultBody() {
         <div style={{ padding: '0 4px' }}>
           {/* ── 2. 본문 리포트  ── */}
           <div style={{ marginBottom: '40px' }}>
-            {renderResponse(stripJsonBlock(coaching.aiResponse))}
+            {renderResponse(coaching.aiResponse)}
           </div>
 
           {/* ── 3. 추천 운동 루틴  ── */}
@@ -213,8 +213,8 @@ function AiResultBody() {
       
 
       {menuOpen && (
-        <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
-      )}
+  <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
+)}
     </div>
   );
 }
