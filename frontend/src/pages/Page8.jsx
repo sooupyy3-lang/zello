@@ -34,6 +34,16 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
     setPlaying(initialPlaying);
   }, [sessionData?.sessionId]);
 
+  // 운동 중인 친구 목록 (30초마다 갱신)
+  useEffect(() => {
+    const fetchActiveFriends = () => {
+      getActiveFriends().then(setActiveFriends).catch(() => {});
+    };
+    fetchActiveFriends();
+    const interval = setInterval(fetchActiveFriends, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     getLatestCoaching()
       .then(data => {
