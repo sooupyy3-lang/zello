@@ -334,12 +334,33 @@ function GroupDetailView({ groupName, category, members, goal, desc, isHost, onS
         <p style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '700', color: '#000' }}>그룹 소개/규칙</p>
 
         {isEditing ? (
-          <textarea
-            value={tempDesc}
-            onChange={e => setTempDesc(e.target.value)}
-            style={{ width: '100%', height: '160px', border: '1px solid #1E59DA', borderRadius: '12px', padding: '14px', fontSize: '14px', color: '#000', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-          />
-        ) : (
+  <div style={{
+    width: '100%',
+    height: '160px',
+    border: '1px solid #1E59DA',
+    borderRadius: '12px',
+    overflow: 'hidden',        
+    boxSizing: 'border-box',
+  }}>
+    <textarea
+      value={tempDesc}
+      onChange={e => setTempDesc(e.target.value)}
+      style={{
+        width: '100%',
+        height: '100%',
+        border: 'none',       
+        borderRadius: '12px',
+        padding: '14px',
+        fontSize: '14px',
+        color: '#000',
+        outline: 'none',
+        resize: 'none',
+        boxSizing: 'border-box',
+        fontFamily: 'inherit',
+      }}
+    />
+  </div>
+) : (
           <p style={{ margin: 0, fontSize: '14px', color: '#4E5968', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
             {tempDesc || '내용이 없습니다.'}
           </p>

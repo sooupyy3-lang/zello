@@ -218,13 +218,7 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
 
   return (
     <div style={{ position: 'absolute', inset: 0, backgroundColor: '#fff', zIndex: 600, display: 'flex', flexDirection: 'column' }}>
-      {/* 권한 테스트 바 (실제 연동 완료 후 제거하셔도 좋습니다) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 20px', backgroundColor: '#1E59DA', color: '#fff', fontSize: '11px' }}>
-        <span>[테스트] 상단 스위치 :</span>
-        <button onClick={() => { setIsHost(!isHost); setIsEditing(false); }} style={{ fontSize: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          {isHost ? '현재: 모임장' : '현재: 비소속 일반유저'}
-        </button>
-      </div>
+      
 
       {/* 헤더 영역 */}
       <div style={{ display: 'flex', alignItems: 'center', height: '56px', padding: '0 20px', position: 'relative' }}>
@@ -248,12 +242,33 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
         <p style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '700', color: '#000' }}>그룹 소개/규칙</p>
         
         {isEditing ? (
-          <textarea 
-            value={tempDesc} 
-            onChange={e => setTempDesc(e.target.value)} 
-            style={{ width: '110%', height: '160px', border: '1px solid #1E59DA', borderRadius: '12px', padding: '14px', fontSize: '14px', color: '#000', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} 
-          />
-        ) : (
+  <div style={{
+    width: '100%',
+    height: '160px',
+    border: '1px solid #1E59DA',
+    borderRadius: '12px',
+    overflow: 'hidden',        
+    boxSizing: 'border-box',
+  }}>
+    <textarea
+      value={tempDesc}
+      onChange={e => setTempDesc(e.target.value)}
+      style={{
+        width: '100%',
+        height: '100%',
+        border: 'none',       
+        borderRadius: '12px',
+        padding: '14px',
+        fontSize: '14px',
+        color: '#000',
+        outline: 'none',
+        resize: 'none',
+        boxSizing: 'border-box',
+        fontFamily: 'inherit',
+      }}
+    />
+  </div>
+) : (
           <p style={{ margin: 0, fontSize: '14px', color: '#4E5968', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
             {tempDesc || '내용이 없습니다.'}
           </p>
