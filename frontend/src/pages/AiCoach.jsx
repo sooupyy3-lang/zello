@@ -6,7 +6,7 @@ import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 function AiCoach() {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
-const name = location.state?.name || getUserName() || "사용자";
+const username = location.state?.name || getUserName() || "사용자";
     // 버튼 공통 스타일
     const buttonContainerStyle = {
         width: '100%',
@@ -102,7 +102,7 @@ const name = location.state?.name || getUserName() || "사용자";
 
             {/* ── 3. 사이드 메뉴 패널 ── */}
             {menuOpen && (
-  <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
 )}
         </div>
     );

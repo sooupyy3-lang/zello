@@ -117,7 +117,7 @@ export default function Group() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const name = location.state?.name || getUserName() || '사용자';
+  const username = location.state?.name || getUserName() || '사용자';
 
   useEffect(() => {
     let cancelled = false;

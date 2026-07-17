@@ -45,7 +45,7 @@ function AiResultBody() {
   const [error, setError] = useState('');
   const [name, setName] = useState(location.state?.name || '사용자');
   const [applying, setApplying] = useState(false);
-const name = location.state?.name || getUserName() || "사용자";
+const username = location.state?.name || getUserName() || "사용자";
   useEffect(() => {
     let cancelled = false;
 
@@ -213,7 +213,7 @@ const name = location.state?.name || getUserName() || "사용자";
       
 
       {menuOpen && (
-  <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
 )}
     </div>
   );

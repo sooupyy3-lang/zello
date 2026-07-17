@@ -50,7 +50,7 @@ function AiResultEx() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(false);
-const name = location.state?.name || getUserName() || "사용자";  useEffect(() => {
+const username = location.state?.name || getUserName() || "사용자";  useEffect(() => {
     let cancelled = false;
 
     // 이미지/체형 설명 없이 요청 → 백엔드가 운동 기록 기반으로 코칭을 생성해요.
@@ -207,7 +207,7 @@ const name = location.state?.name || getUserName() || "사용자";  useEffect(()
       
 
       {menuOpen && (
-  <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
 )}
     </div>
   );
