@@ -286,7 +286,6 @@ function NewGroupSheet({ onClose }) {
   const [openModal, setOpenModal] = useState(null);
 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const canSubmit = groupName.trim() && category && goal && members;
@@ -352,14 +351,28 @@ function NewGroupSheet({ onClose }) {
 
             {/* 그룹 소개/규칙 */}
             <div>
-              <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: '700', color: '#191F28' }}>그룹 소개/규칙</p>
-              <div 
-                onClick={() => setShowDetail(true)}
-                style={{ width: '100%', border: '1px solid #E5E8EB', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#191F28', backgroundColor: '#DBE9F9', minHeight: '96px', boxSizing: 'border-box', lineHeight: 1.6, cursor: 'pointer', whiteSpace: 'pre-wrap' }}
-              >
-                {desc || '어떤 그룹인가요? 소개를 적어주세요.'}
-              </div>
-            </div>
+  <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: '700', color: '#191F28' }}>그룹 소개/규칙</p>
+  <textarea
+    value={desc}
+    onChange={e => setDesc(e.target.value)}
+    placeholder="어떤 그룹인가요? 소개를 적어주세요."
+    style={{
+      width: '100%',
+      border: '1px solid #E5E8EB',
+      borderRadius: 10,
+      padding: '12px 14px',
+      fontSize: 14,
+      color: '#191F28',
+      backgroundColor: '#DBE9F9',
+      minHeight: '96px',
+      boxSizing: 'border-box',
+      lineHeight: 1.6,
+      resize: 'none',
+      outline: 'none',
+      fontFamily: 'inherit',
+    }}
+  />
+</div>
             
           </div>
           
@@ -425,17 +438,7 @@ function NewGroupSheet({ onClose }) {
           </div>
         </>
       )}
-      {showDetail && (
-        <GroupDetailView
-          groupName={groupName}
-          category={category}
-          members={members}
-          goal={goal}
-          desc={desc}
-          onSave={(newDesc) => setDesc(newDesc)}
-          onClose={() => setShowDetail(false)}
-        />
-      )}
+      
       
       </div>
 
@@ -520,7 +523,7 @@ export default function AddGroup() {
 
       {/* 카드 목록 */}
       <div style={{ padding: '16px 20px 100px', flex: 1, overflowY: 'auto' }}>
-        {sorted.map(group => <GroupCard key={group.id} group={group} onClick={setSelectedGroup} />)}
+        {groups.map(group => <GroupCard key={group.id} group={group} onClick={setSelectedGroup} />)}
       </div>
 
       {/* FAB */}
