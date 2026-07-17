@@ -203,7 +203,7 @@ export default Page3;
     flexDirection: 'column',
     alignItems: 'center',
     paddingTop: '98px',
-    overflowY:'hidden',
+    overflowY:'auto',
   },
  
   /* ── 영역 1: 타이머 (고정 높이) ── */
