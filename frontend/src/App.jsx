@@ -24,7 +24,6 @@ import Group from './pages/Group.jsx';
 import AddGroup from './pages/AddGroup.jsx';
 import GroupExplore from './pages/GroupExplore.jsx';
 import Groupdetail from './pages/Groupdetail.jsx';
-import NewGroup from './pages/NewGroup.jsx';
 
 
 
@@ -132,7 +131,6 @@ function App() {
           <Route path="/Analyzing" element={<Analyzing />} />
           <Route path="/GroupExplore" element={<GroupExplore />} />
           <Route path="/Groupdetail" element={<Groupdetail />} />
-          <Route path="/NewGroup" element={<NewGroup />} />
           <Route path="/AiUpload" element={<AiUpload />} />
           <Route path="/AiResultEx" element={<AiResultEx />} />
           <Route path="/AiResultBody" element={<AiResultBody />} />
