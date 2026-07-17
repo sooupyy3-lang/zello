@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getFriends, getActiveFriends } from '../api';
+import { getUserName } from '../api';
+
 
 
 const AVATAR_COLORS = ['#BFE8F8', '#D4F1D4', '#FFE5C4', '#E8E0FF', '#FFD6E0'];
@@ -21,7 +23,7 @@ function Avatar({ name, color, size = 52.5 }) {
       flexShrink: 0,
       fontSize: size * 0.35, fontWeight: '700', color: '#002738',
     }}>
-      {name[0]}
+      {name ? name[0] : ''}
     </div>
   );
 }
@@ -128,7 +130,12 @@ export default function Friends() {
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const workingOutCount = friends.filter(f => f.isWorkingOut).length; 
+    const location = useLocation();
+
+  const workingOutCount = friends.filter(f => f.isWorkingOut).length;
+  const username = location.state?.name || getUserName() || "사용자";
+ 
+ 
 
 useEffect(() => {
     let cancelled = false;
@@ -267,8 +274,8 @@ useEffect(() => {
 </div>
 
       {menuOpen && (
-        <HamburgerPanel userName="사용자" onClose={() => setMenuOpen(false)} />
-      )}
+                <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
+            )}
 
       <FriendPopup friend={selectedFriend} onClose={() => setSelectedFriend(null)} />
 

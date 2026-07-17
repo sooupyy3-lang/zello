@@ -10,7 +10,7 @@ import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 function AiUpload() {
   const navigate = useNavigate();
   const location = useLocation();
-  const name = location.state?.name || "사용자";
+const username = location.state?.name || getUserName() || "사용자";  
   const [selectedFile, setSelectedFile] = useState(null);
   const [bodyDescription, setBodyDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -198,9 +198,8 @@ function AiUpload() {
         {loading ? '분석 중...' : '내 체형 및 정보 업로드 하기'}
       </button>
      {menuOpen && (
-        <HamburgerPanel userName="사용자" onClose={() => setMenuOpen(false)} />
-      )}
-    </div>
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
+)}</div>
     
   );
   

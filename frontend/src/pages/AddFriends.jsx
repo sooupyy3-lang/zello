@@ -13,7 +13,8 @@ function AddFriends() {
   const [groupIndex, setGroupIndex] = useState(0); 
   const [myGroups, setMyGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
-  const currentGroup = myGroups[groupIndex] ?? null; 
+  const currentGroup = myGroups[groupIndex] ?? null;
+const userName = location.state?.name || getUserName() || "사용자";
 
   useEffect(() => {
     getMyGroups()
@@ -75,8 +76,10 @@ function AddFriends() {
   width: '100%',
   maxWidth: '500px'}}>
     {/* 햄버거 패널 */}
-    {menuOpen && <HamburgerPanel userName="사용자" onClose={() => setMenuOpen(false)} />}
-      {/* ── 헤더 ── */}
+{menuOpen && (
+  <HamburgerPanel userName={userName} onClose={() => setMenuOpen(false)} />
+)}
+     {/* ── 헤더 ── */}
       <header style={{ 
         height: `calc(115/874*100dvh)`, 
         maxHeight: '874px',

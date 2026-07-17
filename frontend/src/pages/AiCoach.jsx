@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { getUserName } from '../api';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 
 function AiCoach() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [menuOpen, setMenuOpen] = useState(false);
-    const name = getUserName() || "사용자";
-
+const username = location.state?.name || getUserName() || "사용자";
     // 버튼 공통 스타일
     const buttonContainerStyle = {
         width: '100%',
@@ -52,18 +52,30 @@ function AiCoach() {
             flexDirection: 'column'
         }}>
             {/* ── 1. 상단 헤더 ── */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '80px 20px 20px',
+             <div style={{
+                margin: '0 0 30px',
+                padding: '0 20px',
                 backgroundColor: '#FFFFFF',
-                boxSizing: 'border-box'
+                display: 'flex', alignItems: 'center',
+                position: 'relative',
+                borderBottom: '1px solid #F0F0F0',
+                height: '60px',
+                boxSizing: 'border-box',
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '4px', }}>
                     <HamburgerButton onOpen={() => setMenuOpen(true)} />
                 </div>
-                <h1 style={{ fontSize: '20px', fontWeight: '800', color: '#333D4B', margin: 0 }}>
+                <h1 style={{
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    margin: 0,
+    fontSize: '18px',
+    fontWeight: '700',
+    color: '#333D4B',
+    pointerEvents: 'none',
+}}>
                     AI 운동 코칭
                 </h1>
             </div>
@@ -103,8 +115,8 @@ function AiCoach() {
 
             {/* ── 3. 사이드 메뉴 패널 ── */}
             {menuOpen && (
-                <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
-            )}
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
+)}
         </div>
     );
 }

@@ -50,9 +50,7 @@ function AiResultEx() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(false);
-  const name = location.state?.name || getUserName() || '사용자';
-
-  useEffect(() => {
+const username = location.state?.name || getUserName() || "사용자";  useEffect(() => {
     let cancelled = false;
 
     // 이미지/체형 설명 없이 요청 → 백엔드가 운동 기록 기반으로 코칭을 생성해요.
@@ -90,14 +88,10 @@ function AiResultEx() {
 
   return (
     <div style={{
-      width: '100%',
-      maxWidth: '450px',
-      margin: '0 auto',
-      height: '100%',
-      backgroundColor: '#fff',
-      padding: '20px 20px 140px', 
-      boxSizing: 'border-box',
-      position: 'relative'
+      width: '100%', minHeight: '100%',
+      backgroundColor: '#F3F4F4',
+      display: 'flex', flexDirection: 'column',
+      position: 'relative',
     }}>
 
       {/* ── 1. 헤더 영역 (카드 스타일 제거) ── */}
@@ -209,8 +203,8 @@ function AiResultEx() {
       
 
       {menuOpen && (
-        <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
-      )}
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
+)}
     </div>
   );
 }
