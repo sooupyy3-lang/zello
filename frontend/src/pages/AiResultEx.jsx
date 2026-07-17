@@ -130,7 +130,7 @@ function AiResultEx() {
         <div style={{ padding: '0 4px' }}>
           {/* ── 2. 본문 리포트  ── */}
           <div style={{ marginBottom: '40px' }}>
-            {renderResponse(coaching.aiResponse)}
+            {renderResponse(stripJsonBlock(coaching.aiResponse))}
           </div>
 
           {/* ── 3. 추천 운동 루틴  ── */}
