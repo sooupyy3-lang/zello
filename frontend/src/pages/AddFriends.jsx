@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HamburgerButton } from '../pages/HamburgerMenu.jsx'; 
 import { HamburgerPanel } from '../pages/HamburgerMenu.jsx';
 import { getMyGroups, sendFriendRequestByNickname, joinGroupByCode } from '../api';
+import { getUserName } from '../api';
 
 
 function AddFriends() {
