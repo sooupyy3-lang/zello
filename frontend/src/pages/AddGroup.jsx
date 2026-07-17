@@ -251,7 +251,7 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
           <textarea 
             value={tempDesc} 
             onChange={e => setTempDesc(e.target.value)} 
-            style={{ width: '100%', height: '160px', border: '1px solid #1E59DA', borderRadius: '12px', padding: '14px', fontSize: '14px', color: '#000', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} 
+            style={{ width: '110%', height: '160px', border: '1px solid #1E59DA', borderRadius: '12px', padding: '14px', fontSize: '14px', color: '#000', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} 
           />
         ) : (
           <p style={{ margin: 0, fontSize: '14px', color: '#4E5968', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
