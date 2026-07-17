@@ -106,7 +106,7 @@ function AddFriends() {
             onChange={(e) => setName(e.target.value)}
             style={inputStyle}
           />
-<button onClick={handleSearch} style={actionButtonStyle}>검색</button>          
+<button onClick={handleSearch} style={actionButtonStyle}>추가</button>          
         </div>
       </section>
 
