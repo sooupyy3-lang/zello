@@ -199,7 +199,12 @@ public class WorkoutService {
                 .filter(s -> s.getStartedAt().toLocalDate().equals(date))
                 .findFirst()
                 .map(this::toSessionResponse)
-                .orElseThrow(() -> new RuntimeException("해당 날짜의 운동 기록이 없어요"));
+                .orElseGet(() -> SessionResponse.builder()
+                        .isActive(false)
+                        .totalDurationSec(0)
+                        .totalCalories(0f)
+                        .tracks(List.of())
+                        .build());
     }
 
     // ── 운동 종류 목록 (카테고리별) ───────────────────────
