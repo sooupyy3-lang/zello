@@ -478,6 +478,7 @@ export default function AddGroup() {
   const [error, setError] = useState(null);
 
   const currentTab = TABS.find(t => t.key === activeTab);
+  const sorted = [...groups].sort(currentTab.sort);
 
   const loadGroups = () => {
     setLoading(true);
