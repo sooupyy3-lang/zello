@@ -198,6 +198,18 @@ public class AiCoachingService {
                 .toList();
     }
 
+    @Transactional
+    public void applyRoutine(Long userId, Long logId) {
+        AiCoachingLog log = aiLogRepo.findById(logId)
+                .orElseThrow(() -> new RuntimeException("코칭 기록을 찾을 수 없어요"));
+        if (!log.getUser().getId().equals(userId)) {
+            throw new RuntimeException("본인의 코칭 기록만 적용할 수 있어요");
+        }
+        aiLogRepo.findByUserIdAndAppliedTrue(userId)
+                .forEach(prev -> prev.setApplied(false));
+        log.setApplied(true);
+    }
+
     private String extractRoutineJson(String aiResponse) {
         // 기존의 extractRoutineJson 로직을 그대로 사용하시면 됩니다.
         // (Markdown에서 ```json ... ``` 사이의 내용을 추출하는 로직)

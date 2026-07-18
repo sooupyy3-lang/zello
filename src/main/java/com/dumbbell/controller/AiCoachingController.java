@@ -43,4 +43,12 @@ public class AiCoachingController {
         Long userId = (Long) auth.getPrincipal();
         return ResponseEntity.ok(aiService.getCoachingHistory(userId));
     }
+
+    // POST /api/ai/coaching/{logId}/apply — 추천 루틴을 현재 적용 루틴으로 지정
+    @PostMapping("/coaching/{logId}/apply")
+    public ResponseEntity<Void> applyRoutine(Authentication auth, @PathVariable Long logId) {
+        Long userId = (Long) auth.getPrincipal();
+        aiService.applyRoutine(userId, logId);
+        return ResponseEntity.ok().build();
+    }
 }

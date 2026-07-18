@@ -39,6 +39,14 @@ public class FriendController {
         return ResponseEntity.ok(friendService.getPendingRequests(userId));
     }
 
+    // POST /api/friends/by-nickname?nickname= — 닉네임으로 친구 요청
+    @PostMapping("/by-nickname")
+    public ResponseEntity<FriendResponse> sendRequestByNickname(Authentication auth,
+                                                                  @RequestParam String nickname) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(friendService.sendRequestByNickname(userId, nickname));
+    }
+
     // POST /api/friends/{targetId} — 친구 요청 보내기
     @PostMapping("/{targetId}")
     public ResponseEntity<FriendResponse> sendRequest(Authentication auth,

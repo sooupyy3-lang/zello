@@ -8,16 +8,6 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleKakaoLogin = async () => {
-    try {
-      const redirectUri = `${window.location.origin}/kakao/callback`;
-      const { url } = await getKakaoLoginUrl(redirectUri);
-      window.location.href = url;
-    } catch (e) {
-      setError('카카오 로그인을 시작할 수 없어요.');
-    }
-  };
-
   const handleLogin = async () => {
     if (!userId) { setError('유저 ID를 입력해주세요'); return; }
     setLoading(true);
@@ -29,6 +19,16 @@ function Login() {
       setError('로그인에 실패했어요. ID를 확인해주세요.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleKakaoLogin = async () => {
+    try {
+      const redirectUri = `${window.location.origin}/kakao/callback`;
+      const { url } = await getKakaoLoginUrl(redirectUri);
+      window.location.href = url;
+    } catch (e) {
+      setError('카카오 로그인을 시작할 수 없어요.');
     }
   };
 

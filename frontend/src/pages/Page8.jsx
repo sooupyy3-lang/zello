@@ -1,36 +1,38 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
 import { updateTrack, endSession, getLatestCoaching, getActiveFriends } from '../api';
-
-// 알림 권한 요청 헬퍼
-function requestNotificationPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-}
-
-function sendNotification(title, body) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body, icon: '/vite.svg' });
-  }
+function formatElapsedSince(startedAt) {
+  if (!startedAt) return '-';
+  const diffSec = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
+  const h = Math.floor(diffSec / 3600);
+  const m = Math.floor((diffSec % 3600) / 60);
+  const s = diffSec % 60;
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
 function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const navigate = useNavigate();
   const sessionData = selectedExercise?.sessionData;
   const tracks = sessionData?.tracks || [];
-  const goalNotifiedRef = useRef(false);
 
   const [trackElapsed, setTrackElapsed] = useState({});
   const [playing, setPlaying] = useState({});
   const [aiRoutine, setAiRoutine] = useState([]);
   const [activeFriends, setActiveFriends] = useState([]);
 
-  // 알림 권한 요청 (운동 시작 시)
+  // 서버에서 복원된 세션(새로고침/재실행 포함)의 트랙별 진행 상태 반영
   useEffect(() => {
-    requestNotificationPermission();
-  }, []);
+    if (!tracks.length) return;
+    const initialElapsed = {};
+    const initialPlaying = {};
+    tracks.forEach((t) => {
+      initialElapsed[t.trackId] = t.elapsedSec || 0;
+      initialPlaying[t.trackId] = t.status === 'running';
+    });
+    setTrackElapsed(initialElapsed);
+    setPlaying(initialPlaying);
+  }, [sessionData?.sessionId]);
 
   // 서버에서 복원된 세션(새로고침/재실행 포함)의 트랙별 진행 상태 반영
   useEffect(() => {
@@ -65,15 +67,6 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
       })
       .catch(() => {});
   }, []);
-
-  // 목표 달성 알림 (세션의 목표 시간 도달 시)
-  useEffect(() => {
-    const goalSec = sessionData?.goalDurationMin ? sessionData.goalDurationMin * 60 : null;
-    if (goalSec && elapsed >= goalSec && !goalNotifiedRef.current) {
-      goalNotifiedRef.current = true;
-      sendNotification('🎉 목표 달성!', `목표 운동 시간 ${sessionData.goalDurationMin}분을 달성했어요!`);
-    }
-  }, [elapsed]);
 
   useEffect(() => {
     setIsRunning(Object.values(playing).some((v) => v));
@@ -133,7 +126,6 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
       await Promise.all(pausePromises);
       await endSession();
     } catch (e) {}
-    sendNotification('운동 완료! 💪', `${formatTime(elapsed)} 동안 운동했어요. 수고했어요!`);
     navigate('/Page3');
   };
 
@@ -259,7 +251,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
         gap: 12,
       }}>
         {displayItems.map((item) => {
-          // ✅ Fix 2: togglePlay와 동일한 방식으로 key 추출
+          //  togglePlay와 동일한 방식으로 key 추출
           const key = item.id !== null ? item.id : item.name;
           const isPlaying = !!playing[key];
           const timeRecorded = trackElapsed[key] || 0;
@@ -289,7 +281,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {/* ✅ Fix 2: 정지 시 누적 시간, 재생 중엔 "진행중" */}
+                {/* 정지 시 누적 시간, 재생 중엔 "진행중" */}
                 <div style={{
                   backgroundColor: '#E6EEFF',
                   display: 'flex',
@@ -306,7 +298,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
                   {isPlaying ? '진행중' : formatTime(timeRecorded)}
                 </div>
 
-                {/* ✅ Fix 3: background / backgroundColor 모두 transparent, appearance 초기화 */}
+                {/*  background / backgroundColor 모두 transparent, appearance 초기화 */}
                 <button
                   onClick={() => togglePlay(item)}
                   style={{
@@ -363,33 +355,47 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '20px 8px',
         }}>
-          {activeFriends.length === 0 ? (
-            <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#ADB5BD', fontSize: 13, margin: 0 }}>
-              운동 중인 친구가 없어요
-            </p>
-          ) : activeFriends.slice(0, 8).map((friend) => {
-            const workoutSec = Math.floor((Date.now() - new Date(friend.startedAt).getTime()) / 1000);
-            return (
-              <div key={friend.userId} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+          {activeFriends.length === 0 && (
+  <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: 13, color: '#ADB5BD', margin: 0 }}>
+    지금 운동 중인 친구가 없어요.
+  </p>
+)}
+{activeFriends.slice(0, 8).map((friend) => (
+  <div key={friend.userId} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+    <div style={{ width: 52, height: 52, borderRadius: '50%', backgroundColor: '#ffffff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <svg width="53" height="53" viewBox="0 0 53 53" fill="none">
+<path
+  fillRule="evenodd"
+  clipRule="evenodd"
+  d="M52.5 26.25C52.5 40.7479 40.7479 52.5 26.25 52.5C11.7521 52.5 0 40.7479 0 26.25C0 11.7521 11.7521 0 26.25 0C40.7479 0 52.5 11.7521 52.5 26.25ZM34.125 18.375C34.125 20.4636 33.2953 22.4666 31.8185 23.9435C30.3416 25.4203 28.3386 26.25 26.25 26.25C24.1614 26.25 22.1584 25.4203 20.6815 23.9435C19.2047 22.4666 18.375 20.4636 18.375 18.375C18.375 16.2864 19.2047 14.2834 20.6815 12.8065C22.1584 11.3297 24.1614 10.5 26.25 10.5C28.3386 10.5 30.3416 11.3297 31.8185 12.8065C33.2953 14.2834 34.125 16.2864 34.125 18.375ZM26.25 48.5625C30.7552 48.5697 35.1561 47.2065 38.8684 44.6539C40.4539 43.5645 41.1311 41.4907 40.2071 39.8029C38.2987 36.3037 34.3612 34.125 26.25 34.125C18.1388 34.125 14.2013 36.3037 12.2903 39.8029C11.3689 41.4907 12.0461 43.5645 13.6316 44.6539C17.3439 47.2065 21.7448 48.5697 26.25 48.5625Z"
+  fill="#1E59DA"
+/>      </svg>
+    </div>
+   
+    <span style={{ fontSize: 10, fontWeight: '700', color: '#1E59DA' }}>
+      {formatElapsedSince(friend.startedAt)}
+      </span>
+    
+
+              <span style={{
+                fontSize: 11,
+                fontWeight: '600',
+                color: friend.todayDone ? '#1E59DA' : '#ADB5BD',
+                whiteSpace: 'nowrap',
               }}>
-                <div style={{
-                  width: 52, height: 52, borderRadius: '50%',
-                  backgroundColor: '#1E59DA',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, fontWeight: '700', color: '#ffffff',
-                }}>
-                  {friend.name[0]}
-                </div>
-                <span style={{ fontSize: 11, fontWeight: '600', color: '#1E59DA', whiteSpace: 'nowrap' }}>
-                  {friend.name}
-                </span>
-                <span style={{ fontSize: 10, fontWeight: '700', color: '#1E59DA' }}>
-                  {formatTime(workoutSec)}
-                </span>
-              </div>
-            );
-          })}
+                {friend.name}
+              </span>
+
+              <span style={{
+                fontSize: 10,
+                fontWeight: '700',
+                color: friend.todayDone ? '#1E59DA' : '#ADB5BD',
+              }}>
+                1:45:04
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 

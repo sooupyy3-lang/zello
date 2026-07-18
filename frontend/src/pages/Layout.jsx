@@ -1,8 +1,8 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import HomeIcon from '../assets/Icon/HomeIcon.png';
-import CalendarIcon from '../assets/Icon/CalendarIcon.png';
-import AiIcon from '../assets/Icon/AiIcon.png';
-import MypageIcon from '../assets/Icon/MypageIcon.png';
+import HomeIcon from '../assets/Icon/HomeIcon.svg';
+import CalendarIcon from '../assets/Icon/CalendarIcon.svg';
+import AiIcon from '../assets/Icon/AiIcon.svg';
+import MypageIcon from '../assets/Icon/MypageIcon.svg';
 
 function Layout() {
   const navigate = useNavigate();
@@ -10,7 +10,7 @@ function Layout() {
   const navItems = [
     {  icon: HomeIcon, path: '/Page3', label: '홈' },
     { icon: CalendarIcon, path: '/Calendar', label: '캘린더' },
-    {  icon: AiIcon, path: '/AiCoach', label: 'AI코치'},
+    {  icon: AiIcon, path: '/Group', label: '운동모임'},
     {  icon: MypageIcon, path: '/MyPage',label: '마이페이지' },
   ];
 
@@ -52,14 +52,23 @@ function Layout() {
               onClick={() => navigate(item.path)}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',padding: '8px 0',flex: 1
                 
               }}
             >
               <img src={item.icon} alt={item.label} style={{ width: '28px', height: '28px', objectFit: 'contain', filter: isActive 
         ? 'brightness(0) saturate(100%) invert(35%) sepia(80%) saturate(500%) hue-rotate(163deg) brightness(90%)'
-        : 'brightness(0) saturate(100%) invert(14%) sepia(29%) saturate(1200%) hue-rotate(163deg) brightness(94%) contrast(97%)'  
+        : 'none'  
     }}  />
+    {/* 라벨 텍스트 추가 */}
+      <span style={{
+        fontSize: '11px',
+        fontWeight: isActive ? '700' : '500',
+        color: isActive ? '#1E59DA' : '#94A3B8', // 활성화 시 아이콘 필터 색상과 맞춤
+        transition: 'color 0.2s'
+      }}>
+        {item.label}
+      </span>
               
             </button>
           );

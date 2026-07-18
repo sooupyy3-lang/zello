@@ -1,15 +1,16 @@
-import AiImage from '../assets/Components/AiCoach.svg';
 import GhostImg from '../assets/Components/GhostBody.svg';
 import Uploadimg from '../assets/Icon/UploadIcon.svg';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { requestAiCoaching } from '../api';
+import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
+
 
 function AiUpload() {
   const navigate = useNavigate();
   const location = useLocation();
-  const name = location.state?.name || "사용자";
+const username = location.state?.name || getUserName() || "사용자";  
   const [selectedFile, setSelectedFile] = useState(null);
   const [bodyDescription, setBodyDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,7 @@ function AiUpload() {
     const file = e.target.files[0];
     if (file) setSelectedFile(file);
   };
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -37,12 +39,48 @@ function AiUpload() {
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', aspectRatio: '402 / 974', backgroundColor: '#ffffff' }}>
+     <div style={{ 
+                width: '100%', 
+                maxWidth: '450px',
+                margin: '0 auto',
+                height: '100%', 
+                backgroundColor: '#fff', 
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                
 
-      {/* 배경 이미지 */}
-      <img src={AiImage} alt="background"
-        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }} />
-
+            }}>
+                {/* ── 1. 상단 헤더 ── */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '78px 20px 20px',
+                    position: 'relative',
+                    backgroundColor: '#FFFFFF',
+                    boxSizing: 'border-box',
+                    boxShadow:'0 4px 4px 0 rgba(0, 0, 0, 0.09)'
+                }}>
+                    <div style={{ 
+        position: 'absolute', 
+        left: '20px', 
+        display: 'flex', 
+        alignItems: 'center' 
+    }}>
+        <HamburgerButton onOpen={() => setMenuOpen(true)} />
+    </div>
+                    <h1 style={{ 
+        flex: 1, 
+        fontSize: '20px', 
+        fontWeight: '800', 
+        color: '#333D4B', 
+        margin: 0, 
+        textAlign: 'center' 
+    }}>
+        체형 기반 AI 코칭 받기
+    </h1>
+</div>
       {/* 파일 input */}
       <input id="fileInput" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
 
@@ -99,7 +137,7 @@ function AiUpload() {
       {/* 파일 선택 표시 - top: 610/974=62.6% */}
       {selectedFile && (
         <p style={{
-          position: 'absolute', top: '65%', left: '5%', right: '5%',
+          position: 'absolute', top: '63%', left: '5%', right: '5%',
           fontSize: 'clamp(11px, 3.2vw, 13px)', color: '#002738',
           textAlign: 'center', margin: 0, zIndex: 1,
         }}>
@@ -114,7 +152,7 @@ function AiUpload() {
         onChange={(e) => setBodyDescription(e.target.value)}
         style={{
           position: 'absolute',
-          top:`calc(649/874*100%)`, left:`calc(40/402*100%)` ,
+          top:`calc(655/874*100%)`, left:`calc(40/402*100%)` ,
           width: '79.6%',    // 320/402
           height: '12.3%',   // 120/974
           backgroundColor: '#E9EAEF',
@@ -130,7 +168,7 @@ function AiUpload() {
       {/* 에러 메시지 - top: 740/974=76% */}
       {error && (
         <p style={{
-          position: 'absolute', top: '88%', left: '10.2%',
+          position: 'absolute', top: '87%', left: '10.2%',
           color: '#e53e3e', fontSize: 'clamp(12px, 3.5vw, 14px)',
           margin: 0, zIndex: 1,
         }}>
@@ -152,16 +190,19 @@ function AiUpload() {
           borderRadius: '14px', border: 'none',
           boxShadow: '0px 4px 8px rgba(0,0,0,0.15)',
           color: '#FFFFFF', fontSize: '16px',
-          fontWeight: '400', fontFamily: 'inherit',
+          fontWeight: '600', fontFamily: 'inherit',
           cursor: loading ? 'default' : 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'all 0.1s ease-in-out', zIndex: 1,
         }}>
         {loading ? '분석 중...' : '내 체형 및 정보 업로드 하기'}
       </button>
-
-    </div>
+     {menuOpen && (
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
+)}</div>
+    
   );
+  
 }
 
 export default AiUpload;

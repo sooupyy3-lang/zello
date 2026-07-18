@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface AiCoachingLogRepository extends JpaRepository<AiCoachingLog, Long> {
     Optional<AiCoachingLog> findTopByUserIdOrderByCreatedAtDesc(Long userId);
     List<AiCoachingLog> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<AiCoachingLog> findByUserIdAndAppliedTrue(Long userId);
 }

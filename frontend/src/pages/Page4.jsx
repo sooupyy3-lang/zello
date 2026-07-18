@@ -1,32 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackForward from '../assets/Icon/BackForward.svg';
-import { getExercises, getExerciseCategories, startSession } from '../api';
+import { getExercises, startSession } from '../api';
 
 function Page4({ setSelectedExercise }) {
   const navigate = useNavigate();
   const [openCategory, setOpenCategory] = useState(null);
-  const [selectedSubs, setSelectedSubs] = useState([]);
+  const [selectedSubs, setSelectedSubs] = useState([]); // ⭐ 다중 선택을 위한 배열 처리
   const [exerciseTypes, setExerciseTypes] = useState([]);
-  const [categoryData, setCategoryData] = useState({});
   const [loading, setLoading] = useState(false);
 
+  const EXERCISE_DATA = {
+    running: { label: '러닝', category: '러닝', items: [{ name: '걷기' }, { name: '달리기' }] },
+    health: { label: '헬스', category: '헬스', items: [{ name: '상체' }, { name: '하체' }, { name: '코어' }, { name: '유산소' }] },
+    home: { label: '홈트', category: '홈트', items: [{ name: '전신' }, { name: '상체' }, { name: '하체' }, { name: '코어' }] },
+    yoga: { label: '요가', category: '요가', items: [{ name: '스트레칭' }, { name: '밸런스' }, { name: '유연성' }] },
+    pilates: { label: '필라테스', category: '필라테스', items: [{ name: '코어' }, { name: '전신' }] },
+    cardio: { label: '유산소', category: '유산소', items: [{ name: '자전거' }, { name: '줄넘기' }, { name: '계단' }] },
+    sports: { label: '스포츠', category: '스포츠', items: [{ name: '구기' }, { name: '라켓' }] },
+    swimming: { label: '수영', category: '수영', items: [{ name: '전신' }] },
+    etc: { label: '기타', category: '기타', items: [{ name: '기타' }] }
+  };
+
   useEffect(() => {
-    Promise.all([getExerciseCategories(), getExercises()])
-      .then(([categories, exercises]) => {
-        setExerciseTypes(exercises);
-        const data = {};
-        categories.forEach(cat => {
-          const key = cat;
-          data[key] = {
-            label: cat,
-            category: cat,
-            items: exercises.filter(e => e.category === cat).map(e => ({ name: e.name, id: e.id }))
-          };
-        });
-        setCategoryData(data);
-      })
-      .catch(() => {});
+    getExercises().then(setExerciseTypes).catch(() => {});
   }, []);
 
   // ⭐ 다중 선택 토글 함수
@@ -83,9 +80,9 @@ function Page4({ setSelectedExercise }) {
       </div>
 
       <div style={styles.grid}>
-        {Object.entries(categoryData).map(([key, ue]) => {
+        {Object.entries(EXERCISE_DATA).map(([key, ue]) => {
           const isOpen = openCategory === key;
-          const isFullWidth = key === '기타';
+          const isFullWidth = key === 'etc';
           // 해당 카테고리에 하나라도 선택된 게 있는지 확인
           const hasSelectedInThisCategory = selectedSubs.some(s => s.parent === key);
 
@@ -93,7 +90,7 @@ function Page4({ setSelectedExercise }) {
             <div key={key} style={{ gridColumn: isFullWidth ? '1 / -1' : 'auto', position: 'relative' }}>
               <div 
                 onClick={() => {
-                  if (key === '기타') {
+                  if (key === 'etc') {
                     toggleSelect(ue.items[0], key, ue.label);
                   } else {
                     setOpenCategory(isOpen ? null : key);
@@ -107,14 +104,14 @@ function Page4({ setSelectedExercise }) {
                 }}
               >
                 <span style={styles.categoryLabel}>{ue.label}</span>
-                {key !== '기타' && (
+                {key !== 'etc' && (
                   <div style={styles.arrowBtn}>
                     <span style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', display: 'block' }}>▼</span>
                   </div>
                 )}
               </div>
 
-              {key !== '기타' && isOpen && (
+              {key !== 'etc' && isOpen && (
                 <div style={styles.dropdown}>
                   {ue.items.map((item, idx) => {
                     const isItemSelected = selectedSubs.some(s => s.name === item.name && s.parent === key);
