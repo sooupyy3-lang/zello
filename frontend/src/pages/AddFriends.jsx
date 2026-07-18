@@ -3,9 +3,11 @@ import { HamburgerButton } from '../pages/HamburgerMenu.jsx';
 import { HamburgerPanel } from '../pages/HamburgerMenu.jsx';
 import { getMyGroups, sendFriendRequestByNickname, joinGroupByCode } from '../api';
 import { getUserName } from '../api';
+import { useLocation } from 'react-router-dom';
 
 
 function AddFriends() {
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
@@ -15,6 +17,7 @@ function AddFriends() {
   const [myGroups, setMyGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(true);
   const currentGroup = myGroups[groupIndex] ?? null;
+  
 const userName = location.state?.name || getUserName() || "사용자";
 
   useEffect(() => {
