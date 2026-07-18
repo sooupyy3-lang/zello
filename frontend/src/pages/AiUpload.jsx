@@ -3,7 +3,7 @@ import Uploadimg from '../assets/Icon/UploadIcon.svg';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { requestAiCoaching } from '../api';
+import { requestAiCoaching,getUserName  } from '../api';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
 
 
@@ -90,7 +90,7 @@ const username = location.state?.name || getUserName() || "사용자";
         color: '#002738',
         fontSize: '15px', margin: 0, zIndex: 1,
       }}>
-        {name}님의 체형 사진과 체형 고민을 추가해 주세요
+        {username}님의 체형 사진과 체형 고민을 추가해 주세요
       </p>
 
       {/* 안내 텍스트2 - top: 180/974=18.5% */}
@@ -147,7 +147,7 @@ const username = location.state?.name || getUserName() || "사용자";
 
       {/* textarea - top: 650/974=66.7% */}
       <textarea
-        placeholder={`${name}님의 체형 특징과 고민을 적어주세요`}
+        placeholder={`${username}님의 체형 특징과 고민을 적어주세요`}
         value={bodyDescription}
         onChange={(e) => setBodyDescription(e.target.value)}
         style={{
