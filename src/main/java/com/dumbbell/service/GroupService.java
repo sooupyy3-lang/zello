@@ -7,6 +7,10 @@ import com.dumbbell.entity.Group;
 import com.dumbbell.entity.GroupMember;
 import com.dumbbell.entity.User;
 import com.dumbbell.entity.WorkoutSession;
+import com.dumbbell.exception.BadRequestException;
+import com.dumbbell.exception.ConflictException;
+import com.dumbbell.exception.ForbiddenException;
+import com.dumbbell.exception.NotFoundException;
 import com.dumbbell.repository.GroupMemberRepository;
 import com.dumbbell.repository.GroupRepository;
 import com.dumbbell.repository.UserRepository;
@@ -84,7 +88,7 @@ public class GroupService {
     @Transactional(readOnly = true)
     public GroupResponse getGroup(Long groupId, Long userId) {
         Group group = groupRepo.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("그룹을 찾을 수 없어요"));
+                .orElseThrow(() -> new NotFoundException("그룹을 찾을 수 없어요"));
         return toDto(group, userId);
     }
 
@@ -92,14 +96,14 @@ public class GroupService {
     @Transactional
     public GroupResponse joinByInviteCode(Long userId, String inviteCode) {
         Group group = groupRepo.findByInviteCode(inviteCode)
-                .orElseThrow(() -> new RuntimeException("유효하지 않은 초대 코드예요"));
+                .orElseThrow(() -> new NotFoundException("유효하지 않은 초대 코드예요"));
 
         if (groupMemberRepo.existsByGroupIdAndUserId(group.getId(), userId))
-            throw new RuntimeException("이미 가입된 그룹이에요");
+            throw new ConflictException("이미 가입된 그룹이에요");
 
         int currentCount = groupMemberRepo.countByGroupId(group.getId());
         if (group.getMaxMembers() != null && currentCount >= group.getMaxMembers())
-            throw new RuntimeException("정원이 가득 찼어요");
+            throw new ConflictException("정원이 가득 찼어요");
 
         User user = userRepo.findById(userId).orElseThrow();
         GroupMember member = GroupMember.builder()
@@ -116,10 +120,10 @@ public class GroupService {
     @Transactional
     public void leaveGroup(Long groupId, Long userId) {
         GroupMember member = groupMemberRepo.findByGroupIdAndUserId(groupId, userId)
-                .orElseThrow(() -> new RuntimeException("그룹 멤버가 아니에요"));
+                .orElseThrow(() -> new ForbiddenException("그룹 멤버가 아니에요"));
 
         if (member.getRole() == GroupMember.MemberRole.owner)
-            throw new RuntimeException("방장은 탈퇴할 수 없어요. 그룹을 삭제하거나 방장을 위임하세요");
+            throw new ConflictException("방장은 탈퇴할 수 없어요. 그룹을 삭제하거나 방장을 위임하세요");
 
         groupMemberRepo.delete(member);
     }
@@ -128,7 +132,7 @@ public class GroupService {
     @Transactional
     public GroupResponse updateGroup(Long groupId, Long userId, GroupRequest req) {
         Group group = groupRepo.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("그룹을 찾을 수 없어요"));
+                .orElseThrow(() -> new NotFoundException("그룹을 찾을 수 없어요"));
 
         checkOwner(groupId, userId);
 
@@ -148,10 +152,10 @@ public class GroupService {
         checkOwner(groupId, ownerId);
 
         if (ownerId.equals(targetUserId))
-            throw new RuntimeException("자기 자신을 내보낼 수 없어요");
+            throw new BadRequestException("자기 자신을 내보낼 수 없어요");
 
         GroupMember member = groupMemberRepo.findByGroupIdAndUserId(groupId, targetUserId)
-                .orElseThrow(() -> new RuntimeException("해당 멤버가 없어요"));
+                .orElseThrow(() -> new NotFoundException("해당 멤버가 없어요"));
 
         groupMemberRepo.delete(member);
     }
@@ -160,7 +164,7 @@ public class GroupService {
     @Transactional
     public void deleteGroup(Long groupId, Long userId) {
         Group group = groupRepo.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("그룹을 찾을 수 없어요"));
+                .orElseThrow(() -> new NotFoundException("그룹을 찾을 수 없어요"));
 
         checkOwner(groupId, userId);
 
@@ -174,12 +178,12 @@ public class GroupService {
         checkOwner(groupId, userId);
 
         if (userId.equals(newOwnerId))
-            throw new RuntimeException("본인에게는 위임할 수 없어요");
+            throw new BadRequestException("본인에게는 위임할 수 없어요");
 
         GroupMember currentOwner = groupMemberRepo.findByGroupIdAndUserId(groupId, userId)
-                .orElseThrow(() -> new RuntimeException("그룹 멤버가 아니에요"));
+                .orElseThrow(() -> new ForbiddenException("그룹 멤버가 아니에요"));
         GroupMember newOwner = groupMemberRepo.findByGroupIdAndUserId(groupId, newOwnerId)
-                .orElseThrow(() -> new RuntimeException("위임 대상이 그룹 멤버가 아니에요"));
+                .orElseThrow(() -> new NotFoundException("위임 대상이 그룹 멤버가 아니에요"));
 
         currentOwner.setRole(GroupMember.MemberRole.member);
         newOwner.setRole(GroupMember.MemberRole.owner);
@@ -194,7 +198,7 @@ public class GroupService {
     @Transactional(readOnly = true)
     public List<ActiveFriendResponse> getActiveMembers(Long groupId, Long userId) {
         if (!groupMemberRepo.existsByGroupIdAndUserId(groupId, userId))
-            throw new RuntimeException("그룹 멤버가 아니에요");
+            throw new ForbiddenException("그룹 멤버가 아니에요");
 
         return sessionRepo.findActiveGroupMemberSessions(groupId).stream()
                 .map(this::toActiveMemberDto)
@@ -216,9 +220,9 @@ public class GroupService {
     // ── 방장 확인 ────────────────────────────────────────
     private void checkOwner(Long groupId, Long userId) {
         GroupMember me = groupMemberRepo.findByGroupIdAndUserId(groupId, userId)
-                .orElseThrow(() -> new RuntimeException("그룹 멤버가 아니에요"));
+                .orElseThrow(() -> new ForbiddenException("그룹 멤버가 아니에요"));
         if (me.getRole() != GroupMember.MemberRole.owner)
-            throw new RuntimeException("방장만 가능한 작업이에요");
+            throw new ForbiddenException("방장만 가능한 작업이에요");
     }
 
     // ── DTO 변환 ─────────────────────────────────────────
