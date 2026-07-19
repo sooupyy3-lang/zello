@@ -1,5 +1,7 @@
 import { useState,useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import Backimg from '../assets/Icon/BackForward.svg';
+
 import { getGroup, updateGroup, kickGroupMember, leaveGroup, getUserId, getGroupActiveMembers, deleteGroup, delegateGroupOwner } from '../api';
 const AVATAR_COLORS = ['#BFE8F8', '#D4F1D4', '#FFE5C4', '#E8E0FF', '#FFD6E0'];
 
@@ -531,10 +533,8 @@ export default function Groupdetail() {
       <div style={{ 
         height: '149px', display: 'flex', alignItems: 'center', padding: '0 25px', position: 'relative' 
       }}>
-       <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, zIndex: 1 }}>
-    <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
-      <path d="M5 5L15 15M15 5L5 15" stroke="#333D4B" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
+      <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, zIndex: 1 }}>
+    <img src={Backimg} alt="back" style={{ width: '24px', height: '24px', opacity: 0.4 }} />
   </button>
         <h1 style={{
           position: 'absolute', left: 0, right: 0, textAlign: 'center',
