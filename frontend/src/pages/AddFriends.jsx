@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 
 
 function AddFriends() {
+    const location = useLocation();                     
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
