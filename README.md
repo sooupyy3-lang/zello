@@ -64,7 +64,6 @@ jwt.secret: 256비트 이상의 랜덤 문자열로 교체
 ```bash
 ./gradlew bootRun
 ```
-JPA `ddl-auto: update` 로 설정되어 있어 테이블이 자동 생성됩니다.
 
 ### 4. 시드 데이터 삽입
 ```bash
