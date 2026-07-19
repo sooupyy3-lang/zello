@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
-import { updateTrack, endSession, getLatestCoaching, getActiveFriends } from '../api';
+import { updateTrack, endSession, getAppliedCoaching, getActiveFriends } from '../api';
 function formatElapsedSince(startedAt) {
   if (!startedAt) return '-';
   const diffSec = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
@@ -75,7 +75,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise, endWorkoutSession }) {
   }, []);
 
   useEffect(() => {
-    getLatestCoaching()
+    getAppliedCoaching()
       .then(data => {
         if (data?.recommendedRoutine) {
           const parsed = JSON.parse(data.recommendedRoutine);

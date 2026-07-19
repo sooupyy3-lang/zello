@@ -112,6 +112,8 @@ export async function requestAiCoaching(bodyDescription, imageFile) {
 
 // GET /api/ai/coaching/latest
 export const getLatestCoaching = () => request('GET', '/api/ai/coaching/latest');
+// GET /api/ai/coaching/applied — 현재 적용(선택)된 루틴
+export const getAppliedCoaching = () => request('GET', '/api/ai/coaching/applied');
 export const applyCoachingRoutine = (logId) =>
   request('POST', `/api/ai/coaching/${logId}/apply`);
 // ── User ───────────────────────────────────────────────

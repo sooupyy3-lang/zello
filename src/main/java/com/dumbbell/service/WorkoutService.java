@@ -67,8 +67,9 @@ public class WorkoutService {
                             .build();
                 }).collect(Collectors.toList());
 
-        // 최근 AI 추천 루틴 요약
-        String aiSummary = aiLogRepo.findTopByUserIdOrderByCreatedAtDesc(userId)
+        // 현재 적용된 AI 추천 루틴 요약 (없으면 표시 안 함)
+        String aiSummary = aiLogRepo.findByUserIdAndAppliedTrue(userId).stream()
+                .findFirst()
                 .map(AiCoachingLog::getRecommendedRoutine).orElse(null);
 
         String todayLabel = today.format(DateTimeFormatter.ofPattern("M.d.(E)", Locale.KOREAN));
