@@ -41,7 +41,6 @@ https://github.com/sooupyy3-lang/zello
 - ESLint 9
 
 ### Infra
-- Docker
 - MySQL 8
 
 ---
