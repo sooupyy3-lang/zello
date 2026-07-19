@@ -133,7 +133,6 @@ erDiagram
     }
 ```
 
-상세 컬럼 명세는 [workout_app_schema.md](workout_app_schema.md) 참고 (일부 컬럼은 이후 리팩터링으로 변경됨 — 위 다이어그램이 최신 기준).
 
 ---
 
