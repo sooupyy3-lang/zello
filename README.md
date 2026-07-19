@@ -1,11 +1,11 @@
-# 젤로 (Jello)
+# 젤로 (Zello)
 
-함께하면 열정이 두 배! 함께 운동하는 jello입니다.
-운동 기록, 운동 그룹 참여, ai 운동 루틴 추천 등의 기능을 제공합니다.
+함께하면 열정이 두 배! 함께 운동하는 zello입니다.
+운동 기록, 운동 그룹 참여, ai 운동 루틴 추천 기능을 제공합니다.
 
 ## GitHub 저장소
 
-https://github.com/sooupyy3-lang/jello
+https://github.com/sooupyy3-lang/zello
 
 ---
 
@@ -64,7 +64,6 @@ jwt.secret: 256비트 이상의 랜덤 문자열로 교체
 ```bash
 ./gradlew bootRun
 ```
-JPA `ddl-auto: update` 로 설정되어 있어 테이블이 자동 생성됩니다.
 
 ### 4. 시드 데이터 삽입
 ```bash

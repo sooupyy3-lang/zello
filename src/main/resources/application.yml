@@ -21,7 +21,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 31536000000
+  expiration: 604800000
 
 server:
   port: ${PORT:8080}
