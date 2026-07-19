@@ -238,6 +238,10 @@ export const getGroup = (groupId) => request('GET', `/api/groups/${groupId}`);
 export const joinGroupByCode = (inviteCode) =>
   request('POST', `/api/groups/join?inviteCode=${encodeURIComponent(inviteCode)}`);
 
+// POST /api/groups/:groupId/join — 그룹 탐색(검색)에서 바로 가입 (초대코드 불필요)
+export const joinGroupById = (groupId) =>
+  request('POST', `/api/groups/${groupId}/join`);
+
 // DELETE /api/groups/:groupId/leave — 그룹 탈퇴
 export const leaveGroup = (groupId) =>
   request('DELETE', `/api/groups/${groupId}/leave`);
