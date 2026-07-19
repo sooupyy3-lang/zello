@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +44,6 @@ public class GroupService {
                 .category(req.getCategory())
                 .goal(req.getGoal())
                 .maxMembers(req.getMaxMembers())
-                .createdBy(user)
                 .build();
         groupRepo.save(group);
 
@@ -64,24 +64,38 @@ public class GroupService {
                 ? groupRepo.searchByKeyword(keyword)
                 : groupRepo.findAll();
 
+        Map<Long, List<GroupMember>> membersByGroup = fetchMembersByGroup(
+                groups.stream().map(Group::getId).collect(Collectors.toList()));
+
         Comparator<Group> comparator = switch (sort != null ? sort : "recent") {
             case "members" -> Comparator.comparingInt(
-                    (Group g) -> groupMemberRepo.countByGroupId(g.getId())).reversed();
+                    (Group g) -> membersByGroup.getOrDefault(g.getId(), List.of()).size()).reversed();
             default -> Comparator.comparing(Group::getCreatedAt).reversed();
         };
 
         return groups.stream()
                 .sorted(comparator)
-                .map(g -> toDto(g, userId))
+                .map(g -> toDto(g, userId, membersByGroup.getOrDefault(g.getId(), List.of())))
                 .collect(Collectors.toList());
     }
 
     // ── 내 그룹 목록 ──────────────────────────────────────
     @Transactional(readOnly = true)
     public List<GroupResponse> getMyGroups(Long userId) {
-        return groupMemberRepo.findByUserId(userId).stream()
-                .map(m -> toDto(m.getGroup(), userId))
+        List<GroupMember> myMemberships = groupMemberRepo.findByUserId(userId);
+
+        Map<Long, List<GroupMember>> membersByGroup = fetchMembersByGroup(
+                myMemberships.stream().map(m -> m.getGroup().getId()).collect(Collectors.toList()));
+
+        return myMemberships.stream()
+                .map(m -> toDto(m.getGroup(), userId, membersByGroup.getOrDefault(m.getGroup().getId(), List.of())))
                 .collect(Collectors.toList());
+    }
+
+    private Map<Long, List<GroupMember>> fetchMembersByGroup(List<Long> groupIds) {
+        if (groupIds.isEmpty()) return Map.of();
+        return groupMemberRepo.findByGroupIdIn(groupIds).stream()
+                .collect(Collectors.groupingBy(m -> m.getGroup().getId()));
     }
 
     // ── 그룹 상세 조회 ────────────────────────────────────
@@ -92,12 +106,23 @@ public class GroupService {
         return toDto(group, userId);
     }
 
-    // ── 초대 코드로 가입 ──────────────────────────────────
+    // ── 초대 코드로 가입 (코드를 직접 아는 경우) ──────────
     @Transactional
     public GroupResponse joinByInviteCode(Long userId, String inviteCode) {
         Group group = groupRepo.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new NotFoundException("유효하지 않은 초대 코드예요"));
+        return joinGroup(userId, group);
+    }
 
+    // ── 그룹 탐색(검색)에서 바로 가입 (코드를 모르는 경우) ───────────────────
+    @Transactional
+    public GroupResponse joinByGroupId(Long userId, Long groupId) {
+        Group group = groupRepo.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("그룹을 찾을 수 없어요"));
+        return joinGroup(userId, group);
+    }
+
+    private GroupResponse joinGroup(Long userId, Group group) {
         if (groupMemberRepo.existsByGroupIdAndUserId(group.getId(), userId))
             throw new ConflictException("이미 가입된 그룹이에요");
 
@@ -225,10 +250,13 @@ public class GroupService {
             throw new ForbiddenException("방장만 가능한 작업이에요");
     }
 
-    // ── DTO 변환 ─────────────────────────────────────────
+    // ── DTO 변환 (단일 그룹용 — 멤버 목록을 직접 조회) ────
     private GroupResponse toDto(Group group, Long userId) {
-        List<GroupMember> members = groupMemberRepo.findByGroupId(group.getId());
+        return toDto(group, userId, groupMemberRepo.findByGroupId(group.getId()));
+    }
 
+    // ── DTO 변환 (목록 조회용 — 미리 묶어둔 멤버 목록을 그대로 사용) ──
+    private GroupResponse toDto(Group group, Long userId, List<GroupMember> members) {
         String myRole = members.stream()
                 .filter(m -> m.getUser().getId().equals(userId))
                 .map(m -> m.getRole().name())
@@ -250,7 +278,7 @@ public class GroupService {
                 .goal(group.getGoal())
                 .maxMembers(group.getMaxMembers())
                 .memberCount(members.size())
-                .inviteCode(group.getInviteCode())
+                .inviteCode(myRole != null ? group.getInviteCode() : null) // 멤버만 초대코드 노출
                 .myRole(myRole)
                 .members(memberInfos)
                 .build();

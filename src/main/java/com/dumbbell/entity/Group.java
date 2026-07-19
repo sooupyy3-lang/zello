@@ -31,10 +31,6 @@ public class Group {
     @Column(name = "invite_code", unique = true, length = 20)
     private String inviteCode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
