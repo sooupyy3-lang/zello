@@ -7,6 +7,7 @@ import java.util.List;
 public class HomeResponse {
     private String            today;
     private Integer           streakDays;
+    private Integer           todayDurationSec;
     private Integer           goalDurationMin;
     private Integer           goalCalorie;
     private List<ActiveFriendDto> activeFriends;
