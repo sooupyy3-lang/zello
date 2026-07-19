@@ -110,7 +110,8 @@ public class GroupService {
     // 그룹별 오늘 출석(운동 완료)한 멤버 수
     private Map<Long, Long> fetchAttendanceByGroup(List<Long> groupIds) {
         if (groupIds.isEmpty()) return Map.of();
-        return groupMemberRepo.findTodayAttendeeCountsByGroup(groupIds).stream()
+        LocalDateTime start = LocalDate.now().atStartOfDay();
+        return groupMemberRepo.findTodayAttendeeCountsByGroup(groupIds, start, start.plusDays(1)).stream()
                 .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 
