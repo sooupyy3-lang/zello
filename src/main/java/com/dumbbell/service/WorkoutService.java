@@ -43,6 +43,12 @@ public class WorkoutService {
         // 연속 운동 일수 계산
         int streak = calcStreak(workedOutDates, today);
 
+        // 오늘 끝난 세션들의 누적 시간 (진행 중인 세션은 별도로 클라이언트가 실시간으로 더함)
+        int todayDurationSec = monthSessions.stream()
+                .filter(s -> !s.getIsActive() && s.getStartedAt().toLocalDate().equals(today))
+                .mapToInt(s -> s.getTotalDurationSec() != null ? s.getTotalDurationSec() : 0)
+                .sum();
+
         // 목표
         var goal = goalRepo.findTopByUserIdOrderByUpdatedAtDesc(userId).orElse(null);
 
@@ -70,6 +76,7 @@ public class WorkoutService {
         return HomeResponse.builder()
                 .today(todayLabel)
                 .streakDays(streak)
+                .todayDurationSec(todayDurationSec)
                 .goalDurationMin(goal != null ? goal.getDurationMin() : 0)
                 .goalCalorie(goal != null ? goal.getCalorieTarget() : 0)
                 .activeFriends(activeFriends)

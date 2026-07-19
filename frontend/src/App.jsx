@@ -17,7 +17,7 @@ import AiResultEx from './pages/AiResultEx';
 import AiResultBody from './pages/AiResultBody';
 import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
-import { getToken, getTodaySession, endSession } from './api';
+import { getToken, getTodaySession, endSession, getHome } from './api';
 
 // 이 시간(초) 이상 연속으로 켜져 있으면 타이머를 강제 정지한다 (백엔드의 좀비 세션 자동 종료 기준과 동일)
 const MAX_CONTINUOUS_SEC = 3 * 60 * 60;
@@ -31,16 +31,25 @@ import Groupdetail from './pages/Groupdetail.jsx';
 
 
 function App() {
-  const [elapsed, setElapsed] = useState(0);
+  // elapsed = 오늘 이미 끝낸 세션들의 누적(baseSec) + 지금 진행 중인 세션의 실시간 경과(liveSec)
+  const [baseSec, setBaseSec] = useState(0);
+  const [liveSec, setLiveSec] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState(null);
   const startTimeRef = useRef(null);
   const timerRef    = useRef(null);
   const wakeLockRef = useRef(null);
+  const elapsed = baseSec + liveSec;
+
+  // 오늘 이미 끝낸 세션들의 누적 시간을 서버에서 다시 가져온다 (세션 종료 직후 등)
+  const refreshTodayBase = () => {
+    getHome().then(home => setBaseSec(home?.todayDurationSec || 0)).catch(() => {});
+  };
 
   // ── 앱 재실행 시 서버의 진행 중인 세션 기준으로 타이머 복원 ──
   // (탭을 완전히 닫았다 열거나 새로고침해도, 서버의 started_at으로 정확한 경과시간을 계산)
   useEffect(() => {
+    refreshTodayBase();
     getTodaySession()
       .then(session => {
         if (!session?.isActive || !session.startedAt) return;
@@ -48,11 +57,11 @@ function App() {
         const secs = Math.floor((Date.now() - start) / 1000);
         if (secs >= MAX_CONTINUOUS_SEC) {
           // 3시간 넘게 방치된 세션 — 서버 스케줄러를 기다리지 않고 바로 종료 처리
-          endSession().catch(() => {});
+          endSession().catch(() => {}).finally(refreshTodayBase);
           return;
         }
         startTimeRef.current = start;
-        setElapsed(secs);
+        setLiveSec(secs);
         setSelectedExercise(prev => ({ ...(prev || {}), sessionData: session }));
         setIsRunning(true);
       })
@@ -67,18 +76,18 @@ function App() {
       if (saved && !startTimeRef.current) {
         startTimeRef.current = parseInt(saved);
       } else if (!startTimeRef.current) {
-        startTimeRef.current = Date.now() - elapsed * 1000;
+        startTimeRef.current = Date.now() - liveSec * 1000;
         localStorage.setItem('workoutStartTime', String(startTimeRef.current));
       }
       timerRef.current = setInterval(() => {
         const secs = Math.floor((Date.now() - startTimeRef.current) / 1000);
         if (secs >= MAX_CONTINUOUS_SEC) {
-          setElapsed(MAX_CONTINUOUS_SEC);
+          setLiveSec(MAX_CONTINUOUS_SEC);
           setIsRunning(false);
-          endSession().catch(() => {});
+          endSession().catch(() => {}).finally(refreshTodayBase);
           return;
         }
-        setElapsed(secs);
+        setLiveSec(secs);
       }, 1000);
 
       // 화면 켜짐 유지 (Screen Wake Lock)
@@ -91,6 +100,7 @@ function App() {
       clearInterval(timerRef.current);
       startTimeRef.current = null;
       localStorage.removeItem('workoutStartTime');
+      setLiveSec(0);
       if (wakeLockRef.current) {
         wakeLockRef.current.release().catch(() => {});
         wakeLockRef.current = null;
@@ -105,12 +115,12 @@ function App() {
       if (!document.hidden && isRunning && startTimeRef.current) {
         const secs = Math.floor((Date.now() - startTimeRef.current) / 1000);
         if (secs >= MAX_CONTINUOUS_SEC) {
-          setElapsed(MAX_CONTINUOUS_SEC);
+          setLiveSec(MAX_CONTINUOUS_SEC);
           setIsRunning(false);
-          endSession().catch(() => {});
+          endSession().catch(() => {}).finally(refreshTodayBase);
           return;
         }
-        setElapsed(secs);
+        setLiveSec(secs);
         // Wake Lock은 화면 복귀 시 재취득 필요
         if ('wakeLock' in navigator && !wakeLockRef.current) {
           navigator.wakeLock.request('screen')
@@ -162,6 +172,7 @@ function App() {
               isRunning={isRunning}
               setIsRunning={setIsRunning}
               selectedExercise={selectedExercise}
+              onWorkoutEnded={refreshTodayBase}
             />
             
           } />

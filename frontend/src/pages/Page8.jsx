@@ -11,7 +11,7 @@ function formatElapsedSince(startedAt) {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function Page8({ elapsed, setIsRunning, selectedExercise }) {
+function Page8({ elapsed, setIsRunning, selectedExercise, onWorkoutEnded }) {
   const navigate = useNavigate();
   const sessionData = selectedExercise?.sessionData;
   const tracks = sessionData?.tracks || [];
@@ -161,6 +161,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
       await Promise.all(pausePromises);
       await endSession();
     } catch (e) {}
+    onWorkoutEnded?.();
     navigate('/Page3');
   };
 
