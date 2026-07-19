@@ -2,26 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GhostRunning from '../assets/Components/GhostRunning.png';
 import BackForward from '../assets/Icon/BackForward.svg';
-import { getHome } from '../api';
+import { getHome, getMyStats } from '../api';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 function Calendar() {
   const navigate = useNavigate();
   const [homeData, setHomeData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+
 
   useEffect(() => {
-    getHome()
-      .then(setHomeData)
+    Promise.all([getHome(), getMyStats().catch(() => null)])
+      .then(([home, statsData]) => {
+        setHomeData(home);
+        setStats(statsData);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+    const workedOutDateSet = new Set(homeData?.workedOutDates ?? []);
+
 
   const streakDays = homeData?.streakDays || 0;
 
   const today = new Date(); // 실제 오늘 날짜
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+    const isRealCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
+
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -128,14 +137,29 @@ function Calendar() {
         <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '12px', color: '#1A1A1A' }}>목표</h3>
         <div style={{ backgroundColor: '#ffffff', borderRadius: '24px', padding: '24px', boxSizing: 'border-box' }}>
           <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '700' }}>{streakDays}일째 운동중</h4>
-          <p style={{ margin: 0, fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
-            목표 시간까지 <span style={{ fontWeight: '700' }}>1시간</span> 남았습니다<br />
-            목표 칼로리까지 <span style={{ fontWeight: '700' }}>312칼로리</span> 남았습니다
-          </p>
+          {stats ? (
+            <p style={{ margin: 0, fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
+              {stats.remainDurationMin > 0 ? (
+                <>오늘의 목표 시간까지 <span style={{ fontWeight: '700' }}>
+                  {Math.floor(stats.remainDurationMin / 60) > 0 ? `${Math.floor(stats.remainDurationMin / 60)}시간 ` : ''}
+                  {stats.remainDurationMin % 60}분
+                </span> 남았습니다<br /></>
+              ) : (
+                <>오늘의 목표 시간을 <span style={{ fontWeight: '700' }}>달성했어요!</span><br /></>
+              )}
+              {stats.remainCalories > 0 ? (
+                <>오늘의 목표 칼로리까지 <span style={{ fontWeight: '700' }}>{Math.round(stats.remainCalories)}칼로리</span> 남았습니다</>
+              ) : (
+                <>오늘의 목표 칼로리를 <span style={{ fontWeight: '700' }}>달성했어요!</span></>
+              )}
+            </p>
+          ) : (
+            <p style={{ margin: 0, fontSize: '13px', color: '#AAA' }}>목표 진행률을 불러오지 못했어요.</p>
+          )}
           <div style={{ marginTop: '24px' }}>
-            <span style={{ fontSize: '11px', color: '#2563EB', fontWeight: '800' }}>진행률</span>
+            <span style={{ fontSize: '11px', color: '#2563EB', fontWeight: '800' }}>금주의 진행률</span>
             <div style={{ width: '100%', height: '8px', backgroundColor: '#EDF2F7', borderRadius: '4px', marginTop: '8px', overflow: 'hidden' }}>
-              <div style={{ width: '65%', height: '100%', backgroundColor: '#2563EB', borderRadius: '4px' }} />
+              <div style={{ width: `${Math.min(100, Math.max(0, stats?.goalProgressPercent ?? 0))}%`, height: '100%', backgroundColor: '#2563EB', borderRadius: '4px' }} />
             </div>
           </div>
         </div>

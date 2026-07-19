@@ -1,19 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { joinGroupById } from '../api';
 
-// ── 더미 데이터 ──────────────────────────────────────
-const DUMMY_GROUP = {
-  name: '하체 집중 모임',
-  desc: '매일 아침 7시, 상쾌한 공기를 마시며 함께 뛰어요! 지각 시 벌금 1,000원입니다.'
-};
 
-// ── 더미 멤버 데이터 ──────────────────────────────────
-const DUMMY_MEMBERS = Array.from({ length: 12 }, (_, i) => ({
-  id: i + 1,
-  name: '훈남 민성',
-  time: '1:56:12',
-  kcal: '472kcal',
-}));
+
 
 // ── 아바타 아이콘 ─────────────────────────────────────
 function Avatar({ size = 52 }) {
@@ -83,17 +73,46 @@ function JoinModal({ groupName, onConfirm }) {
 export default function GroupExplore() {
   const navigate = useNavigate();
   const location = useLocation();
-  const group = location.state?.group ?? {
-    name: '하체 집중 모임', type: '헬스', people: '3/8', goal: '주 2회', desc: '이피구 저피구구 아라아라',
-  };
+  const group = location.state?.group;
+  const members = group?.members ?? [];
+  const isMyGroup = !!group?.myRole;
+
 
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [isDescOpen, setIsDescOpen] = useState(false);
+
+  if (!group) {
+    // 그룹 데이터 없이 직접 URL로 진입한 경우
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: '#8B95A1' }}>
+        그룹 정보를 찾을 수 없어요.
+        <div style={{ marginTop: 16 }}>
+          <button onClick={() => navigate('/AddGroup')} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', backgroundColor: '#1E59DA', color: '#fff', cursor: 'pointer' }}>
+            모임 찾기로 이동
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleJoinConfirm = () => {
     setShowJoinModal(false);
     navigate(-2); // Group 페이지로 복귀
   };
-    const [isDescOpen, setIsDescOpen] = useState(false);
+
+  const handleJoinClick = async () => {
+    if (joining) return;
+    setJoining(true);
+    try {
+      await joinGroupById(group.id);
+      setShowJoinModal(true);
+    } catch (e) {
+      alert(e.message || '가입에 실패했어요.');
+    } finally {
+      setJoining(false);
+    }
+  };
 
 
   return (
@@ -120,7 +139,7 @@ export default function GroupExplore() {
       </div>
 
       {/* ── 스크롤 콘텐츠 ── */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 100 }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: isMyGroup ? 20 : 100 }}>
 
         {/* 그룹 소개 영역 */}
         {!isDescOpen ? (
@@ -143,7 +162,7 @@ export default function GroupExplore() {
             </div>
             <div style={{ padding: '0 20px' }}>
               <p style={{ margin: 0, fontSize: 14, color: '#8B95A1', lineHeight: 1.6, wordBreak: 'break-all' }}>
-                {DUMMY_GROUP.desc}
+                {group.desc || '소개 내용이 없습니다.'}
               </p>
             </div>
           </div>
@@ -160,8 +179,11 @@ export default function GroupExplore() {
           gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '20px 4px',
         }}>
-          {DUMMY_MEMBERS.map(member => (
-            <div key={member.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+           {members.length === 0 && (
+            <p style={{ gridColumn: '1 / -1', textAlign: 'center', fontSize: 13, color: '#8B95A1' }}>멤버 정보가 없어요.</p>
+          )}
+          {members.map(member => (
+            <div key={member.userId} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <Avatar size={52} />
               <div style={{ textAlign: 'center' }}>
                 <p style={{ margin: 0, fontSize: 11, fontWeight: '600', color: '#333D4B' }}>{member.name}</p>
@@ -174,26 +196,30 @@ export default function GroupExplore() {
       </div>
 
       {/* ── 가입하기 버튼 (하단 고정) ── */}
-      <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: '5%',
-        padding: '12px 20px 28px',
-        borderTop: '1px solid #F0F0F0',
-      }}>
-        <button
-          onClick={() => setShowJoinModal(true)}
-          style={{
-            width: '100%', padding: '15px 0',
-            backgroundColor: '#1E59DA', color: '#fff',
-            border: 'none', borderRadius: 14,
-            fontSize: 16, fontWeight: '700', cursor: 'pointer',
-            transition: 'transform 0.1s',
-          }}
-          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
-          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-        >
-          가입하기
-        </button>
-      </div>
+      {/* 이미 내가 속한(모임장 포함) 그룹이면 가입하기 버튼을 노출하지 않음 */}
+      {!isMyGroup && (
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: '5%',
+          padding: '12px 20px 28px',
+          borderTop: '1px solid #F0F0F0',
+        }}>
+          <button
+            onClick={handleJoinClick}
+            disabled={joining}
+            style={{
+              width: '100%', padding: '15px 0',
+              backgroundColor: '#1E59DA', color: '#fff',
+              border: 'none', borderRadius: 14,
+              fontSize: 16, fontWeight: '700', cursor: joining ? 'not-allowed' : 'pointer',
+              transition: 'transform 0.1s',
+            }}
+            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
+            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            {joining ? '가입 중...' : '가입하기'}
+          </button>
+        </div>
+      )}
 
       {/* ── 가입 완료 모달 ── */}
       {showJoinModal && (

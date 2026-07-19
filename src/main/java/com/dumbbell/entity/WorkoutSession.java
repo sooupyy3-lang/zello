@@ -38,6 +38,11 @@ public class WorkoutSession {
     @Builder.Default
     private Boolean isActive = true;
 
+    // 3시간 이상 연속으로 켜져 있던 세션(좀비 세션)은 랭킹 집계에서 제외
+    @Column(name = "excluded_from_ranking", nullable = false)
+    @Builder.Default
+    private Boolean excludedFromRanking = false;
+
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<WorkoutTrack> tracks = new ArrayList<>();

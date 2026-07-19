@@ -4,6 +4,8 @@ import com.dumbbell.dto.*;
 import com.dumbbell.entity.*;
 import com.dumbbell.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.*;
@@ -11,9 +13,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorkoutService {
+
+    // 이 시간(시) 이상 연속으로 켜져 있으면 좀비 세션으로 간주해 자동 종료하고 랭킹에서 제외
+    private static final int MAX_CONTINUOUS_HOURS = 3;
 
     private final WorkoutSessionRepository sessionRepo;
     private final WorkoutTrackRepository   trackRepo;
@@ -36,6 +42,12 @@ public class WorkoutService {
 
         // 연속 운동 일수 계산
         int streak = calcStreak(workedOutDates, today);
+
+        // 오늘 끝난 세션들의 누적 시간 (진행 중인 세션은 별도로 클라이언트가 실시간으로 더함)
+        int todayDurationSec = monthSessions.stream()
+                .filter(s -> !s.getIsActive() && s.getStartedAt().toLocalDate().equals(today))
+                .mapToInt(s -> s.getTotalDurationSec() != null ? s.getTotalDurationSec() : 0)
+                .sum();
 
         // 목표
         var goal = goalRepo.findTopByUserIdOrderByUpdatedAtDesc(userId).orElse(null);
@@ -64,6 +76,7 @@ public class WorkoutService {
         return HomeResponse.builder()
                 .today(todayLabel)
                 .streakDays(streak)
+                .todayDurationSec(todayDurationSec)
                 .goalDurationMin(goal != null ? goal.getDurationMin() : 0)
                 .goalCalorie(goal != null ? goal.getCalorieTarget() : 0)
                 .activeFriends(activeFriends)
@@ -145,22 +158,86 @@ public class WorkoutService {
     public SessionResponse endSession(Long userId) {
         WorkoutSession session = sessionRepo.findByUserIdAndIsActiveTrue(userId)
                 .orElseThrow(() -> new RuntimeException("진행 중인 세션이 없어요"));
-        session.setIsActive(false);
-        session.setEndedAt(LocalDateTime.now());
-        sessionRepo.save(session);
+        closeSession(session, LocalDateTime.now());
         return toSessionResponse(session);
     }
 
+    // ── 3시간 이상 방치된 세션 자동 종료 (좀비 세션 정리) ──
+    // 5분마다 실행: 앱을 안 끄고 계속 켜둔 채 잊어버린 세션을 찾아 자동으로 마감한다.
+    @Scheduled(fixedRate = 5 * 60 * 1000)
+    @Transactional
+    public void autoEndStaleSessions() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(MAX_CONTINUOUS_HOURS);
+        List<WorkoutSession> stale = sessionRepo.findActiveSessionsStartedBefore(cutoff);
+        for (WorkoutSession session : stale) {
+            closeSession(session, session.getStartedAt().plusHours(MAX_CONTINUOUS_HOURS));
+            log.info("좀비 세션 자동 종료: sessionId={}, userId={}", session.getId(), session.getUser().getId());
+        }
+    }
+
+    // 세션을 종료 처리한다. 시작 시각부터 MAX_CONTINUOUS_HOURS를 넘겼다면
+    // 그 시점에서 기록을 끊고(더 이상 누적되지 않게) 랭킹 집계에서 제외한다.
+    private void closeSession(WorkoutSession session, LocalDateTime endedAt) {
+        LocalDateTime cap = session.getStartedAt().plusHours(MAX_CONTINUOUS_HOURS);
+        boolean tooLong = endedAt.isAfter(cap);
+
+        session.setIsActive(false);
+        session.setEndedAt(tooLong ? cap : endedAt);
+
+        if (tooLong) {
+            session.setExcludedFromRanking(true);
+            for (WorkoutTrack track : session.getTracks()) {
+                if (track.getStatus() == WorkoutTrack.TrackStatus.running) {
+                    track.setStatus(WorkoutTrack.TrackStatus.paused);
+                    track.setPausedAt(cap);
+                    trackRepo.save(track);
+                }
+            }
+        }
+        sessionRepo.save(session);
+    }
+
     // ── 특정 날 운동 기록 조회 ────────────────────────────
+    // 하루에 "운동 시작하기"를 여러 번 눌러 세션이 여러 개 생겼을 수 있어서,
+    // 그날 해당하는 모든 세션을 합산해서 보여준다 (하나만 고르면 나머지가 누락됨).
     @Transactional(readOnly = true)
     public SessionResponse getSessionByDate(Long userId, LocalDate date) {
         List<WorkoutSession> sessions = sessionRepo.findByUserAndMonth(
-                userId, date.getYear(), date.getMonthValue());
-        return sessions.stream()
+                        userId, date.getYear(), date.getMonthValue())
+                .stream()
                 .filter(s -> s.getStartedAt().toLocalDate().equals(date))
-                .findFirst()
-                .map(this::toSessionResponse)
-                .orElseThrow(() -> new RuntimeException("해당 날짜의 운동 기록이 없어요"));
+                .toList();
+
+        if (sessions.isEmpty()) {
+            return SessionResponse.builder()
+                    .isActive(false)
+                    .totalDurationSec(0)
+                    .totalCalories(0f)
+                    .tracks(List.of())
+                    .build();
+        }
+
+        int totalDurationSec = sessions.stream()
+                .mapToInt(s -> s.getTotalDurationSec() == null ? 0 : s.getTotalDurationSec())
+                .sum();
+        float totalCalories = (float) sessions.stream()
+                .mapToDouble(s -> s.getTotalCalories() == null ? 0f : s.getTotalCalories())
+                .sum();
+        List<SessionResponse.TrackDto> tracks = sessions.stream()
+                .flatMap(s -> s.getTracks().stream())
+                .map(this::toTrackDto)
+                .collect(Collectors.toList());
+        // findByUserAndMonth는 startedAt DESC 정렬이라, 필터링 후 마지막 원소가 그날 중 가장 이른 세션
+        WorkoutSession earliest = sessions.get(sessions.size() - 1);
+
+        return SessionResponse.builder()
+                .isActive(sessions.stream().anyMatch(WorkoutSession::getIsActive))
+                .totalDurationSec(totalDurationSec)
+                .totalCalories(totalCalories)
+                .startedAt(earliest.getStartedAt())
+                .tracks(tracks)
+                .userWeightKg(earliest.getUser().getWeightKg())
+                .build();
     }
 
     // ── 운동 종류 목록 (카테고리별) ───────────────────────
@@ -169,6 +246,12 @@ public class WorkoutService {
         return category != null
                 ? exerciseTypeRepo.findByCategory(category)
                 : exerciseTypeRepo.findAll();
+    }
+
+    // ── 카테고리 목록 ──────────────────────────────────────
+    @Transactional(readOnly = true)
+    public List<String> getCategories() {
+        return exerciseTypeRepo.findAllCategories();
     }
 
     // ── 내부 헬퍼: 연속 운동 일수 계산 ──────────────────
@@ -184,20 +267,25 @@ public class WorkoutService {
         return streak;
     }
 
+    // ── 내부 헬퍼: Track → DTO ──────────────────────────
+    private SessionResponse.TrackDto toTrackDto(WorkoutTrack t) {
+        return SessionResponse.TrackDto.builder()
+                .trackId(t.getId())
+                .exerciseTypeId(t.getExerciseType().getId())
+                .exerciseName(t.getExerciseType().getName())
+                .category(t.getExerciseType().getCategory())
+                .trackOrder(t.getTrackOrder())
+                .status(t.getStatus().name())
+                .elapsedSec(t.getElapsedSec())
+                .calories(t.getCalories())
+                .metValue(t.getExerciseType().getMetValue())
+                .build();
+    }
+
     // ── 내부 헬퍼: Session → DTO ──────────────────────────
     private SessionResponse toSessionResponse(WorkoutSession s) {
         List<SessionResponse.TrackDto> trackDtos = s.getTracks().stream()
-                .map(t -> SessionResponse.TrackDto.builder()
-                        .trackId(t.getId())
-                        .exerciseTypeId(t.getExerciseType().getId())
-                        .exerciseName(t.getExerciseType().getName())
-                        .category(t.getExerciseType().getCategory())
-                        .trackOrder(t.getTrackOrder())
-                        .status(t.getStatus().name())
-                        .elapsedSec(t.getElapsedSec())
-                        .calories(t.getCalories())
-                        .metValue(t.getExerciseType().getMetValue())
-                        .build())
+                .map(this::toTrackDto)
                 .collect(Collectors.toList());
 
         return SessionResponse.builder()

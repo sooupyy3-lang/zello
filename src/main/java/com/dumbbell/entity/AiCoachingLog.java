@@ -28,6 +28,10 @@ public class AiCoachingLog {
     @Column(name = "recommended_routine", columnDefinition = "JSON")
     private String recommendedRoutine;
 
+    @Builder.Default
+    @Column(name = "applied", nullable = false)
+    private Boolean applied = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

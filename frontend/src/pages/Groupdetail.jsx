@@ -1,35 +1,43 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState,useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Backimg from '../assets/Icon/BackForward.svg';
 
-// ── 더미 데이터 ──────────────────────────────────────
-const DUMMY_GROUP = {
-  name: '하체 집중 모임',
-  category: '헬스', 
-  members: '3/8',   
-  goal: '주 2회',    
-  desc: '매일 아침 7시, 상쾌한 공기를 마시며 함께 뛰어요! 지각 시 벌금 1,000원입니다.'
-};
+import { getGroup, updateGroup, kickGroupMember, leaveGroup, getUserId, getGroupActiveMembers, getGroupMemberStats, deleteGroup, delegateGroupOwner } from '../api';
+const AVATAR_COLORS = ['#BFE8F8', '#D4F1D4', '#FFE5C4', '#E8E0FF', '#FFD6E0'];
 
-export const DUMMY_FRIENDS = [
-  { id: 1, name: '훈남민성', streak: 12, goal: '다이어트', todayDone: true, isWorkingOut: true, color: '#BFE8F8',
-    rank: '1위', workoutTime: '1H 12M 13S', calories: '461 kcal', startTime: '09:34 AM', endTime: '10:34 AM', maxDuration: '41M 32S' }, 
-  { id: 2, name: '헬스걸', streak: 8, goal: '근력 강화', todayDone: true, isWorkingOut: true, color: '#D4F1D4',
-    rank: '2위', workoutTime: '58M 40S', calories: '390 kcal', startTime: '07:10 AM', endTime: '08:08 AM', maxDuration: '35M 12S' },
-  { id: 3, name: '집가고싶다', streak: 4, goal: '유산소', todayDone: false, isWorkingOut: false, color: '#FFE5C4',
-    rank: '-', workoutTime: '-', calories: '-', startTime: '-', endTime: '-', maxDuration: '-' },
-  { id: 4, name: '운동왕', streak: 21, goal: '벌크업', todayDone: true, isWorkingOut: true, color: '#E8E0FF',
-    rank: '3위', workoutTime: '47M 05S', calories: '355 kcal', startTime: '06:50 AM', endTime: '07:37 AM', maxDuration: '28M 44S' },
-  { id: 5, name: '새벽러너', streak: 15, goal: '마라톤', todayDone: true, isWorkingOut: false, color: '#FFD6E0',
-    rank: '4위', workoutTime: '52M 20S', calories: '410 kcal', startTime: '05:30 AM', endTime: '06:22 AM', maxDuration: '30M 08S' },
-];
+// 초 → "01:23:45"
+function formatDuration(sec) {
+  if (sec == null) return '-';
+  const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+  const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+  const s = (sec % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
 
-// ── 컴포넌트: 아바타 ───────────────────────────────────────────
-function Avatar({ name, color, size = 52.5 }) {
-  return (
+// ISO 시각 → "오전 9:12"
+function formatClock(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// GroupResponse.members(MemberInfo) → 화면에서 쓰는 friend 카드 형태로 변환
+function toViewMembers(members) {
+  return (members ?? []).map((m, i) => ({
+    id: m.userId,
+    name: m.name,
+    role: m.role, // 'owner' | 'member'
+    color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+  }));
+}
+
+// ── 컴포넌트: 아바타 ──────────────────────────────────────────
+function Avatar({ name, color, size = 52.5, isActive = false }) {
+    return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
       backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, fontSize: size * 0.35, fontWeight: '700', color: '#002738',
+      flexShrink: 0, fontSize: size * 0.35, fontWeight: '700', color: '#002738', boxSizing: 'border-box',
+      border: isActive ? '1px solid #1E59DA' : 'none',
     }}>
       {name[0]}
     </div>
@@ -37,7 +45,7 @@ function Avatar({ name, color, size = 52.5 }) {
 }
 
 // ── 컴포넌트: 친구 카드 ────────────────────────────────────────
-function FriendCard({ friend, onClick }) {
+function FriendCard({ friend, onClick,isActive }) {
   return (
     <button
       onClick={() => onClick(friend)}
@@ -46,21 +54,22 @@ function FriendCard({ friend, onClick }) {
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
       }}
     >
-      <Avatar name={friend.name} color={friend.color} size={60} />
+      <Avatar name={friend.name} color={friend.color} size={60} isActive={isActive} />
       <div style={{ textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 14, fontWeight: '700', color: '#333D4B' }}>{friend.name}</p>
-        <p style={{ margin: '4px 0 0', fontSize: 12, color: '#8B95A1' }}>65분</p>
-        <p style={{ margin: '2px 0 0', fontSize: 11, fontWeight: '600', color: '#191F28' }}>450kcal</p>
+        <p style={{ margin: '4px 0 0', fontSize: 12, color: friend.role === 'owner' ? '#1E59DA' : '#8B95A1' }}>
+          {friend.role === 'owner' ? '모임장' : '멤버'}
+        </p>
       </div>
     </button>
   );
 }
 
 // ── 컴포넌트: 친구 상세 팝업 ──────────────────
-function FriendPopup({ friend, onClose, onKick }) {
+function FriendPopup({ friend, onClose, onKick, canKick }) {
   if (!friend) return null;
   const rows = [
-    ['오늘의 운동 랭킹', friend.rank],
+    ['역할', friend.role === 'owner' ? '모임장' : '멤버'],
     ['오늘의 운동 시간', friend.workoutTime],
     ['총 소모 칼로리', friend.calories],
     ['시작 시간', friend.startTime],
@@ -97,13 +106,15 @@ function FriendPopup({ friend, onClose, onKick }) {
             </div>
           ))}
         </div>
-        <button
-          onClick={() => onKick(friend)}
-          style={{
-            width: '100%', marginTop: 20, height: '43px', backgroundColor: '#F04452', color: '#fff',
-            border: 'none', borderRadius: 12, fontSize: 15, fontWeight: '600', cursor: 'pointer',
-          }}
-        >내보내기</button>
+        {canKick && (
+          <button
+            onClick={() => onKick(friend)}
+            style={{
+              width: '100%', marginTop: 20, height: '43px', backgroundColor: '#F04452', color: '#fff',
+              border: 'none', borderRadius: 12, fontSize: 15, fontWeight: '600', cursor: 'pointer',
+            }}
+          >내보내기</button>
+        )}
       </div>
     </>
   );
@@ -146,8 +157,8 @@ function KickModal({ friendName, onConfirm, onCancel }) {
   );
 }
 
-// ── 컴포넌트: 삭제 확인 모달 ────────────────────────────────────────
-function DeleteModal({ groupName, onConfirm, onCancel }) {
+// ── 컴포넌트: 모임 설정 모달 ────────────────────────────────────────
+function DeleteModal({ groupName, onDeleteClick, onDelegateClick, onCancel }) {
   return (
     <>
       <div onClick={onCancel} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 200 }} />
@@ -158,21 +169,57 @@ function DeleteModal({ groupName, onConfirm, onCancel }) {
       }}>
         <p style={{ margin: '0 0 8px', fontSize: 17, fontWeight: '700' }}>{groupName} 삭제</p>
         <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1', lineHeight: 1.5 }}>
-          정말로 삭제하시겠습니까?<br/>삭제 후에는 복구할 수 없습니다.
-        </p>
+          모임삭제와 그룹장 권한 위임 중 
+<br/>선택하세요.
+           </p>
         <div style={{ display: 'flex', gap: 12 }}>
           <button 
-            onClick={onCancel} 
+            onClick={onDeleteClick} 
             style={{
               flex: 1, height: '43px', backgroundColor: '#B0B8C1', color: '#fff', 
               border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
-          >취소</button>
+          >그룹 삭제</button>
           <button 
-            onClick={onConfirm} 
+            onClick={onDelegateClick} 
             style={{
               flex: 1, height: '43px', backgroundColor: '#1E59DA', color: '#fff', 
+              border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >권한 위임</button>
+        </div>
+      </div>
+    </>
+  );
+}
+function DeleteConfirmModal({ groupName, onConfirm, onCancel }) {
+  return (
+    <>
+      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 300 }} />
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        backgroundColor: '#fff', borderRadius: 20, padding: '32px 24px 24px',
+        zIndex: 301, width: '75%', textAlign: 'center',
+      }}>
+        <p style={{ margin: '0 0 8px', fontSize: 17, fontWeight: '700' }}>{groupName} 삭제</p>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1', lineHeight: 1.5 }}>
+          정말로 삭제하시겠습니까?<br/>삭제 후에는 되돌릴 수 없습니다.
+        </p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={onCancel}
+            style={{
+              flex: 1, height: '43px', backgroundColor: '#B0B8C1', color: '#fff',
+              border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >취소</button>
+          <button
+            onClick={onConfirm}
+            style={{
+              flex: 1, height: '43px', backgroundColor: '#F04452', color: '#fff',
               border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
@@ -182,23 +229,102 @@ function DeleteModal({ groupName, onConfirm, onCancel }) {
     </>
   );
 }
+function DelegateModal({ members, onSelect, onCancel }) {
+  return (
+    <>
+      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 300 }} />
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        backgroundColor: '#fff', borderRadius: 20, padding: '24px', zIndex: 301, width: '80%', maxHeight: '60%', overflowY: 'auto',
+      }}>
+        <p style={{ margin: '0 0 16px', fontSize: 17, fontWeight: '700', textAlign: 'center' }}>권한을 위임할 멤버 선택</p>
+        {members.length === 0 && (
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#8B95A1' }}>위임할 다른 멤버가 없어요.</p>
+        )}
+        {members.map(m => (
+          <button
+            key={m.id}
+            onClick={() => onSelect(m)}
+            style={{
+              width: '100%', padding: '12px 8px', display: 'flex', alignItems: 'center', gap: 12,
+              background: 'none', border: 'none', borderBottom: '1px solid #F0F0F0', cursor: 'pointer', textAlign: 'left',
+            }}
+          >
+            <Avatar name={m.name} color={m.color} size={36} />
+            <span style={{ fontSize: 14, fontWeight: '600', color: '#333D4B' }}>{m.name}</span>
+          </button>
+        ))}
+        <button onClick={onCancel} style={{ marginTop: 16, width: '100%', padding: '12px 0', border: 'none', borderRadius: 12, backgroundColor: '#B0B8C1', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>취소</button>
+      </div>
+    </>
+  );
+}
+function LeaveConfirmModal({ groupName, onConfirm, onCancel }) {
+  return (
+    <>
+      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 300 }} />
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        backgroundColor: '#fff', borderRadius: 20, padding: '32px 24px 24px',
+        zIndex: 301, width: '75%', textAlign: 'center',
+      }}>
+        <p style={{ margin: '0 0 8px', fontSize: 17, fontWeight: '700' }}>{groupName} 나가기</p>
+        <p style={{ margin: '0 0 28px', fontSize: 14, color: '#8B95A1', lineHeight: 1.5 }}>
+          정말로 모임을 나가시겠습니까?<br/>나간 후에는 되돌릴 수 없습니다.
+        </p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={onCancel} style={{ flex: 1, height: '43px', backgroundColor: '#B0B8C1', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>취소</button>
+          <button onClick={onConfirm} style={{ flex: 1, height: '43px', backgroundColor: '#F04452', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>나가기</button>
+        </div>
+      </div>
+    </>
+  );
+}
 
+function ResultModal({ message, onConfirm }) {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onConfirm();
+    }, 1300);
+   return () => clearTimeout(timer);
+    }, []);
+    return(
+    <>
+      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.45)', zIndex: 400 }} />
+      <div style={{
+        position: 'absolute', top: '90%', left: '50%', transform: 'translate(-50%, -50%)',
+        display: 'flex',
+        width: '386px',
+        height: '70px',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: '24px',
+        border: '2px solid rgba(30, 89, 218, 0.18)',
+        background: 'rgba(219, 233, 249, 0.84)',
+        zIndex: 401,
+      }}>
+        <div style={{
+          color: '#1E59DA',
+          textAlign: 'center',
+          fontSize: '20px',
+          fontStyle: 'normal',
+          fontWeight: 500,
+          lineHeight: 'normal',
+        }}>
+          {message}
+        </div>
+      </div>
+    </>
+  );
+}
 // ── 그룹 소개 상세 페이지  ──────
-function GroupDetailView({ groupName, category, members, goal, desc, onSave, onClose }) {
-  // 💡 true 일 땐 모임장(편집가능), false 일 땐 비소속(열람만 가능)
-  const [isHost, setIsHost] = useState(true);
+function GroupDetailView({ groupName, category, members, goal, desc, isHost, onSave, onClose }) {  
   const [isEditing, setIsEditing] = useState(false);
   const [tempDesc, setTempDesc] = useState(desc || '');
 
   return (
     <div style={{ position: 'absolute', inset: 0, backgroundColor: '#fff', zIndex: 600, display: 'flex', flexDirection: 'column' }}>
-      {/* 권한 테스트 바 (실제 연동 완료 후 제거하셔도 좋습니다) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 20px', backgroundColor: '#1E59DA', color: '#fff', fontSize: '11px' }}>
-        <span>[테스트] 상단 스위치 :</span>
-        <button onClick={() => { setIsHost(!isHost); setIsEditing(false); }} style={{ fontSize: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          {isHost ? '현재: 모임장' : '현재: 비소속 일반유저'}
-        </button>
-      </div>
+    
 
       {/* 헤더 영역 */}
       <div style={{ display: 'flex', alignItems: 'center', height: '56px', padding: '0 20px', position: 'relative' }}>
@@ -224,12 +350,33 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
         <p style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '700', color: '#000' }}>그룹 소개/규칙</p>
 
         {isEditing ? (
-          <textarea
-            value={tempDesc}
-            onChange={e => setTempDesc(e.target.value)}
-            style={{ width: '100%', height: '160px', border: '1px solid #1E59DA', borderRadius: '12px', padding: '14px', fontSize: '14px', color: '#000', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-          />
-        ) : (
+  <div style={{
+    width: '100%',
+    height: '160px',
+    border: '1px solid #1E59DA',
+    borderRadius: '12px',
+    overflow: 'hidden',        
+    boxSizing: 'border-box',
+  }}>
+    <textarea
+      value={tempDesc}
+      onChange={e => setTempDesc(e.target.value)}
+      style={{
+        width: '100%',
+        height: '100%',
+        border: 'none',       
+        borderRadius: '12px',
+        padding: '14px',
+        fontSize: '14px',
+        color: '#000',
+        outline: 'none',
+        resize: 'none',
+        boxSizing: 'border-box',
+        fontFamily: 'inherit',
+      }}
+    />
+  </div>
+) : (
           <p style={{ margin: 0, fontSize: '14px', color: '#4E5968', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
             {tempDesc || '내용이 없습니다.'}
           </p>
@@ -254,27 +401,162 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
 
 // ── 메인 페이지 ──────────────────────────────────────
 export default function Groupdetail() {
-  const [friends, setFriends] = useState(DUMMY_FRIENDS); 
-  const [selectedFriend, setSelectedFriend] = useState(null);
-  const [kickTarget, setKickTarget] = useState(null); 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDetail, setShowDetail] = useState(false); 
-  const [desc, setDesc] = useState(DUMMY_GROUP.desc); 
   const navigate = useNavigate();
-  const groupName = DUMMY_GROUP.name;
-  const workingOutCount = friends.filter(f => f.isWorkingOut).length; 
+  const location = useLocation();
+  const groupId = location.state?.groupId ?? location.state?.group?.id;
 
-  const handleDelete = () => {
-    alert('삭제되었습니다.');
-    setShowDeleteModal(false);
-    navigate('/');
+  const [group, setGroup] = useState(location.state?.group ?? null);
+  const [friends, setFriends] = useState(toViewMembers(location.state?.group?.members));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [kickTarget, setKickTarget] = useState(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false); // 모임 나가기 확인 모달
+  const [showDetail, setShowDetail] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDelegateModal, setShowDelegateModal] = useState(false);
+  const [resultMessage, setResultMessage] = useState(null);
+  const [activeUserIds, setActiveUserIds] = useState(null);
+
+  const groupName = group?.name ?? '';
+  const isHost = group?.myRole === 'owner';
+  const myUserId = Number(getUserId());
+  
+
+  useEffect(() => {
+    if (!groupId) {
+      setError('그룹 정보를 찾을 수 없어요.');
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    getGroup(groupId)
+      .then(g => {
+        if (cancelled) return;
+        setGroup(g);
+        setFriends(toViewMembers(g.members));
+
+        getGroupActiveMembers(groupId)
+          .then(list => {
+            if (cancelled) return;
+            setActiveUserIds(new Set((list ?? []).map(a => a.userId)));
+          })
+          .catch(() => { /* 아직 지원 안 함 — 조용히 무시 */ });
+      })
+      .catch(e => { if (!cancelled) setError(e.message || '그룹 정보를 불러오지 못했어요.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [groupId]);
+
+  // "모임 설정하기" → 나가기 확인
+  const handleLeaveConfirm = async () => {
+    setShowSettingsModal(false);
+    try {
+      await leaveGroup(groupId);
+      setResultMessage('모임에서 나갔습니다.');
+    } catch (e) {
+      alert(e.message || '나가기에 실패했어요.');
+    }
+  };
+  const handleDeleteClick = () => {
+    setShowSettingsModal(false);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setShowDeleteConfirm(false);
+    try {
+      await deleteGroup(groupId);
+      setResultMessage('삭제되었습니다.');
+    } catch (e) {
+      alert(e.message || '그룹 삭제에 실패했어요. (백엔드 엔드포인트가 아직 준비되지 않았을 수 있어요)');
+    }
+  };
+  // 방장 권한 위임 (모임장 전용, 백엔드 엔드포인트 추가 필요)
+  const handleDelegateClick = () => {
+    setShowSettingsModal(false);
+    setShowDelegateModal(true);
+  };
+
+  const handleDelegateSelect = async (targetMember) => {
+    setShowDelegateModal(false);
+    try {
+      const updated = await delegateGroupOwner(groupId, targetMember.id);
+      setGroup(updated);
+      setResultMessage('권한이 위임되었습니다.');
+    } catch (e) {
+      alert(e.message || '권한 위임에 실패했어요. (백엔드 엔드포인트가 아직 준비되지 않았을 수 있어요)');
+    }
+  };
+
+  const handleResultConfirm = () => {
+    setResultMessage(null);
+    navigate('/Group');
+  };
+
+  // 그룹 소개/규칙 저장 (모임장만 호출됨)
+  const handleSaveDesc = async (newDesc) => {
+    try {
+      const updated = await updateGroup(groupId, {
+        name: group.name,
+        description: newDesc,
+        category: group.category,
+        goal: group.goal,
+        maxMembers: group.maxMembers,
+      });
+      setGroup(updated);
+    } catch (e) {
+      alert(e.message || '소개 수정에 실패했어요.');
+    }
+  };
+ 
+  // 그룹원 카드 클릭 → 팝업을 먼저 열고, 상세 통계는 이어서 채워넣음
+  const handleSelectFriend = async (friend) => {
+    setSelectedFriend(friend);
+    try {
+      const stats = await getGroupMemberStats(groupId, friend.id);
+      setSelectedFriend(prev => (prev && prev.id === friend.id) ? {
+        ...prev,
+        workoutTime: formatDuration(stats.todayDurationSec),
+        calories: stats.todayCalories != null ? `${Math.round(stats.todayCalories)}kcal` : '-',
+        startTime: formatClock(stats.startedAt),
+        endTime: stats.endedAt ? formatClock(stats.endedAt) : (stats.startedAt ? '진행중' : '-'),
+        maxDuration: formatDuration(stats.maxDurationSec),
+      } : prev);
+    } catch {
+      // 통계 조회 실패해도 팝업 자체(역할 등)는 유지
+    }
   };
 
   // 친구 내보내기 확정 처리
-  const handleKickConfirm = () => {
-    setFriends(prev => prev.filter(f => f.id !== kickTarget.id));
-    setKickTarget(null);
+  const handleKickConfirm = async () => {
+    try {
+      await kickGroupMember(groupId, kickTarget.id);
+      setFriends(prev => prev.filter(f => f.id !== kickTarget.id));
+    } catch (e) {
+      alert(e.message || '내보내기에 실패했어요.');
+    } finally {
+      setKickTarget(null);
+    }
   };
+
+  if (loading) {
+    return <div style={{ padding: 40, textAlign: 'center', color: '#8B95A1' }}>불러오는 중...</div>;
+  }
+  if (error || !group) {
+    return (
+      <div style={{ padding: 40, textAlign: 'center', color: '#8B95A1' }}>
+        {error || '그룹 정보를 찾을 수 없어요.'}
+        <div style={{ marginTop: 16 }}>
+          <button onClick={() => navigate('/Group')} style={{ padding: '10px 20px', borderRadius: 10, border: 'none', backgroundColor: '#1E59DA', color: '#fff', cursor: 'pointer' }}>
+            내 모임으로 이동
+          </button>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div style={{ width: '100%', height: '100%', backgroundColor: '#f4f4f4' }}>
@@ -283,10 +565,8 @@ export default function Groupdetail() {
       <div style={{ 
         height: '149px', display: 'flex', alignItems: 'center', padding: '0 25px', position: 'relative' 
       }}>
-       <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, zIndex: 1 }}>
-    <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
-      <path d="M5 5L15 15M15 5L5 15" stroke="#333D4B" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
+      <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, zIndex: 1 }}>
+    <img src={Backimg} alt="back" style={{ width: '24px', height: '24px', opacity: 0.4 }} />
   </button>
         <h1 style={{
           position: 'absolute', left: 0, right: 0, textAlign: 'center',
@@ -308,10 +588,13 @@ export default function Groupdetail() {
           </div>
         </div>
 
-      {/* ── 현재 운동 중 인원 텍스트  ── */}
-      <p style={{ margin: '20px 20px 0', fontSize: 13, fontWeight: '600', color: '#1E59DA' }}>
-        지금 {workingOutCount}명이 운동 중이에요
-      </p>
+      {/* ── 운동 중 인원 텍스트 (백엔드 API 지원되면 표시) ── */}
+{activeUserIds && (
+  <p style={{ margin: '20px 20px 0', fontSize: 13, fontWeight: '600', color: '#1E59DA' }}>
+    지금 {friends.filter(f => activeUserIds.has(f.id)).length}명이 운동 중이에요
+  </p>
+)}
+      
 
       {/* ── 친구 목록 그리드 ── */}
       <div style={{
@@ -319,29 +602,52 @@ export default function Groupdetail() {
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 8px',
       }}>
         {friends.map(friend => (
-          <FriendCard key={friend.id} friend={friend} onClick={setSelectedFriend} />
+          <FriendCard key={friend.id} friend={friend} onClick={handleSelectFriend}  isActive={!!activeUserIds?.has(friend.id)}/>
         ))}
       </div>
 
-      {/* ── 삭제하기 버튼 ── */}
-      <div style={{ padding: '0 20px 40px' }}>
+      {/* ── 설정하기 버튼 ── */}
+      <div style={{ padding: '0 20px 40px', justifyContent: 'center', textAlign:'center', }}>
         <button
-          onClick={() => setShowDeleteModal(true)}
+          onClick={() => setShowSettingsModal(true)}
           style={{
-            width: '100%', padding: '15px 0', backgroundColor: '#fff', color: '#F04452',
-            border: '1px solid #F2F4F6', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: 'pointer',
+            width: '80%', padding: '15px 0', backgroundColor: '#1E59DA', color: '#FFFFFF',
+            border: '1px solid #1E59DA', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: 'pointer',
           }}
         >
-          모임 삭제하기
+          모임 설정하기
         </button>
       </div>
 
       {/* ── 모달 및 팝업 ── */}
-      {showDeleteModal && (
-        <DeleteModal 
-          groupName={groupName} 
-          onConfirm={handleDelete} 
-          onCancel={() => setShowDeleteModal(false)} 
+       {showSettingsModal && (
+        isHost ? (
+          <DeleteModal
+            groupName={groupName}
+            onDeleteClick={handleDeleteClick}
+            onDelegateClick={handleDelegateClick}
+            onCancel={() => setShowSettingsModal(false)}
+          />
+        ) : (
+          <LeaveConfirmModal
+            groupName={groupName}
+            onConfirm={handleLeaveConfirm}
+            onCancel={() => setShowSettingsModal(false)}
+          />
+        )
+      )}
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          groupName={groupName}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+      {showDelegateModal && (
+        <DelegateModal
+          members={friends.filter(f => f.id !== myUserId)}
+          onSelect={handleDelegateSelect}
+          onCancel={() => setShowDelegateModal(false)}
         />
       )}
 
@@ -349,9 +655,17 @@ export default function Groupdetail() {
         <FriendPopup
           friend={selectedFriend}
           onClose={() => setSelectedFriend(null)}
+          canKick={isHost && selectedFriend.id !== myUserId}
+
           onKick={(friend) => { setKickTarget(friend); setSelectedFriend(null); }} 
         />
       )}
+      {resultMessage && (
+  <ResultModal
+    message={resultMessage}
+    onConfirm={handleResultConfirm}
+  />
+)}
 
       {kickTarget && ( 
         <KickModal
@@ -364,11 +678,12 @@ export default function Groupdetail() {
       {showDetail && ( 
         <GroupDetailView
           groupName={groupName}
-          category={DUMMY_GROUP.category}
-          members={DUMMY_GROUP.members}
-          goal={DUMMY_GROUP.goal}
-          desc={desc}
-          onSave={setDesc}
+          category={group.category}
+          members={`${friends.length}/${group.maxMembers ?? '∞'}`}
+          goal={group.goal}
+          desc={group.description}
+          isHost={isHost}
+          onSave={handleSaveDesc}
           onClose={() => setShowDetail(false)}
         />
       )}

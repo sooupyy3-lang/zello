@@ -1,40 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { HamburgerButton } from '../pages/HamburgerMenu.jsx'; 
 import { HamburgerPanel } from '../pages/HamburgerMenu.jsx';
+import { getMyGroups, sendFriendRequestByNickname, joinGroupByCode } from '../api';
+import { getUserName } from '../api';
+import { useLocation } from 'react-router-dom';
 
-const DUMMY_GROUPS = [
-  { name: '하체 집중 모임', code: 'IJ9T1V' },
-  { name: '새벽 러닝 크루', code: 'RN82KQ' },
-  { name: '요가 힐링 모임', code: 'YG73LM' },
-];
 
 function AddFriends() {
+    const location = useLocation();                     
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [name, setName] = useState('');
   const [groupCode, setGroupCode] = useState('');
   const [groupIndex, setGroupIndex] = useState(0); 
-  const currentGroup = DUMMY_GROUPS[groupIndex]; 
+  const [myGroups, setMyGroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(true);
+  const currentGroup = myGroups[groupIndex] ?? null;
+  
+const userName = location.state?.name || getUserName() || "사용자";
+
+  useEffect(() => {
+    getMyGroups()
+      .then(list => setMyGroups(list ?? []))
+      .catch(() => setMyGroups([]))
+      .finally(() => setGroupsLoading(false));
+  }, []);
 
   const openModal = (message) => {
     setModalMessage(message);
     setShowModal(true);
   };
 
-  const handlePrevGroup = () => setGroupIndex(i => (i - 1 + DUMMY_GROUPS.length) % DUMMY_GROUPS.length);
-  const handleNextGroup = () => setGroupIndex(i => (i + 1) % DUMMY_GROUPS.length);
+  const handlePrevGroup = () => setGroupIndex(i => (i - 1 + myGroups.length) % myGroups.length);
+  const handleNextGroup = () => setGroupIndex(i => (i + 1) % myGroups.length);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(currentGroup.code); 
+    if (!currentGroup) return;
+    navigator.clipboard.writeText(currentGroup.inviteCode); // 백엔드 필드명은 code가 아니라 inviteCode
     openModal('코드가 복사되었습니다.');
   };
-  const handleSearch = () => {
-    openModal(`${name || '사용자'}님이 추가되었습니다.`);
+
+  const handleSearch = async () => {
+    if (!name.trim()) return;
+    try {
+      await sendFriendRequestByNickname(name.trim());
+      openModal(`${name}님과 친구가 되었어요.`);
+      setName('');
+    } catch (e) {
+      openModal(e.message || '친구 요청에 실패했어요.');
+    }
   };
 
-  const handleConfirm = () => {
-    openModal('그룹 참여가 완료되었습니다.');
+  const handleConfirm = async () => {
+    if (!groupCode.trim()) return;
+    try {
+      const joined = await joinGroupByCode(groupCode.trim());
+      openModal(`${joined?.name ?? '그룹'} 참여가 완료되었습니다.`);
+      setGroupCode('');
+    } catch (e) {
+      openModal(e.message || '그룹 참여에 실패했어요.');
+    }
   };
 
   useEffect(() => {
@@ -54,21 +81,23 @@ function AddFriends() {
   width: '100%',
   maxWidth: '500px'}}>
     {/* 햄버거 패널 */}
-    {menuOpen && <HamburgerPanel userName="사용자" onClose={() => setMenuOpen(false)} />}
-      {/* ── 헤더 ── */}
+{menuOpen && (
+  <HamburgerPanel userName={userName} onClose={() => setMenuOpen(false)} />
+)}
+     {/* ── 헤더 ── */}
       <header style={{ 
-        height: `calc(115/874*100dvh)`, 
+        height: `calc(35/874*100dvh)`, 
         maxHeight: '874px',
         display: 'flex', 
         justifyContent: 'center', 
         position: 'relative',
-        paddingTop: '28%',
+        paddingTop: '5%',
         borderBottom: '1px solid #F0F0F0',
         overflow: 'hidden',
         marginBottom:'50px',
         zIndex: 10
       }}>
-        <div style={{ position: 'absolute', left: '0.5%', top:'70%',zIndex: 20 }}>
+        <div style={{ position: 'absolute', left: '0.5%', top:'30%',zIndex: 20 }}>
          <HamburgerButton onOpen={() => setMenuOpen(true)} />
         </div>
         <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#333' }}>친구 추가하기</h2>
@@ -85,7 +114,7 @@ function AddFriends() {
             onChange={(e) => setName(e.target.value)}
             style={inputStyle}
           />
-<button onClick={handleSearch} style={actionButtonStyle}>검색</button>          
+<button onClick={handleSearch} style={actionButtonStyle}>추가</button>          
         </div>
       </section>
 
@@ -93,24 +122,34 @@ function AddFriends() {
       <section style={{ marginBottom: '40px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <h3 style={{ ...labelStyle, marginBottom: 0 }}>그룹 초대 코드</h3>
-          <div style={{ fontSize: '12px', color: '#888', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {currentGroup.name} 
-            <span style={{ display: 'flex', flexDirection: 'column' }}> 
-              <button onClick={handlePrevGroup} style={arrowButtonStyle}>▲</button>
-              <button onClick={handleNextGroup} style={arrowButtonStyle}>▼</button>
-            </span>
-          </div>
+          {myGroups.length > 0 && (
+            <div style={{ fontSize: '12px', color: '#888', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              {currentGroup?.name}
+              <span style={{ display: 'flex', flexDirection: 'column' }}>
+                <button onClick={handlePrevGroup} style={arrowButtonStyle}>▲</button>
+                <button onClick={handleNextGroup} style={arrowButtonStyle}>▼</button>
+              </span>
+            </div>
+          )}
         </div>
         <div style={codeBoxStyle}>
-          <span style={{ fontSize: '20px', fontWeight: '800', color: '#111', letterSpacing: '1px' }}>
-            {currentGroup.code} 
-          </span>
-          <button onClick={handleCopy} style={copyButtonStyle}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-          </button>
+          {groupsLoading ? (
+            <span style={{ fontSize: '13px', color: '#AAA' }}>불러오는 중...</span>
+          ) : myGroups.length === 0 ? (
+            <span style={{ fontSize: '13px', color: '#AAA' }}>가입된 그룹이 없어요.</span>
+          ) : (
+            <>
+              <span style={{ fontSize: '20px', fontWeight: '800', color: '#111', letterSpacing: '1px' }}>
+                {currentGroup.inviteCode}
+              </span>
+              <button onClick={handleCopy} style={copyButtonStyle}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </>
+          )}
         </div>
       </section>
 

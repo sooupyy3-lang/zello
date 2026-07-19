@@ -1,22 +1,37 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
+import { exploreGroups, createGroup } from '../api';
 
-// ── 더미 데이터 ──────────────────────────────────────
-const DUMMY_ALL_GROUPS = [
-  { id: 1, name: '하체 집중 모임', type: '헬스', people: '3/8', goal: '주 2회', createdAt: 1, attendance: 90, memberCount: 3, desc: '이피구 저피구구 아라아라' },
-  { id: 2, name: '새벽 러닝 크루', type: '러닝', people: '5/10', goal: '주 3회', createdAt: 2, attendance: 85, memberCount: 5, desc: '매일 새벽 한강에서 함께 달려요!' },
-  { id: 3, name: '요가 힐링 모임', type: '요가', people: '4/6', goal: '주 2회', createdAt: 3, attendance: 92, memberCount: 4, desc: '몸과 마음을 함께 가꾸는 요가 모임입니다.' },
-  { id: 4, name: '주말 등산 클럽', type: '등산', people: '6/12', goal: '주 1회', createdAt: 4, attendance: 78, memberCount: 6, desc: '주말마다 서울 근교 산을 함께 오릅니다.' },
-  { id: 5, name: '크로스핏 팀', type: '크로스핏', people: '2/8', goal: '주 4회', createdAt: 5, attendance: 88, memberCount: 2, desc: '강도 높은 트레이닝을 함께해요.' },
-  { id: 6, name: '수영 마스터즈', type: '수영', people: '7/10', goal: '주 3회', createdAt: 6, attendance: 95, memberCount: 7, desc: '수영 실력을 함께 키워가는 모임입니다.' },
-];
+
+
 
 const TABS = [
-  { key: 'recent', label: '최신순', sort: (a, b) => b.createdAt - a.createdAt },
-  { key: 'attendance', label: '출석순', sort: (a, b) => b.attendance - a.attendance },
-  { key: 'members', label: '인원순', sort: (a, b) => b.memberCount - a.memberCount },
+  { key: 'recent', label: '최신순' },
+  { key: 'attendance', label: '출석순' },
+  { key: 'members', label: '인원순' },
 ];
+
+// GroupResponse(백엔드) → 화면에서 쓰는 형태로 변환
+function toViewGroup(g) {
+  return {
+    id: g.id,
+    name: g.name,
+    type: g.category,
+    people: `${g.memberCount}/${g.maxMembers ?? '∞'}`,
+    goal: g.goal,
+    desc: g.description,
+    inviteCode: g.inviteCode,
+    myRole: g.myRole,
+    members: g.members ?? [],
+  };
+}
+
+function parseMaxMembers(label) {
+  if (!label || label === '제한 없음') return null;
+  const n = parseInt(label, 10);
+  return Number.isNaN(n) ? null : n;
+}
 
 // ── 옵션 데이터 (NewGroupSheet용) ────────────────────
 const CATEGORIES = ['헬스', '러닝', '홈트레이닝', '필라테스', '요가', '자전거', '수영', '농구', '축구', '테니스', '배드민턴', '발레', '등산'];
@@ -75,19 +90,25 @@ function GroupPopup({ group, onClose, onExplore }) {
 function SearchModal({ onClose, onSelectGroup }) {
   const [query, setQuery] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
 
   const recommendedKeywords = ['하체', '다이어트', '헬스', '갓생', '하체', '다이어트'];
   const popularKeywords = ['대학생', '직장인', '오운완', '아침운동', '미라클모닝', '홈트'];
 
-  const results = query.length > 0
-    ? DUMMY_ALL_GROUPS.filter(g => g.name?.includes(query) || g.type?.includes(query))
-    : [];
-
-  const handleSearch = (keyword) => {
-    const searchTerm = keyword || query;
-    if (searchTerm.trim().length > 0) {
-      setQuery(searchTerm);
-      setIsSubmitted(true);
+  const handleSearch = async (keyword) => {
+    const searchTerm = (keyword || query).trim();
+    if (!searchTerm) return;
+    setQuery(searchTerm);
+    setIsSubmitted(true);
+    setSearching(true);
+    try {
+      const found = await exploreGroups(searchTerm);
+      setResults((found ?? []).map(toViewGroup));
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -197,13 +218,7 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
 
   return (
     <div style={{ position: 'absolute', inset: 0, backgroundColor: '#fff', zIndex: 600, display: 'flex', flexDirection: 'column' }}>
-      {/* 권한 테스트 바 (실제 연동 완료 후 제거하셔도 좋습니다) */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 20px', backgroundColor: '#1E59DA', color: '#fff', fontSize: '11px' }}>
-        <span>[테스트] 상단 스위치 :</span>
-        <button onClick={() => { setIsHost(!isHost); setIsEditing(false); }} style={{ fontSize: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          {isHost ? '현재: 모임장' : '현재: 비소속 일반유저'}
-        </button>
-      </div>
+      
 
       {/* 헤더 영역 */}
       <div style={{ display: 'flex', alignItems: 'center', height: '56px', padding: '0 20px', position: 'relative' }}>
@@ -227,12 +242,33 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
         <p style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '700', color: '#000' }}>그룹 소개/규칙</p>
         
         {isEditing ? (
-          <textarea 
-            value={tempDesc} 
-            onChange={e => setTempDesc(e.target.value)} 
-            style={{ width: '100%', height: '160px', border: '1px solid #1E59DA', borderRadius: '12px', padding: '14px', fontSize: '14px', color: '#000', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} 
-          />
-        ) : (
+  <div style={{
+    width: '100%',
+    height: '160px',
+    border: '1px solid #1E59DA',
+    borderRadius: '12px',
+    overflow: 'hidden',        
+    boxSizing: 'border-box',
+  }}>
+    <textarea
+      value={tempDesc}
+      onChange={e => setTempDesc(e.target.value)}
+      style={{
+        width: '100%',
+        height: '100%',
+        border: 'none',       
+        borderRadius: '12px',
+        padding: '14px',
+        fontSize: '14px',
+        color: '#000',
+        outline: 'none',
+        resize: 'none',
+        boxSizing: 'border-box',
+        fontFamily: 'inherit',
+      }}
+    />
+  </div>
+) : (
           <p style={{ margin: 0, fontSize: '14px', color: '#4E5968', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
             {tempDesc || '내용이 없습니다.'}
           </p>
@@ -256,7 +292,7 @@ function GroupDetailView({ groupName, category, members, goal, desc, onSave, onC
 }
 
 // ── 운동 모임 만들기 하단 시트 ────────────────────────
-function NewGroupSheet({ onClose }) {
+function NewGroupSheet({ onClose, onCreated }) {
   const [groupName, setGroupName] = useState('');
   const [category,  setCategory]  = useState('');
   const [goal,      setGoal]      = useState('');
@@ -265,13 +301,28 @@ function NewGroupSheet({ onClose }) {
   const [openModal, setOpenModal] = useState(null);
 
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
 
+  const [submitting, setSubmitting] = useState(false);
   const canSubmit = groupName.trim() && category && goal && members;
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    setShowSuccessPopup(true);
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) return;
+    setSubmitting(true);
+    try {
+      await createGroup({
+        name: groupName,
+        category,
+        goal,
+        maxMembers: parseMaxMembers(members),
+        description: desc,
+      });
+      setShowSuccessPopup(true);
+      onCreated?.();
+    } catch (e) {
+      alert(e.message || '모임 생성에 실패했어요.');
+    } finally {
+      setSubmitting(false);
+    }
   };
   useEffect(() => {
     if (showSuccessPopup) {
@@ -330,21 +381,35 @@ function NewGroupSheet({ onClose }) {
 
             {/* 그룹 소개/규칙 */}
             <div>
-              <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: '700', color: '#191F28' }}>그룹 소개/규칙</p>
-              <div 
-                onClick={() => setShowDetail(true)}
-                style={{ width: '100%', border: '1px solid #E5E8EB', borderRadius: 10, padding: '12px 14px', fontSize: 14, color: '#191F28', backgroundColor: '#DBE9F9', minHeight: '96px', boxSizing: 'border-box', lineHeight: 1.6, cursor: 'pointer', whiteSpace: 'pre-wrap' }}
-              >
-                {desc || '어떤 그룹인가요? 소개를 적어주세요.'}
-              </div>
-            </div>
+  <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: '700', color: '#191F28' }}>그룹 소개/규칙</p>
+  <textarea
+    value={desc}
+    onChange={e => setDesc(e.target.value)}
+    placeholder="어떤 그룹인가요? 소개를 적어주세요."
+    style={{
+      width: '100%',
+      border: '1px solid #E5E8EB',
+      borderRadius: 10,
+      padding: '12px 14px',
+      fontSize: 14,
+      color: '#191F28',
+      backgroundColor: '#DBE9F9',
+      minHeight: '96px',
+      boxSizing: 'border-box',
+      lineHeight: 1.6,
+      resize: 'none',
+      outline: 'none',
+      fontFamily: 'inherit',
+    }}
+  />
+</div>
             
           </div>
           
 
           {/* 생성하기 버튼 */}
-          <button onClick={handleSubmit} style={{ width: '100%', marginTop: 14, padding: '15px 0', backgroundColor: canSubmit ? '#1E59DA' : '#B0BEC5', color: '#fff', border: 'none', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: canSubmit ? 'pointer' : 'not-allowed', transition: 'background-color 0.2s' }}>
-            생성하기
+          <button onClick={handleSubmit} disabled={!canSubmit || submitting} style={{ width: '100%', marginTop: 14, padding: '15px 0', backgroundColor: canSubmit ? '#1E59DA' : '#B0BEC5', color: '#fff', border: 'none', borderRadius: 14, fontSize: 16, fontWeight: '700', cursor: canSubmit && !submitting ? 'pointer' : 'not-allowed', transition: 'background-color 0.2s' }}>
+            {submitting ? '생성 중...' : '생성하기'}
           </button>
           
         </div>
@@ -384,7 +449,6 @@ function NewGroupSheet({ onClose }) {
 
             animation: 'popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)'
           }}>
-            {/* 요청하신 스타일이 적용된 텍스트 영역 */}
             <div style={{
               display: 'flex',
               width: '100%',     
@@ -404,17 +468,7 @@ function NewGroupSheet({ onClose }) {
           </div>
         </>
       )}
-      {showDetail && (
-        <GroupDetailView
-          groupName={groupName}
-          category={category}
-          members={members}
-          goal={goal}
-          desc={desc}
-          onSave={(newDesc) => setDesc(newDesc)}
-          onClose={() => setShowDetail(false)}
-        />
-      )}
+      
       
       </div>
 
@@ -452,10 +506,24 @@ export default function AddGroup() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const currentTab = TABS.find(t => t.key === activeTab);
-  const sorted = [...DUMMY_ALL_GROUPS].sort(currentTab.sort);
+  const loadGroups = () => {
+    setLoading(true);
+    setError(null);
+    exploreGroups(null, activeTab)
+      .then(list => setGroups((list ?? []).map(toViewGroup)))
+      .catch(e => setError(e.message || '모임 목록을 불러오지 못했어요.'))
+      .finally(() => setLoading(false));
+  };
 
+  useEffect(() => {
+    loadGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+  
   const handleExplore = (group) => {
     setSelectedGroup(null);
     navigate('/GroupExplore', { state: { group } });
@@ -483,7 +551,7 @@ export default function AddGroup() {
 
       {/* 카드 목록 */}
       <div style={{ padding: '16px 20px 100px', flex: 1, overflowY: 'auto' }}>
-        {sorted.map(group => <GroupCard key={group.id} group={group} onClick={setSelectedGroup} />)}
+        {groups.map(group => <GroupCard key={group.id} group={group} onClick={setSelectedGroup} />)}
       </div>
 
       {/* FAB */}
@@ -502,7 +570,7 @@ export default function AddGroup() {
 
       {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} onSelectGroup={setSelectedGroup} />}
       <GroupPopup group={selectedGroup} onClose={() => setSelectedGroup(null)} onExplore={handleExplore} />
-      {newGroupOpen && <NewGroupSheet onClose={() => setNewGroupOpen(false)} />}
+      {newGroupOpen && <NewGroupSheet onClose={() => setNewGroupOpen(false)} onCreated={loadGroups} />}
 
       <style>{`
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }

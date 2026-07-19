@@ -2,26 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
+import { requestAiCoaching, getUserName, applyCoachingRoutine } from '../api';
 
-// ── 더미 데이터 정의 ──
-const DUMMY_COACHING = {
-  aiResponse: `**조서영님의 체형 분석 결과 AI 코칭을 알려드릴게요**
 
-업로드된 체형 사진을 분석한 결과, 상체에 비해 하체 근육 발달이 상대적으로 부족한 편으로 보입니다. 특히 허벅지와 둔근(엉덩이) 근육의 볼륨이 크지 않아 전체적인 체형 균형이 약간 상체 중심으로 나타나는 경향이 있습니다. 또한 골반 주변 근육의 안정성이 다소 약해 보이며 코어 근육의 사용도 충분하지 않은 것으로 판단됩니다.
-
-이러한 체형에서는 하체 근력과 코어 안정성을 함께 강화하는 운동을 진행하면 전체적인 체형 균형을 개선하는 데 도움이 될 수 있습니다.
-
-**AI 운동 코칭**
-하체 근육을 강화하기 위해 스쿼트와 런지 같은 복합 하체 운동을 중심으로 루틴을 구성하는 것을 추천합니다. 스쿼트는 허벅지와 둔근을 동시에 자극할 수 있어 하체 근력 향상에 효과적인 운동입니다. 런지는 하체 근육뿐만 아니라 균형감각과 코어 안정성에도 도움을 줄 수 있습니다.`,
-  recommendedRoutine: JSON.stringify({
-    routines: [
-      { name: "스쿼트", sets: 4, reps: "8~12회" },
-      { name: "런지", sets: 3, reps: "12~15회" },
-      { name: "플랭크", sets: 3, reps: "1분" },
-      { name: "데드버그", sets: 3, reps: "15회" }
-    ]
-  })
-};
+function stripJsonBlock(text) {
+  if (!text) return text;
+  return text.replace(/```json[\s\S]*?```/g, '').trim();
+}
 
 function renderResponse(text) {
   if (!text) return null;
@@ -58,17 +45,24 @@ function AiResultEx() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [coaching, setCoaching] = useState(null);
   const [loading, setLoading] = useState(true);
-  const name = location.state?.name || '조서영';
+  const [error, setError] = useState('');
+  const [applying, setApplying] = useState(false);
+const username = location.state?.name || getUserName() || "사용자";  useEffect(() => {
+    let cancelled = false;
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCoaching(DUMMY_COACHING);
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    // 이미지/체형 설명 없이 요청 → 백엔드가 운동 기록 기반으로 코칭을 생성해요.
+    requestAiCoaching()
+      .then(data => {
+        if (cancelled) return;
+        setCoaching(data);
+      })
+      .catch(e => { if (!cancelled) setError(e.message || 'AI 코칭 요청 중 오류가 발생했어요.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, []);
 
   let routine = [];
@@ -79,16 +73,25 @@ function AiResultEx() {
     } catch (e) {}
   }
 
+  const handleApplyRoutine = async () => {
+    if (!coaching?.logId) return;
+    setApplying(true);
+    try {
+      await applyCoachingRoutine(coaching.logId);
+      navigate('/Page3');
+    } catch (e) {
+      alert(e.message || '루틴 연동에 실패했어요. (백엔드 엔드포인트가 아직 준비되지 않았을 수 있어요)');
+    } finally {
+      setApplying(false);
+    }
+  };
+
   return (
     <div style={{
-      width: '100%',
-      maxWidth: '450px',
-      margin: '0 auto',
-      height: '100%',
-      backgroundColor: '#fff',
-      padding: '20px 20px 140px', 
-      boxSizing: 'border-box',
-      position: 'relative'
+      width: '100%', minHeight: '100%',
+      backgroundColor: '#F3F4F4',
+      display: 'flex', flexDirection: 'column',
+      position: 'relative',
     }}>
 
       {/* ── 1. 헤더 영역 (카드 스타일 제거) ── */}
@@ -113,11 +116,15 @@ function AiResultEx() {
 
       {loading ? (
         <LoadingSpinner />
+      ) : error ? (
+        <div style={{ padding: '60px 20px', textAlign: 'center', color: '#8B95A1', fontSize: 14 }}>
+          {error}
+        </div>
       ) : (
         <div style={{ padding: '0 4px' }}>
           {/* ── 2. 본문 리포트  ── */}
           <div style={{ marginBottom: '40px' }}>
-            {renderResponse(coaching.aiResponse)}
+            {renderResponse(stripJsonBlock(coaching.aiResponse))}
           </div>
 
           {/* ── 3. 추천 운동 루틴  ── */}
@@ -173,30 +180,31 @@ function AiResultEx() {
         padding: '40px 0 60px' 
       }}>
         <button
-          onClick={() => navigate('/Page3')}
+          onClick={handleApplyRoutine}
+          disabled={applying || !coaching}
           style={{
             width: 'calc(343/402*100%)',
             minWidth: '343px',
             height: '51px',
-            backgroundColor: '#1E59DA', 
+            backgroundColor: applying ? '#9DB8E8' : '#1E59DA', 
             borderRadius: '14px',
             border: 'none',
             color: '#fff',
             fontSize: '17px',
             fontWeight: '600',
-            cursor: 'pointer',
+            cursor: applying ? 'default' : 'pointer',
             boxShadow: '0 6px 16px rgba(30, 89, 218, 0.25)',
             zIndex: 10
           }}
         >
-          마이페이지에 추천 운동 루틴 연동하기
+          {applying ? '연동 중...' : '마이페이지에 추천 운동 루틴 연동하기'}
         </button>
       </div>
       
 
       {menuOpen && (
-        <HamburgerPanel userName={name} onClose={() => setMenuOpen(false)} />
-      )}
+  <HamburgerPanel userName={username} onClose={() => setMenuOpen(false)} />
+)}
     </div>
   );
 }

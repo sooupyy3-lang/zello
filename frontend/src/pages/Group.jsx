@@ -1,13 +1,22 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate,useLocation } from 'react-router-dom';
 import { HamburgerButton, HamburgerPanel } from '../pages/HamburgerMenu';
+import { getMyGroups } from '../api';
+import { getUserName } from '../api';
 
-// ── 더미 데이터 ──────────────────────────────────────
-export const DUMMY_Group = [
-  { id: 1, name: '하체 집중 모임', type: '헬스',  people: '3/8',  goal: '주 2회', desc: '이피구 저피구구 아라아라' },
-  { id: 2, name: '새벽 러닝 크루', type: '러닝',  people: '5/10', goal: '주 3회', desc: '매일 새벽 한강에서 함께 달려요!' },
-  { id: 3, name: '요가 힐링 모임', type: '요가',  people: '4/6',  goal: '주 2회', desc: '몸과 마음을 함께 가꾸는 요가 모임입니다.' },
-];
+
+function toViewGroup(g) {
+  return {
+    id: g.id,
+    name: g.name,
+    type: g.category,
+    people: `${g.memberCount}/${g.maxMembers ?? '∞'}`,
+    goal: g.goal,
+    desc: g.description,
+    inviteCode: g.inviteCode,
+    myRole: g.myRole,
+  };
+}
 
 // ── 그룹 카드 ─────────────────────────────────────────
 function GroupCard({ group, onClick }) {
@@ -104,13 +113,27 @@ function GroupPopup({ group, onClose, onExplore }) {
 
 // ── 메인 페이지 ──────────────────────────────────────
 export default function Group() {
+  const [groups, setGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation(); 
+  const userName = location.state?.name || getUserName() || '사용자';
+
+  useEffect(() => {
+    let cancelled = false;
+    getMyGroups()
+      .then(list => { if (!cancelled) setGroups((list ?? []).map(toViewGroup)); })
+      .catch(e => { if (!cancelled) setError(e.message || '그룹 목록을 불러오지 못했어요.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const handleExplore = (group) => {
     setSelectedGroup(null);
-    navigate('/Groupdetail', { state: { group } });
+    navigate('/Groupdetail', { state: { groupId: group.id, group } });
   };
 
   return (
@@ -133,7 +156,14 @@ export default function Group() {
 
       {/* ── 카드 목록 ── */}
       <div style={{ padding: '20px 20px 100px', flex: 1 }}>
-        {DUMMY_Group.map(group => (
+        {loading && <p style={{ textAlign: 'center', fontSize: 13, color: '#8B95A1', padding: '20px 0' }}>불러오는 중...</p>}
+        {!loading && error && <p style={{ textAlign: 'center', fontSize: 13, color: '#F04452', padding: '20px 0' }}>{error}</p>}
+        {!loading && !error && groups.length === 0 && (
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#8B95A1', padding: '20px 0' }}>
+            아직 가입한 모임이 없어요. 새 모임을 만들거나 찾아보세요.
+          </p>
+        )}
+        {!loading && !error && groups.map(group => (
           <GroupCard key={group.id} group={group} onClick={setSelectedGroup} />
         ))}
       </div>
@@ -157,7 +187,10 @@ export default function Group() {
         </button>
       </div>
 
-      {menuOpen && <HamburgerPanel userName="사용자" onClose={() => setMenuOpen(false)} />}
+      {menuOpen && (
+  <HamburgerPanel userName={userName} onClose={() => setMenuOpen(false)} />
+)}
+
       <GroupPopup group={selectedGroup} onClose={() => setSelectedGroup(null)} onExplore={handleExplore} />
     </div>
   );
