@@ -16,12 +16,13 @@ function toViewMembers(members) {
 }
 
 // ── 컴포넌트: 아바타 ──────────────────────────────────────────
-function Avatar({ name, color, size = 52.5 }) {
-  return (
+function Avatar({ name, color, size = 52.5, isActive = false }) {
+    return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
       backgroundColor: color, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, fontSize: size * 0.35, fontWeight: '700', color: '#002738',
+      flexShrink: 0, fontSize: size * 0.35, fontWeight: '700', color: '#002738', boxSizing: 'border-box',
+      border: isActive ? '1px solid #1E59DA' : 'none',
     }}>
       {name[0]}
     </div>
@@ -29,7 +30,7 @@ function Avatar({ name, color, size = 52.5 }) {
 }
 
 // ── 컴포넌트: 친구 카드 ────────────────────────────────────────
-function FriendCard({ friend, onClick }) {
+function FriendCard({ friend, onClick,isActive }) {
   return (
     <button
       onClick={() => onClick(friend)}
@@ -38,7 +39,7 @@ function FriendCard({ friend, onClick }) {
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
       }}
     >
-      <Avatar name={friend.name} color={friend.color} size={60} />
+      <Avatar name={friend.name} color={friend.color} size={60} isActive={isActive} />
       <div style={{ textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 14, fontWeight: '700', color: '#333D4B' }}>{friend.name}</p>
         <p style={{ margin: '4px 0 0', fontSize: 12, color: friend.role === 'owner' ? '#1E59DA' : '#8B95A1' }}>
@@ -570,7 +571,7 @@ export default function Groupdetail() {
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 8px',
       }}>
         {friends.map(friend => (
-          <FriendCard key={friend.id} friend={friend} onClick={setSelectedFriend} />
+          <FriendCard key={friend.id} friend={friend} onClick={setSelectedFriend}  isActive={!!activeUserIds?.has(friend.id)}/>
         ))}
       </div>
 
