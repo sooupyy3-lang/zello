@@ -107,12 +107,23 @@ public class GroupService {
         return toDto(group, userId);
     }
 
-    // ── 초대 코드로 가입 ──────────────────────────────────
+    // ── 초대 코드로 가입 (코드를 직접 아는 경우) ──────────
     @Transactional
     public GroupResponse joinByInviteCode(Long userId, String inviteCode) {
         Group group = groupRepo.findByInviteCode(inviteCode)
                 .orElseThrow(() -> new NotFoundException("유효하지 않은 초대 코드예요"));
+        return joinGroup(userId, group);
+    }
 
+    // ── 그룹 탐색(검색)에서 바로 가입 (코드를 모르는 경우) ───────────────────
+    @Transactional
+    public GroupResponse joinByGroupId(Long userId, Long groupId) {
+        Group group = groupRepo.findById(groupId)
+                .orElseThrow(() -> new NotFoundException("그룹을 찾을 수 없어요"));
+        return joinGroup(userId, group);
+    }
+
+    private GroupResponse joinGroup(Long userId, Group group) {
         if (groupMemberRepo.existsByGroupIdAndUserId(group.getId(), userId))
             throw new ConflictException("이미 가입된 그룹이에요");
 
