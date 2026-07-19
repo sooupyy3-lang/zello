@@ -5,6 +5,7 @@ import com.dumbbell.dto.DelegateOwnerRequest;
 import com.dumbbell.dto.GroupRequest;
 import com.dumbbell.dto.GroupResponse;
 import com.dumbbell.service.GroupService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,7 +23,7 @@ public class GroupController {
     // POST /api/groups — 그룹 생성
     @PostMapping
     public ResponseEntity<GroupResponse> createGroup(Authentication auth,
-                                                      @RequestBody GroupRequest req) {
+                                                      @Valid @RequestBody GroupRequest req) {
         Long userId = (Long) auth.getPrincipal();
         return ResponseEntity.ok(groupService.createGroup(userId, req));
     }
@@ -72,7 +73,7 @@ public class GroupController {
     @PutMapping("/{groupId}")
     public ResponseEntity<GroupResponse> updateGroup(Authentication auth,
                                                       @PathVariable Long groupId,
-                                                      @RequestBody GroupRequest req) {
+                                                      @Valid @RequestBody GroupRequest req) {
         Long userId = (Long) auth.getPrincipal();
         return ResponseEntity.ok(groupService.updateGroup(groupId, userId, req));
     }
