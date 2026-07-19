@@ -171,8 +171,7 @@ function Page3({ elapsed = 0 }) {
         <div style={styles.card}>
           <div style={styles.aiHeader}>
             <p style={styles.sectionTitle}>AI 운동 코칭</p>
-            <button style={styles.moreLink}>+ 이력보기</button>
-          </div>
+<button style={styles.moreLink} onClick={() => navigate('/AiHistory')}>+ 이력보기</button>          </div>
           {aiRoutine.length > 0 ? (
             <div style={styles.workoutScroll}>
               {aiRoutine.map((item, idx) => (

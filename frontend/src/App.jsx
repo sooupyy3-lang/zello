@@ -17,6 +17,8 @@ import AiResultEx from './pages/AiResultEx';
 import AiResultBody from './pages/AiResultBody';
 import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
+import AiHistory from './pages/AiHistory';
+
 import { getToken, getTodaySession, endSession, getHome } from './api';
 
 // 이 시간(초) 이상 연속으로 켜져 있으면 타이머를 강제 정지한다 (백엔드의 좀비 세션 자동 종료 기준과 동일)
@@ -175,7 +177,9 @@ function App() {
               onWorkoutEnded={refreshTodayBase}
             />
             
+            
           } />
+        <Route path="/AiHistory" element={<AiHistory />} />
 
           <Route path="/Analyzing" element={<Analyzing />} />
           <Route path="/GroupExplore" element={<GroupExplore />} />
