@@ -144,6 +144,7 @@ export default function AiHistory() {
         </button>
         <h1 style={styles.headerTitle}>AI 코칭 이력</h1>
       </div>
+      
 
       {/* ── 목록 ── */}
       <div style={styles.list}>
@@ -234,8 +235,14 @@ const styles = {
     fontSize: 9, color: '#1E59DA', lineHeight: 1.3,
   },
   toastWrap: {
-    position: 'absolute', left: 0, right: 0, bottom: '8%', display: 'flex',
-    justifyContent: 'center', zIndex: 400, pointerEvents: 'none',
+    position: 'fixed', 
+  left: 0, 
+  right: 0, 
+  bottom: '45%', 
+  display: 'flex',
+  justifyContent: 'center', 
+  zIndex: 400, 
+  pointerEvents: 'none'
   },
   toast: {
     backgroundColor: 'rgba(219, 233, 249, 0.92)', border: '2px solid rgba(30, 89, 218, 0.18)',
