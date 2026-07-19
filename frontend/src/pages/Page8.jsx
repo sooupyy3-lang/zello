@@ -422,9 +422,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise, onWorkoutEnded }) {
 />      </svg>
     </div>
    
-    <span style={{ fontSize: 10, fontWeight: '700', color: '#1E59DA' }}>
-      {formatElapsedSince(friend.startedAt)}
-      </span>
+    
     
 
               <span style={{
@@ -437,12 +435,12 @@ function Page8({ elapsed, setIsRunning, selectedExercise, onWorkoutEnded }) {
               </span>
 
               <span style={{
-                fontSize: 10,
-                fontWeight: '700',
-                color: friend.todayDone ? '#1E59DA' : '#ADB5BD',
-              }}>
-                1:45:04
-              </span>
+  fontSize: 10,
+  fontWeight: '700',
+  color: friend.todayDone ? '#1E59DA' : '#ADB5BD',
+}}>
+  {formatTime(friend.elapsedSec || 0)}
+</span>
             </div>
           ))}
         </div>
