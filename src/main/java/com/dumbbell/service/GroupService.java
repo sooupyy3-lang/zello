@@ -1,6 +1,7 @@
 package com.dumbbell.service;
 
 import com.dumbbell.dto.ActiveFriendResponse;
+import com.dumbbell.dto.GroupMemberStatsResponse;
 import com.dumbbell.dto.GroupRequest;
 import com.dumbbell.dto.GroupResponse;
 import com.dumbbell.entity.Group;
@@ -19,9 +20,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -239,6 +243,67 @@ public class GroupService {
                         .map(t -> t.getExerciseType().getName())
                         .distinct()
                         .collect(Collectors.toList()))
+                .build();
+    }
+
+    // ── 그룹원 상세 통계 (오늘의 랭킹/운동시간/칼로리, 역대 최대 지속시간) ──
+    @Transactional(readOnly = true)
+    public GroupMemberStatsResponse getMemberStats(Long groupId, Long requesterId, Long targetUserId) {
+        if (!groupMemberRepo.existsByGroupIdAndUserId(groupId, requesterId))
+            throw new ForbiddenException("그룹 멤버가 아니에요");
+
+        GroupMember target = groupMemberRepo.findByGroupIdAndUserId(groupId, targetUserId)
+                .orElseThrow(() -> new NotFoundException("해당 멤버가 없어요"));
+
+        List<Long> memberUserIds = groupMemberRepo.findByGroupId(groupId).stream()
+                .map(m -> m.getUser().getId())
+                .collect(Collectors.toList());
+
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+
+        List<WorkoutSession> todaySessions = sessionRepo
+                .findByUserIdInAndStartedAtBetween(memberUserIds, startOfDay, endOfDay).stream()
+                .filter(s -> !s.getIsActive() && !s.getExcludedFromRanking())
+                .collect(Collectors.toList());
+
+        Map<Long, Long> durationByUser = todaySessions.stream()
+                .collect(Collectors.groupingBy(s -> s.getUser().getId(),
+                        Collectors.summingLong(WorkoutSession::getTotalDurationSec)));
+
+        List<Long> ranked = durationByUser.entrySet().stream()
+                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+        Integer rank = ranked.contains(targetUserId) ? ranked.indexOf(targetUserId) + 1 : null;
+
+        List<WorkoutSession> targetTodaySessions = todaySessions.stream()
+                .filter(s -> s.getUser().getId().equals(targetUserId))
+                .collect(Collectors.toList());
+
+        long todayDurationSec = targetTodaySessions.stream()
+                .mapToLong(WorkoutSession::getTotalDurationSec).sum();
+        float todayCalories = (float) targetTodaySessions.stream()
+                .mapToDouble(WorkoutSession::getTotalCalories).sum();
+        LocalDateTime startedAt = targetTodaySessions.stream()
+                .map(WorkoutSession::getStartedAt).min(LocalDateTime::compareTo).orElse(null);
+        LocalDateTime endedAt = targetTodaySessions.stream()
+                .map(WorkoutSession::getEndedAt).filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo).orElse(null);
+
+        int maxDurationSec = sessionRepo.findAllByUserId(targetUserId).stream()
+                .mapToInt(WorkoutSession::getTotalDurationSec).max().orElse(0);
+
+        return GroupMemberStatsResponse.builder()
+                .userId(targetUserId)
+                .name(target.getUser().getName())
+                .role(target.getRole().name())
+                .rank(rank)
+                .todayDurationSec(todayDurationSec)
+                .todayCalories(todayCalories)
+                .startedAt(startedAt)
+                .endedAt(endedAt)
+                .maxDurationSec(maxDurationSec)
                 .build();
     }
 

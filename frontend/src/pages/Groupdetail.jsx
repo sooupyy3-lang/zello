@@ -2,8 +2,23 @@ import { useState,useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
 
-import { getGroup, updateGroup, kickGroupMember, leaveGroup, getUserId, getGroupActiveMembers, deleteGroup, delegateGroupOwner } from '../api';
+import { getGroup, updateGroup, kickGroupMember, leaveGroup, getUserId, getGroupActiveMembers, getGroupMemberStats, deleteGroup, delegateGroupOwner } from '../api';
 const AVATAR_COLORS = ['#BFE8F8', '#D4F1D4', '#FFE5C4', '#E8E0FF', '#FFD6E0'];
+
+// 초 → "01:23:45"
+function formatDuration(sec) {
+  if (sec == null) return '-';
+  const h = Math.floor(sec / 3600).toString().padStart(2, '0');
+  const m = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
+  const s = (sec % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+// ISO 시각 → "오전 9:12"
+function formatClock(dateStr) {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+}
 
 // GroupResponse.members(MemberInfo) → 화면에서 쓰는 friend 카드 형태로 변환
 function toViewMembers(members) {
@@ -498,6 +513,25 @@ export default function Groupdetail() {
     }
   };
  
+  // 그룹원 카드 클릭 → 팝업을 먼저 열고, 상세 통계는 이어서 채워넣음
+  const handleSelectFriend = async (friend) => {
+    setSelectedFriend(friend);
+    try {
+      const stats = await getGroupMemberStats(groupId, friend.id);
+      setSelectedFriend(prev => (prev && prev.id === friend.id) ? {
+        ...prev,
+        rank: stats.rank ? `${stats.rank}위` : '-',
+        workoutTime: formatDuration(stats.todayDurationSec),
+        calories: stats.todayCalories != null ? `${Math.round(stats.todayCalories)}kcal` : '-',
+        startTime: formatClock(stats.startedAt),
+        endTime: stats.endedAt ? formatClock(stats.endedAt) : (stats.startedAt ? '진행중' : '-'),
+        maxDuration: formatDuration(stats.maxDurationSec),
+      } : prev);
+    } catch {
+      // 통계 조회 실패해도 팝업 자체(역할 등)는 유지
+    }
+  };
+
   // 친구 내보내기 확정 처리
   const handleKickConfirm = async () => {
     try {
@@ -571,7 +605,7 @@ export default function Groupdetail() {
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px 8px',
       }}>
         {friends.map(friend => (
-          <FriendCard key={friend.id} friend={friend} onClick={setSelectedFriend}  isActive={!!activeUserIds?.has(friend.id)}/>
+          <FriendCard key={friend.id} friend={friend} onClick={handleSelectFriend}  isActive={!!activeUserIds?.has(friend.id)}/>
         ))}
       </div>
 
