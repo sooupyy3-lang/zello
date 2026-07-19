@@ -38,4 +38,5 @@ out/
 
 ### Environment variables ###
 .env
+application-local.yml
 
