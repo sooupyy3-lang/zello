@@ -279,7 +279,7 @@ public class GroupService {
                 .goal(group.getGoal())
                 .maxMembers(group.getMaxMembers())
                 .memberCount(members.size())
-                .inviteCode(group.getInviteCode())
+                .inviteCode(myRole != null ? group.getInviteCode() : null) // 멤버만 초대코드 노출
                 .myRole(myRole)
                 .members(memberInfos)
                 .build();
