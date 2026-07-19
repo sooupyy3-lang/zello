@@ -1,11 +1,13 @@
 package com.dumbbell.service;
 
+import com.dumbbell.dto.RankingResponse;
 import com.dumbbell.dto.UserProfileResponse;
 import com.dumbbell.entity.*;
 import com.dumbbell.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,13 +81,8 @@ public class StatsService {
                 .sum();
 
         // 날짜별 합산 (하루에 세션이 여러 개면 하나의 "하루 실적"으로 합침)
-        Map<LocalDate, Integer> dailyDurationSec = new HashMap<>();
-        Map<LocalDate, Float> dailyCalories = new HashMap<>();
-        for (WorkoutSession s : weeklySessions) {
-            LocalDate d = s.getStartedAt().toLocalDate();
-            dailyDurationSec.merge(d, s.getTotalDurationSec() != null ? s.getTotalDurationSec() : 0, Integer::sum);
-            dailyCalories.merge(d, s.getTotalCalories() != null ? s.getTotalCalories() : 0f, Float::sum);
-        }
+        Map<LocalDate, Integer> dailyDurationSec = sumDurationByDate(weeklySessions);
+        Map<LocalDate, Float> dailyCalories = sumCaloriesByDate(weeklySessions);
 
         // 오늘의 목표 시간/칼로리 (하루 단위 — durationMin/calorieTarget은 1회=하루 기준 목표값)
         int goalProgressPercent = 0;
@@ -93,7 +90,6 @@ public class StatsService {
         float remainCalories = 0f;
 
         if (goal != null) {
-            int countGoal    = goal.getWeeklyCount() != null ? goal.getWeeklyCount() : 0;
             int durationGoal = goal.getDurationMin() != null ? goal.getDurationMin() : 0;
             int calorieGoal  = goal.getCalorieTarget() != null ? goal.getCalorieTarget() : 0;
 
@@ -102,18 +98,7 @@ public class StatsService {
             remainDurationMin = Math.max(0, durationGoal - todayDurationMin);
             remainCalories    = Math.max(0f, calorieGoal - todayCalories);
 
-            // 금주의 진행률: 이번 주에 운동한 날마다 (시간% + 칼로리%)/2 로 "하루 완성도"를 구하고,
-            // 그 합을 주 목표 횟수로 나눔 → 운동 안 한 날은 자동으로 0점 처리되어 횟수까지 함께 반영됨
-            double dailyScoreSum = 0;
-            for (LocalDate d : dailyDurationSec.keySet()) {
-                int durMin = dailyDurationSec.getOrDefault(d, 0) / 60;
-                float cal = dailyCalories.getOrDefault(d, 0f);
-                double durPercent = durationGoal > 0 ? Math.min(100.0, durMin * 100.0 / durationGoal) : 100.0;
-                double calPercent = calorieGoal > 0 ? Math.min(100.0, cal * 100.0 / calorieGoal) : 100.0;
-                dailyScoreSum += (durPercent + calPercent) / 2.0;
-            }
-            int sessionsGoal = Math.max(countGoal, 1);
-            goalProgressPercent = (int) Math.min(100, dailyScoreSum / sessionsGoal);
+            goalProgressPercent = calcGoalProgressPercent(goal, dailyDurationSec, dailyCalories);
         }
 
         return UserProfileResponse.builder()
@@ -140,6 +125,75 @@ public class StatsService {
                 .remainDurationMin(remainDurationMin)
                 .remainCalories(remainCalories)
                 .build();
+    }
+
+    // ── 목표 달성순 랭킹 (마이페이지와 동일한 '이번 주 목표 진행률' 기준) ──
+    @Transactional(readOnly = true)
+    public List<RankingResponse> getGoalProgressRanking() {
+        LocalDate today = LocalDate.now();
+        LocalDate weekStart = today.with(DayOfWeek.MONDAY);
+
+        List<RankingResponse> result = new ArrayList<>();
+        for (User user : userRepo.findAll()) {
+            UserGoal goal = goalRepo.findTopByUserIdOrderByUpdatedAtDesc(user.getId()).orElse(null);
+            if (goal == null) continue;
+
+            // 마이페이지(getFullProfile)와 동일하게 계산 — 필터 조건도 그대로 맞춤
+            List<WorkoutSession> weeklySessions = sessionRepo.findAllByUserId(user.getId()).stream()
+                    .filter(s -> {
+                        LocalDate d = s.getStartedAt().toLocalDate();
+                        return !d.isBefore(weekStart) && !d.isAfter(today);
+                    })
+                    .collect(Collectors.toList());
+            if (weeklySessions.isEmpty()) continue;
+
+            int percent = calcGoalProgressPercent(goal,
+                    sumDurationByDate(weeklySessions), sumCaloriesByDate(weeklySessions));
+            result.add(RankingResponse.builder()
+                    .userId(user.getId())
+                    .userName(user.getName())
+                    .value((long) percent)
+                    .build());
+        }
+
+        result.sort(Comparator.comparingLong(RankingResponse::getValue).reversed());
+        return result;
+    }
+
+    // 날짜별 (시간% + 칼로리%)/2 의 평균을 주 목표 횟수로 나눈 진행률 — 운동 안 한 날은 0점 처리되어 횟수까지 함께 반영됨
+    private int calcGoalProgressPercent(UserGoal goal, Map<LocalDate, Integer> dailyDurationSec, Map<LocalDate, Float> dailyCalories) {
+        int countGoal    = goal.getWeeklyCount() != null ? goal.getWeeklyCount() : 0;
+        int durationGoal = goal.getDurationMin() != null ? goal.getDurationMin() : 0;
+        int calorieGoal  = goal.getCalorieTarget() != null ? goal.getCalorieTarget() : 0;
+
+        double dailyScoreSum = 0;
+        for (LocalDate d : dailyDurationSec.keySet()) {
+            int durMin = dailyDurationSec.getOrDefault(d, 0) / 60;
+            float cal = dailyCalories.getOrDefault(d, 0f);
+            double durPercent = durationGoal > 0 ? Math.min(100.0, durMin * 100.0 / durationGoal) : 100.0;
+            double calPercent = calorieGoal > 0 ? Math.min(100.0, cal * 100.0 / calorieGoal) : 100.0;
+            dailyScoreSum += (durPercent + calPercent) / 2.0;
+        }
+        int sessionsGoal = Math.max(countGoal, 1);
+        return (int) Math.min(100, dailyScoreSum / sessionsGoal);
+    }
+
+    private Map<LocalDate, Integer> sumDurationByDate(List<WorkoutSession> sessions) {
+        Map<LocalDate, Integer> map = new HashMap<>();
+        for (WorkoutSession s : sessions) {
+            LocalDate d = s.getStartedAt().toLocalDate();
+            map.merge(d, s.getTotalDurationSec() != null ? s.getTotalDurationSec() : 0, Integer::sum);
+        }
+        return map;
+    }
+
+    private Map<LocalDate, Float> sumCaloriesByDate(List<WorkoutSession> sessions) {
+        Map<LocalDate, Float> map = new HashMap<>();
+        for (WorkoutSession s : sessions) {
+            LocalDate d = s.getStartedAt().toLocalDate();
+            map.merge(d, s.getTotalCalories() != null ? s.getTotalCalories() : 0f, Float::sum);
+        }
+        return map;
     }
 
     // ── 최대 연속 운동 일수 계산 ──────────────────────────

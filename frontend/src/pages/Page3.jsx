@@ -24,7 +24,7 @@ function formatRankingValue(type, value) {
     const m = Math.floor((v % 3600) / 60);
     return h > 0 ? `${h}시간 ${m}분` : `${m}분`;
   }
-  if (type === 'goal') return `목표 ${v}회 달성`;
+  if (type === 'goal') return `이번 주 목표 ${v}% 달성`;
   return `총 ${v}일 운동`; // attendance
 }
 

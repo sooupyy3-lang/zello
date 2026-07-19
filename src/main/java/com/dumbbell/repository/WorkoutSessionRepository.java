@@ -57,27 +57,18 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
         """)
     List<WorkoutSession> findActiveSessionsStartedBefore(@Param("cutoff") LocalDateTime cutoff);
 
-    // 시간순 랭킹 (총 운동 시간)
+    // 시간순 랭킹 (오늘의 총 운동 시간) — 날짜 경계는 애플리케이션(Asia/Seoul 기준)에서 계산해 전달
+    // DB의 CURRENT_DATE에 의존하면 DB 서버 타임존(대개 UTC) 기준으로 날짜가 바뀌어 버그가 생김
     @Query("""
         SELECT new com.dumbbell.dto.RankingResponse(0, s.user.id, s.user.name, SUM(s.totalDurationSec))
         FROM WorkoutSession s
         WHERE s.isActive = false AND s.excludedFromRanking = false
-          AND FUNCTION('DATE', s.startedAt) = CURRENT_DATE
+          AND s.startedAt >= :start AND s.startedAt < :end
         GROUP BY s.user.id, s.user.name
         ORDER BY SUM(s.totalDurationSec) DESC
         """)
-    List<RankingResponse> findRankingByTotalTime();
-
-    // 목표 달성순 랭킹 (목표 달성한 세션 수)
-    @Query("""
-        SELECT new com.dumbbell.dto.RankingResponse(0, s.user.id, s.user.name, COUNT(s))
-        FROM WorkoutSession s
-        JOIN UserGoal g ON g.user.id = s.user.id
-        WHERE s.isActive = false AND s.excludedFromRanking = false AND s.totalDurationSec >= g.durationMin * 60
-        GROUP BY s.user.id, s.user.name
-        ORDER BY COUNT(s) DESC
-        """)
-    List<RankingResponse> findRankingByGoalAchievement();
+    List<RankingResponse> findRankingByTotalTime(
+            @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     // 운동 지속일 랭킹 (총 운동한 날 수)
     @Query("""
