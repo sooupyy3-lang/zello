@@ -272,7 +272,7 @@ public class GroupService {
 
         List<WorkoutSession> targetTodaySessions = sessionRepo
                 .findByUserIdInAndStartedAtBetween(List.of(targetUserId), startOfDay, endOfDay).stream()
-                .filter(s -> !s.getIsActive() && !s.getExcludedFromRanking())
+                .filter(s -> !s.getExcludedFromRanking())
                 .collect(Collectors.toList());
 
         long todayDurationSec = targetTodaySessions.stream()
@@ -281,7 +281,8 @@ public class GroupService {
                 .mapToDouble(WorkoutSession::getTotalCalories).sum();
         LocalDateTime startedAt = targetTodaySessions.stream()
                 .map(WorkoutSession::getStartedAt).min(LocalDateTime::compareTo).orElse(null);
-        LocalDateTime endedAt = targetTodaySessions.stream()
+        boolean stillActive = targetTodaySessions.stream().anyMatch(WorkoutSession::getIsActive);
+        LocalDateTime endedAt = stillActive ? null : targetTodaySessions.stream()
                 .map(WorkoutSession::getEndedAt).filter(Objects::nonNull)
                 .max(LocalDateTime::compareTo).orElse(null);
 
