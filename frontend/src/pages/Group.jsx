@@ -120,7 +120,7 @@ export default function Group() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation(); 
-  const username = location.state?.name || getUserName() || '사용자';
+  const userName = location.state?.name || getUserName() || '사용자';
 
   useEffect(() => {
     let cancelled = false;
