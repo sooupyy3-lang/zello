@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 
 
 function AddFriends() {
+    const location = useLocation();                     
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -85,18 +86,18 @@ const userName = location.state?.name || getUserName() || "사용자";
 )}
      {/* ── 헤더 ── */}
       <header style={{ 
-        height: `calc(115/874*100dvh)`, 
+        height: `calc(35/874*100dvh)`, 
         maxHeight: '874px',
         display: 'flex', 
         justifyContent: 'center', 
         position: 'relative',
-        paddingTop: '28%',
+        paddingTop: '5%',
         borderBottom: '1px solid #F0F0F0',
         overflow: 'hidden',
         marginBottom:'50px',
         zIndex: 10
       }}>
-        <div style={{ position: 'absolute', left: '0.5%', top:'70%',zIndex: 20 }}>
+        <div style={{ position: 'absolute', left: '0.5%', top:'30%',zIndex: 20 }}>
          <HamburgerButton onOpen={() => setMenuOpen(true)} />
         </div>
         <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#333' }}>친구 추가하기</h2>

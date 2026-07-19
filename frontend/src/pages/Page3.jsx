@@ -166,7 +166,6 @@ function Page3({ elapsed = 0 }) {
               </div>
             ))
           )}
-          <button style={styles.moreBtn}> +더보기</button>
         </div>
  {/* 영역 3: AI 추천 루틴 */}
         <div style={styles.card}>

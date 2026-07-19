@@ -6,6 +6,10 @@ import { getLatestCoaching, getMyProfile, applyCoachingRoutine } from '../api';
 import { getUserName } from '../api';
 
 
+function stripJsonBlock(text) {
+  if (!text) return text;
+  return text.replace(/```json[\s\S]*?```/g, '').trim();
+}
 function renderResponse(text) {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
@@ -136,7 +140,7 @@ const username = location.state?.name || getUserName() || "사용자";
         <div style={{ padding: '0 4px' }}>
           {/* ── 2. 본문 리포트  ── */}
           <div style={{ marginBottom: '40px' }}>
-            {renderResponse(coaching.aiResponse)}
+            {renderResponse(stripJsonBlock(coaching.aiResponse))}
           </div>
 
           {/* ── 3. 추천 운동 루틴  ── */}

@@ -75,6 +75,7 @@ export default function GroupExplore() {
   const location = useLocation();
   const group = location.state?.group;
   const members = group?.members ?? [];
+  const isMyGroup = !!group?.myRole;
 
 
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -138,7 +139,7 @@ export default function GroupExplore() {
       </div>
 
       {/* ── 스크롤 콘텐츠 ── */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 100 }}>
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: isMyGroup ? 20 : 100 }}>
 
         {/* 그룹 소개 영역 */}
         {!isDescOpen ? (
@@ -195,27 +196,30 @@ export default function GroupExplore() {
       </div>
 
       {/* ── 가입하기 버튼 (하단 고정) ── */}
-      <div style={{
-        position: 'absolute', left: 0, right: 0, bottom: '5%',
-        padding: '12px 20px 28px',
-        borderTop: '1px solid #F0F0F0',
-      }}>
-        <button
-          onClick={handleJoinClick}
-          disabled={joining}
-          style={{
-            width: '100%', padding: '15px 0',
-            backgroundColor: '#1E59DA', color: '#fff',
-            border: 'none', borderRadius: 14,
-            fontSize: 16, fontWeight: '700', cursor: joining ? 'not-allowed' : 'pointer',
-            transition: 'transform 0.1s',
-          }}
-          onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
-          onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
-        >
-          {joining ? '가입 중...' : '가입하기'}
-        </button>
-      </div>
+      {/* 이미 내가 속한(모임장 포함) 그룹이면 가입하기 버튼을 노출하지 않음 */}
+      {!isMyGroup && (
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: '5%',
+          padding: '12px 20px 28px',
+          borderTop: '1px solid #F0F0F0',
+        }}>
+          <button
+            onClick={handleJoinClick}
+            disabled={joining}
+            style={{
+              width: '100%', padding: '15px 0',
+              backgroundColor: '#1E59DA', color: '#fff',
+              border: 'none', borderRadius: 14,
+              fontSize: 16, fontWeight: '700', cursor: joining ? 'not-allowed' : 'pointer',
+              transition: 'transform 0.1s',
+            }}
+            onMouseDown={e => (e.currentTarget.style.transform = 'scale(0.98)')}
+            onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
+            {joining ? '가입 중...' : '가입하기'}
+          </button>
+        </div>
+      )}
 
       {/* ── 가입 완료 모달 ── */}
       {showJoinModal && (
