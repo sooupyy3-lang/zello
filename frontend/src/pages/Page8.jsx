@@ -11,7 +11,7 @@ function formatElapsedSince(startedAt) {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function Page8({ elapsed, setIsRunning, selectedExercise, onWorkoutEnded }) {
+function Page8({ elapsed, setIsRunning, selectedExercise, endWorkoutSession }) {
   const navigate = useNavigate();
   const sessionData = selectedExercise?.sessionData;
   const tracks = sessionData?.tracks || [];
@@ -161,22 +161,21 @@ function Page8({ elapsed, setIsRunning, selectedExercise, onWorkoutEnded }) {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [playing]);
 
-  const handleEnd = async () => {
-    setIsRunning(false);
-    try {
-      const pausePromises = Object.keys(playing)
-        .filter((id) => playing[id] && id !== 'null')
-        .map((id) => {
-          const finalElapsed = getCurrentElapsed(id);
-          delete playStartRef.current[id];
-          return updateTrack(Number(id), 'paused', finalElapsed).catch(() => {});
-        });
-      await Promise.all(pausePromises);
-      await endSession();
-    } catch (e) {}
-    onWorkoutEnded?.();
-    navigate('/Page3');
-  };
+ const handleEnd = async () => {
+  try {
+    const pausePromises = Object.keys(playing)
+      .filter((id) => playing[id] && id !== 'null')
+      .map((id) => {
+        const finalElapsed = getCurrentElapsed(id);
+        delete playStartRef.current[id];
+        return updateTrack(Number(id), 'paused', finalElapsed).catch(() => {});
+      });
+    await Promise.all(pausePromises);
+  } catch (e) {}
+
+  await endWorkoutSession(); // setIsRunning(false) + liveSec 리셋 + endSession() + baseSec 갱신을 한번에 처리
+  navigate('/Page3');
+};
 
   const formatTime = (sec) => {
     const h = Math.floor(sec / 3600).toString().padStart(2, '0');
@@ -422,9 +421,7 @@ function Page8({ elapsed, setIsRunning, selectedExercise, onWorkoutEnded }) {
 />      </svg>
     </div>
    
-    <span style={{ fontSize: 10, fontWeight: '700', color: '#1E59DA' }}>
-      {formatElapsedSince(friend.startedAt)}
-      </span>
+    
     
 
               <span style={{
@@ -437,12 +434,12 @@ function Page8({ elapsed, setIsRunning, selectedExercise, onWorkoutEnded }) {
               </span>
 
               <span style={{
-                fontSize: 10,
-                fontWeight: '700',
-                color: friend.todayDone ? '#1E59DA' : '#ADB5BD',
-              }}>
-                1:45:04
-              </span>
+  fontSize: 10,
+  fontWeight: '700',
+  color: friend.todayDone ? '#1E59DA' : '#ADB5BD',
+}}>
+  {formatTime(friend.elapsedSec || 0)}
+</span>
             </div>
           ))}
         </div>

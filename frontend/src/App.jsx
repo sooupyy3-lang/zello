@@ -17,6 +17,8 @@ import AiResultEx from './pages/AiResultEx';
 import AiResultBody from './pages/AiResultBody';
 import MyPage from './pages/MyPage';
 import Friends from './pages/Friends';
+import AiHistory from './pages/AiHistory';
+
 import { getToken, getTodaySession, endSession, getHome } from './api';
 
 // 이 시간(초) 이상 연속으로 켜져 있으면 타이머를 강제 정지한다 (백엔드의 좀비 세션 자동 종료 기준과 동일)
@@ -45,6 +47,16 @@ function App() {
   const refreshTodayBase = () => {
     getHome().then(home => setBaseSec(home?.todayDurationSec || 0)).catch(() => {});
   };
+  const endWorkoutSession = async () => {
+  setIsRunning(false);
+  setLiveSec(0);
+  startTimeRef.current = null;
+  localStorage.removeItem('workoutStartTime');
+  try {
+    await endSession();
+  } catch (e) {}
+  refreshTodayBase();
+};
 
   // ── 앱 재실행 시 서버의 진행 중인 세션 기준으로 타이머 복원 ──
   // (탭을 완전히 닫았다 열거나 새로고침해도, 서버의 started_at으로 정확한 경과시간을 계산)
@@ -89,6 +101,7 @@ function App() {
         }
         setLiveSec(secs);
       }, 1000);
+      
 
       // 화면 켜짐 유지 (Screen Wake Lock)
       if ('wakeLock' in navigator) {
@@ -100,7 +113,6 @@ function App() {
       clearInterval(timerRef.current);
       startTimeRef.current = null;
       localStorage.removeItem('workoutStartTime');
-      setLiveSec(0);
       if (wakeLockRef.current) {
         wakeLockRef.current.release().catch(() => {});
         wakeLockRef.current = null;
@@ -108,6 +120,7 @@ function App() {
     }
     return () => clearInterval(timerRef.current);
   }, [isRunning]);
+
 
   // ── 화면 복귀 시 즉시 시간 동기화 ──
   useEffect(() => {
@@ -167,15 +180,15 @@ function App() {
           <Route path="/Login" element={<Login />} />
           <Route path="/Page2" element={<Page2 />} />
           <Route path="/Page8" element={
-            <Page8
-              elapsed={elapsed}
-              isRunning={isRunning}
-              setIsRunning={setIsRunning}
-              selectedExercise={selectedExercise}
-              onWorkoutEnded={refreshTodayBase}
-            />
-            
-          } />
+  <Page8
+    elapsed={elapsed}
+    isRunning={isRunning}
+    setIsRunning={setIsRunning}
+    selectedExercise={selectedExercise}
+    endWorkoutSession={endWorkoutSession}
+  />
+} />
+        <Route path="/AiHistory" element={<AiHistory />} />
 
           <Route path="/Analyzing" element={<Analyzing />} />
           <Route path="/GroupExplore" element={<GroupExplore />} />
