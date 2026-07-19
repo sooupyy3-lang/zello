@@ -18,7 +18,6 @@ https://github.com/sooupyy3-lang/zello
 | Frontend 런타임 | Node.js + npm |
 | Frontend 빌드 도구 | Vite 8 |
 | Database | MySQL 8 (AWS RDS)|
-| 컨테이너 | Docker (멀티스테이지 빌드, JDK 17 → JRE 17) |
 | 환경 분리 | `application-local.yml` (로컬) / `application-prod.yml` (운영) |
 | Frontend 배포 | Vercel |
 | Backend 배포 | AWS Elastic Beanstalk |
