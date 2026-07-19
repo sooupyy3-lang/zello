@@ -26,6 +26,9 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
 
     List<WorkoutSession> findAllByUserId(Long userId);
 
+    List<WorkoutSession> findByUserIdInAndStartedAtBetween(
+            List<Long> userIds, LocalDateTime start, LocalDateTime end);
+
     @Query("""
         SELECT s FROM WorkoutSession s
         WHERE s.isActive = true

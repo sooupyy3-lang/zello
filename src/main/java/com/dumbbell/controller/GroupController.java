@@ -2,6 +2,7 @@ package com.dumbbell.controller;
 
 import com.dumbbell.dto.ActiveFriendResponse;
 import com.dumbbell.dto.DelegateOwnerRequest;
+import com.dumbbell.dto.GroupMemberStatsResponse;
 import com.dumbbell.dto.GroupRequest;
 import com.dumbbell.dto.GroupResponse;
 import com.dumbbell.service.GroupService;
@@ -120,5 +121,14 @@ public class GroupController {
                                                                         @PathVariable Long groupId) {
         Long userId = (Long) auth.getPrincipal();
         return ResponseEntity.ok(groupService.getActiveMembers(groupId, userId));
+    }
+
+    // GET /api/groups/{groupId}/members/{targetUserId}/stats — 그룹원 상세 통계
+    @GetMapping("/{groupId}/members/{targetUserId}/stats")
+    public ResponseEntity<GroupMemberStatsResponse> getMemberStats(Authentication auth,
+                                                                     @PathVariable Long groupId,
+                                                                     @PathVariable Long targetUserId) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(groupService.getMemberStats(groupId, userId, targetUserId));
     }
 }
