@@ -56,6 +56,19 @@ public class AiCoachingService {
                 .orElseThrow(() -> new RuntimeException("코칭 기록이 없습니다."));
     }
 
+    // 현재 적용(선택)된 루틴 조회 — 이력에서 사용자가 직접 "불러오기"한 그 루틴
+    public AiCoachingResponse getAppliedRoutine(Long userId) {
+        return aiLogRepo.findByUserIdAndAppliedTrue(userId).stream()
+                .findFirst()
+                .map(log -> AiCoachingResponse.builder()
+                        .logId(log.getId())
+                        .aiResponse(log.getAiResponse())
+                        .recommendedRoutine(log.getRecommendedRoutine())
+                        .createdAt(log.getCreatedAt())
+                        .build())
+                .orElse(null);
+    }
+
     public List<AiCoachingResponse> getCoachingHistory(Long userId) {
         return aiLogRepo.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(log -> AiCoachingResponse.builder()

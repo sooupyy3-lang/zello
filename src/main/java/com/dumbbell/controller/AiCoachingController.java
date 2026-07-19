@@ -35,6 +35,13 @@ public class AiCoachingController {
         return ResponseEntity.ok(aiService.getLatestCoaching(userId));
     }
 
+    // GET /api/ai/coaching/applied — 현재 적용된 루틴 조회 (없으면 빈 응답)
+    @GetMapping("/coaching/applied")
+    public ResponseEntity<AiCoachingResponse> getApplied(Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(aiService.getAppliedRoutine(userId));
+    }
+
     // GET /api/ai/coaching/history — AI 루틴 이력 전체 조회
     @GetMapping("/coaching/history")
     public ResponseEntity<List<AiCoachingResponse>> getHistory(Authentication auth) {
