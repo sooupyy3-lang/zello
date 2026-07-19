@@ -234,7 +234,7 @@ const styles = {
     fontSize: 9, color: '#1E59DA', lineHeight: 1.3,
   },
   toastWrap: {
-    position: 'fixed', left: 0, right: 0, bottom: '8%', display: 'flex',
+    position: 'absolute', left: 0, right: 0, bottom: '8%', display: 'flex',
     justifyContent: 'center', zIndex: 400, pointerEvents: 'none',
   },
   toast: {
