@@ -201,6 +201,10 @@ export const delegateGroupOwner = (groupId, newOwnerId) =>
 export const getGroupActiveMembers = (groupId) =>
   request('GET', `/api/groups/${groupId}/active`);
 
+// GET /api/groups/:groupId/members/:targetUserId/stats — 그룹원 상세 통계
+export const getGroupMemberStats = (groupId, targetUserId) =>
+  request('GET', `/api/groups/${groupId}/members/${targetUserId}/stats`);
+
 // ── Groups ─────────────────────────────────────────────
 // POST /api/groups — 그룹 생성
 export const createGroup = (group) =>
