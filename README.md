@@ -8,7 +8,7 @@ https://github.com/sooupyy3-lang/jello
 
 ---
 
-## 개발 환경 정보
+## 개발 환경
 
 | 항목 | 내용 |
 |---|---|
@@ -23,7 +23,7 @@ https://github.com/sooupyy3-lang/jello
 
 ---
 
-## 개발 스택 정보
+## 개발 스택
 
 ### Backend
 - Spring Boot 3.5.13
