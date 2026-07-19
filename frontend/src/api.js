@@ -189,22 +189,15 @@ export const deleteFriend = (targetId) =>
   request('DELETE', `/api/friends/${targetId}`);
 
 // DELETE /api/groups/:groupId — 그룹 삭제 (방장만)
-// ⚠️ 아직 백엔드에 없는 엔드포인트예요. 백엔드팀에 추가 요청 필요.
-// 구현되기 전까지는 404/에러가 나고, 호출부에서 에러 메시지로 안내해요.
 export const deleteGroup = (groupId) =>
   request('DELETE', `/api/groups/${groupId}`);
 
 // PATCH /api/groups/:groupId/owner — 방장 권한을 다른 멤버에게 위임 (방장만)
-// ⚠️ 아직 백엔드에 없는 엔드포인트예요. 백엔드팀에 추가 요청 필요.
 // 요청 바디 제안: { newOwnerId: number }
 export const delegateGroupOwner = (groupId, newOwnerId) =>
   request('PATCH', `/api/groups/${groupId}/owner`, { newOwnerId });
 
 // GET /api/groups/:groupId/active — 그룹 멤버 중 현재 운동 중인 사람 목록
-// ⚠️ 아직 백엔드에 구현되어 있지 않은 엔드포인트예요.
-// 백엔드팀에 추가 요청 필요. 구현되기 전까지는 항상 404/에러가 나고,
-// 호출부에서 catch로 조용히 무시하도록 되어 있어서 다른 기능엔 영향 없어요.
-// 응답 형태 제안: [{ userId, startedAt, exerciseNames }] (ActiveFriendResponse와 동일 형태 추천)
 export const getGroupActiveMembers = (groupId) =>
   request('GET', `/api/groups/${groupId}/active`);
 
