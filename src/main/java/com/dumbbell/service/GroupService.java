@@ -44,7 +44,6 @@ public class GroupService {
                 .category(req.getCategory())
                 .goal(req.getGoal())
                 .maxMembers(req.getMaxMembers())
-                .createdBy(user)
                 .build();
         groupRepo.save(group);
 
