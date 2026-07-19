@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { joinGroupByCode } from '../api';
+import { joinGroupById } from '../api';
 
 
 
@@ -105,7 +105,7 @@ export default function GroupExplore() {
     if (joining) return;
     setJoining(true);
     try {
-      await joinGroupByCode(group.inviteCode);
+      await joinGroupById(group.id);
       setShowJoinModal(true);
     } catch (e) {
       alert(e.message || '가입에 실패했어요.');

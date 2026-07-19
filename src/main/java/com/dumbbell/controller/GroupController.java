@@ -60,6 +60,14 @@ public class GroupController {
         return ResponseEntity.ok(groupService.joinByInviteCode(userId, inviteCode));
     }
 
+    // POST /api/groups/{groupId}/join — 그룹 탐색(검색)에서 바로 가입 (초대코드 불필요)
+    @PostMapping("/{groupId}/join")
+    public ResponseEntity<GroupResponse> joinByGroupId(Authentication auth,
+                                                        @PathVariable Long groupId) {
+        Long userId = (Long) auth.getPrincipal();
+        return ResponseEntity.ok(groupService.joinByGroupId(userId, groupId));
+    }
+
     // DELETE /api/groups/{groupId}/leave — 그룹 탈퇴
     @DeleteMapping("/{groupId}/leave")
     public ResponseEntity<Void> leaveGroup(Authentication auth,
