@@ -11,20 +11,13 @@ const COLORS = {
 
 // 체형(이미지) 기반인지 운동 데이터(텍스트) 기반인지 판별
 function resolveRoutineType(log) {
-  const isBodyBased =
-    !!log.imageUrl ||
-    !!log.bodyImageUrl ||
-    !!log.hasImage ||
-    log.type === 'BODY' ||
-    log.type === 'IMAGE' ||
-    log.source === 'image';
-  return isBodyBased ? '체형 기반 추천루틴' : '운동 루틴 기반 추천루틴';
+  return log.imageUrl ? '체형 기반 추천루틴' : '운동 루틴 기반 추천루틴';
 }
 
 function parseRoutines(log) {
   try {
-    if (log.aiRoutineSummary) {
-      const parsed = JSON.parse(log.aiRoutineSummary);
+    if (log.recommendedRoutine) {
+      const parsed = JSON.parse(log.recommendedRoutine);
       return parsed.routines || [];
     }
   } catch (e) {
