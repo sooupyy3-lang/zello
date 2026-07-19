@@ -189,6 +189,9 @@ export default function Group() {
 
       {menuOpen && (
   <HamburgerPanel userName={userName} onClose={() => setMenuOpen(false)} />
-)} </div>
+)}
+
+      <GroupPopup group={selectedGroup} onClose={() => setSelectedGroup(null)} onExplore={handleExplore} />
+    </div>
   );
 }
