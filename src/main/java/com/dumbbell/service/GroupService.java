@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,24 +65,42 @@ public class GroupService {
                 ? groupRepo.searchByKeyword(keyword)
                 : groupRepo.findAll();
 
+        // 그룹마다 따로 멤버를 조회하지 않고, 목록에 있는 모든 그룹의 멤버를
+        // 한 번의 쿼리로 가져와서 그룹ID별로 메모리에서 묶어둔다 (N+1 방지).
+        Map<Long, List<GroupMember>> membersByGroup = fetchMembersByGroup(
+                groups.stream().map(Group::getId).collect(Collectors.toList()));
+
+        // 정렬도 DB에 다시 물어보지 않고 위에서 미리 묶어둔 멤버 수로 계산한다.
         Comparator<Group> comparator = switch (sort != null ? sort : "recent") {
             case "members" -> Comparator.comparingInt(
-                    (Group g) -> groupMemberRepo.countByGroupId(g.getId())).reversed();
+                    (Group g) -> membersByGroup.getOrDefault(g.getId(), List.of()).size()).reversed();
             default -> Comparator.comparing(Group::getCreatedAt).reversed();
         };
 
         return groups.stream()
                 .sorted(comparator)
-                .map(g -> toDto(g, userId))
+                .map(g -> toDto(g, userId, membersByGroup.getOrDefault(g.getId(), List.of())))
                 .collect(Collectors.toList());
     }
 
     // ── 내 그룹 목록 ──────────────────────────────────────
     @Transactional(readOnly = true)
     public List<GroupResponse> getMyGroups(Long userId) {
-        return groupMemberRepo.findByUserId(userId).stream()
-                .map(m -> toDto(m.getGroup(), userId))
+        List<GroupMember> myMemberships = groupMemberRepo.findByUserId(userId);
+
+        Map<Long, List<GroupMember>> membersByGroup = fetchMembersByGroup(
+                myMemberships.stream().map(m -> m.getGroup().getId()).collect(Collectors.toList()));
+
+        return myMemberships.stream()
+                .map(m -> toDto(m.getGroup(), userId, membersByGroup.getOrDefault(m.getGroup().getId(), List.of())))
                 .collect(Collectors.toList());
+    }
+
+    // 여러 그룹의 멤버를 한 번의 쿼리로 조회해서 그룹ID별 Map으로 묶어준다.
+    private Map<Long, List<GroupMember>> fetchMembersByGroup(List<Long> groupIds) {
+        if (groupIds.isEmpty()) return Map.of();
+        return groupMemberRepo.findByGroupIdIn(groupIds).stream()
+                .collect(Collectors.groupingBy(m -> m.getGroup().getId()));
     }
 
     // ── 그룹 상세 조회 ────────────────────────────────────
@@ -225,10 +244,13 @@ public class GroupService {
             throw new ForbiddenException("방장만 가능한 작업이에요");
     }
 
-    // ── DTO 변환 ─────────────────────────────────────────
+    // ── DTO 변환 (단일 그룹용 — 멤버 목록을 직접 조회) ────
     private GroupResponse toDto(Group group, Long userId) {
-        List<GroupMember> members = groupMemberRepo.findByGroupId(group.getId());
+        return toDto(group, userId, groupMemberRepo.findByGroupId(group.getId()));
+    }
 
+    // ── DTO 변환 (목록 조회용 — 미리 묶어둔 멤버 목록을 그대로 사용) ──
+    private GroupResponse toDto(Group group, Long userId, List<GroupMember> members) {
         String myRole = members.stream()
                 .filter(m -> m.getUser().getId().equals(userId))
                 .map(m -> m.getRole().name())
