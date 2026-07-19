@@ -78,23 +78,42 @@ public class StatsService {
                 .mapToDouble(s -> s.getTotalCalories() != null ? s.getTotalCalories() : 0)
                 .sum();
 
-        // 진행률 계산 (횟수/시간/칼로리 평균)
+        // 날짜별 합산 (하루에 세션이 여러 개면 하나의 "하루 실적"으로 합침)
+        Map<LocalDate, Integer> dailyDurationSec = new HashMap<>();
+        Map<LocalDate, Float> dailyCalories = new HashMap<>();
+        for (WorkoutSession s : weeklySessions) {
+            LocalDate d = s.getStartedAt().toLocalDate();
+            dailyDurationSec.merge(d, s.getTotalDurationSec() != null ? s.getTotalDurationSec() : 0, Integer::sum);
+            dailyCalories.merge(d, s.getTotalCalories() != null ? s.getTotalCalories() : 0f, Float::sum);
+        }
+
+        // 오늘의 목표 시간/칼로리 (하루 단위 — durationMin/calorieTarget은 1회=하루 기준 목표값)
         int goalProgressPercent = 0;
         int remainDurationMin = 0;
         float remainCalories = 0f;
 
         if (goal != null) {
-            int countGoal   = goal.getWeeklyCount() != null ? goal.getWeeklyCount() : 0;
+            int countGoal    = goal.getWeeklyCount() != null ? goal.getWeeklyCount() : 0;
             int durationGoal = goal.getDurationMin() != null ? goal.getDurationMin() : 0;
-            int calorieGoal = goal.getCalorieTarget() != null ? goal.getCalorieTarget() : 0;
+            int calorieGoal  = goal.getCalorieTarget() != null ? goal.getCalorieTarget() : 0;
 
-            int countPercent    = countGoal > 0 ? Math.min(100, weeklyWorkoutCount * 100 / countGoal) : 100;
-            int durationPercent = durationGoal > 0 ? Math.min(100, weeklyDurationMin * 100 / durationGoal) : 100;
-            int caloriePercent  = calorieGoal > 0 ? Math.min(100, (int)(weeklyCalories * 100 / calorieGoal)) : 100;
+            int todayDurationMin = dailyDurationSec.getOrDefault(today, 0) / 60;
+            float todayCalories  = dailyCalories.getOrDefault(today, 0f);
+            remainDurationMin = Math.max(0, durationGoal - todayDurationMin);
+            remainCalories    = Math.max(0f, calorieGoal - todayCalories);
 
-            goalProgressPercent = (countPercent + durationPercent + caloriePercent) / 3;
-            remainDurationMin   = Math.max(0, durationGoal - weeklyDurationMin);
-            remainCalories      = Math.max(0f, calorieGoal - weeklyCalories);
+            // 금주의 진행률: 이번 주에 운동한 날마다 (시간% + 칼로리%)/2 로 "하루 완성도"를 구하고,
+            // 그 합을 주 목표 횟수로 나눔 → 운동 안 한 날은 자동으로 0점 처리되어 횟수까지 함께 반영됨
+            double dailyScoreSum = 0;
+            for (LocalDate d : dailyDurationSec.keySet()) {
+                int durMin = dailyDurationSec.getOrDefault(d, 0) / 60;
+                float cal = dailyCalories.getOrDefault(d, 0f);
+                double durPercent = durationGoal > 0 ? Math.min(100.0, durMin * 100.0 / durationGoal) : 100.0;
+                double calPercent = calorieGoal > 0 ? Math.min(100.0, cal * 100.0 / calorieGoal) : 100.0;
+                dailyScoreSum += (durPercent + calPercent) / 2.0;
+            }
+            int sessionsGoal = Math.max(countGoal, 1);
+            goalProgressPercent = (int) Math.min(100, dailyScoreSum / sessionsGoal);
         }
 
         return UserProfileResponse.builder()

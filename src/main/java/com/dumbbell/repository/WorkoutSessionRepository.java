@@ -59,6 +59,7 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSession, 
         SELECT new com.dumbbell.dto.RankingResponse(0, s.user.id, s.user.name, SUM(s.totalDurationSec))
         FROM WorkoutSession s
         WHERE s.isActive = false AND s.excludedFromRanking = false
+          AND FUNCTION('DATE', s.startedAt) = CURRENT_DATE
         GROUP BY s.user.id, s.user.name
         ORDER BY SUM(s.totalDurationSec) DESC
         """)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Backimg from '../assets/Icon/BackForward.svg';
 import { updateTrack, endSession, getLatestCoaching, getActiveFriends } from '../api';
@@ -20,15 +20,32 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
   const [playing, setPlaying] = useState({});
   const [aiRoutine, setAiRoutine] = useState([]);
   const [activeFriends, setActiveFriends] = useState([]);
+  // trackId -> { startedAt: 재생 시작 시각(ms), baseElapsed: 그 시점까지 누적된 초 }
+  // setInterval로 1초씩 더하면 백그라운드에서 타이머가 쓰로틀링될 때 실제 경과시간보다 적게 기록되므로,
+  // 항상 Date.now() 기준 실제 시각 차이로 재계산한다 (App.jsx의 전체 타이머와 동일한 방식).
+  const playStartRef = useRef({});
+
+  // 현재 시점 기준 정확한 경과시간 계산
+  const getCurrentElapsed = (id) => {
+    const ref = playStartRef.current[id];
+    if (ref) {
+      return ref.baseElapsed + Math.floor((Date.now() - ref.startedAt) / 1000);
+    }
+    return trackElapsed[id] || 0;
+  };
 
   // 서버에서 복원된 세션(새로고침/재실행 포함)의 트랙별 진행 상태 반영
   useEffect(() => {
     if (!tracks.length) return;
     const initialElapsed = {};
     const initialPlaying = {};
+    playStartRef.current = {};
     tracks.forEach((t) => {
       initialElapsed[t.trackId] = t.elapsedSec || 0;
       initialPlaying[t.trackId] = t.status === 'running';
+      if (t.status === 'running') {
+        playStartRef.current[t.trackId] = { startedAt: Date.now(), baseElapsed: t.elapsedSec || 0 };
+      }
     });
     setTrackElapsed(initialElapsed);
     setPlaying(initialPlaying);
@@ -76,26 +93,36 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
     // key를 item 객체에서 일관되게 추출
     const trackId = item.id !== null ? item.id : item.name;
     const nowPlaying = !playing[trackId];
+    let currentElapsed;
 
     if (nowPlaying) {
+      // 재생 중이던 다른 트랙들을 실제 경과시간 기준으로 일시정지 처리
       const pausePromises = Object.keys(playing)
         .filter((id) => playing[id] && id !== String(trackId))
         .map((id) => {
+          const finalElapsed = getCurrentElapsed(id);
+          delete playStartRef.current[id];
+          setTrackElapsed((prev) => ({ ...prev, [id]: finalElapsed }));
           if (id !== 'null') {
-            return updateTrack(Number(id), 'paused', trackElapsed[id] || 0).catch(() => {});
+            return updateTrack(Number(id), 'paused', finalElapsed).catch(() => {});
           }
         });
       await Promise.all(pausePromises);
+
+      currentElapsed = trackElapsed[trackId] || 0;
+      playStartRef.current[trackId] = { startedAt: Date.now(), baseElapsed: currentElapsed };
 
       setPlaying((prev) => {
         const reset = Object.keys(prev).reduce((acc, id) => ({ ...acc, [id]: false }), {});
         return { ...reset, [trackId]: true };
       });
     } else {
+      currentElapsed = getCurrentElapsed(trackId);
+      delete playStartRef.current[trackId];
+      setTrackElapsed((prev) => ({ ...prev, [trackId]: currentElapsed }));
       setPlaying((prev) => ({ ...prev, [trackId]: false }));
     }
 
-    const currentElapsed = trackElapsed[trackId] || 0;
     const status = nowPlaying ? 'running' : 'paused';
 
     if (item.id !== null) {
@@ -105,16 +132,33 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
     }
   };
 
-  useEffect(() => {
-    const intervals = {};
-    Object.keys(playing).forEach((id) => {
-      if (playing[id]) {
-        intervals[id] = setInterval(() => {
-          setTrackElapsed((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
-        }, 1000);
-      }
+  // 재생 중인 트랙들의 표시 시간을 실제 경과시간 기준으로 재계산
+  const resyncTrackElapsed = () => {
+    setTrackElapsed((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      Object.keys(playStartRef.current).forEach((id) => {
+        if (playing[id]) {
+          next[id] = getCurrentElapsed(id);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
     });
-    return () => Object.values(intervals).forEach(clearInterval);
+  };
+
+  useEffect(() => {
+    const interval = setInterval(resyncTrackElapsed, 1000);
+    return () => clearInterval(interval);
+  }, [playing]);
+
+  // 화면(탭)으로 복귀했을 때 즉시 재동기화 (백그라운드에 있는 동안 놓친 시간 반영)
+  useEffect(() => {
+    const onVisible = () => {
+      if (!document.hidden) resyncTrackElapsed();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [playing]);
 
   const handleEnd = async () => {
@@ -122,7 +166,11 @@ function Page8({ elapsed, setIsRunning, selectedExercise }) {
     try {
       const pausePromises = Object.keys(playing)
         .filter((id) => playing[id] && id !== 'null')
-        .map((id) => updateTrack(Number(id), 'paused', trackElapsed[id] || 0).catch(() => {}));
+        .map((id) => {
+          const finalElapsed = getCurrentElapsed(id);
+          delete playStartRef.current[id];
+          return updateTrack(Number(id), 'paused', finalElapsed).catch(() => {});
+        });
       await Promise.all(pausePromises);
       await endSession();
     } catch (e) {}
