@@ -64,12 +64,17 @@ public class GroupService {
                 ? groupRepo.searchByKeyword(keyword)
                 : groupRepo.findAll();
 
-        Map<Long, List<GroupMember>> membersByGroup = fetchMembersByGroup(
-                groups.stream().map(Group::getId).collect(Collectors.toList()));
+        List<Long> groupIds = groups.stream().map(Group::getId).collect(Collectors.toList());
+        Map<Long, List<GroupMember>> membersByGroup = fetchMembersByGroup(groupIds);
 
         Comparator<Group> comparator = switch (sort != null ? sort : "recent") {
             case "members" -> Comparator.comparingInt(
                     (Group g) -> membersByGroup.getOrDefault(g.getId(), List.of()).size()).reversed();
+            case "attendance" -> {
+                Map<Long, Long> attendanceByGroup = fetchAttendanceByGroup(groupIds);
+                yield Comparator.comparingLong(
+                        (Group g) -> attendanceByGroup.getOrDefault(g.getId(), 0L)).reversed();
+            }
             default -> Comparator.comparing(Group::getCreatedAt).reversed();
         };
 
@@ -96,6 +101,13 @@ public class GroupService {
         if (groupIds.isEmpty()) return Map.of();
         return groupMemberRepo.findByGroupIdIn(groupIds).stream()
                 .collect(Collectors.groupingBy(m -> m.getGroup().getId()));
+    }
+
+    // 그룹별 오늘 출석(운동 완료)한 멤버 수
+    private Map<Long, Long> fetchAttendanceByGroup(List<Long> groupIds) {
+        if (groupIds.isEmpty()) return Map.of();
+        return groupMemberRepo.findTodayAttendeeCountsByGroup(groupIds).stream()
+                .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
     }
 
     // ── 그룹 상세 조회 ────────────────────────────────────

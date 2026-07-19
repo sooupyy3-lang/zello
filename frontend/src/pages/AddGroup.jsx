@@ -7,9 +7,9 @@ import { exploreGroups, createGroup } from '../api';
 
 
 const TABS = [
-  { key: 'recent', label: '최신순', sort: (a, b) => b.createdAt - a.createdAt },
-  { key: 'attendance', label: '출석순', sort: (a, b) => b.attendance - a.attendance },
-  { key: 'members', label: '인원순', sort: (a, b) => b.memberCount - a.memberCount },
+  { key: 'recent', label: '최신순' },
+  { key: 'attendance', label: '출석순' },
+  { key: 'members', label: '인원순' },
 ];
 
 // GroupResponse(백엔드) → 화면에서 쓰는 형태로 변환
@@ -510,13 +510,10 @@ export default function AddGroup() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const currentTab = TABS.find(t => t.key === activeTab);
-  const sorted = [...groups].sort(currentTab.sort);
-
   const loadGroups = () => {
     setLoading(true);
     setError(null);
-    exploreGroups(null, currentTab.sort)
+    exploreGroups(null, activeTab)
       .then(list => setGroups((list ?? []).map(toViewGroup)))
       .catch(e => setError(e.message || '모임 목록을 불러오지 못했어요.'))
       .finally(() => setLoading(false));
