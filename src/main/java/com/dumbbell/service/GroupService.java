@@ -65,12 +65,9 @@ public class GroupService {
                 ? groupRepo.searchByKeyword(keyword)
                 : groupRepo.findAll();
 
-        // 그룹마다 따로 멤버를 조회하지 않고, 목록에 있는 모든 그룹의 멤버를
-        // 한 번의 쿼리로 가져와서 그룹ID별로 메모리에서 묶어둔다 (N+1 방지).
         Map<Long, List<GroupMember>> membersByGroup = fetchMembersByGroup(
                 groups.stream().map(Group::getId).collect(Collectors.toList()));
 
-        // 정렬도 DB에 다시 물어보지 않고 위에서 미리 묶어둔 멤버 수로 계산한다.
         Comparator<Group> comparator = switch (sort != null ? sort : "recent") {
             case "members" -> Comparator.comparingInt(
                     (Group g) -> membersByGroup.getOrDefault(g.getId(), List.of()).size()).reversed();
@@ -96,7 +93,6 @@ public class GroupService {
                 .collect(Collectors.toList());
     }
 
-    // 여러 그룹의 멤버를 한 번의 쿼리로 조회해서 그룹ID별 Map으로 묶어준다.
     private Map<Long, List<GroupMember>> fetchMembersByGroup(List<Long> groupIds) {
         if (groupIds.isEmpty()) return Map.of();
         return groupMemberRepo.findByGroupIdIn(groupIds).stream()
