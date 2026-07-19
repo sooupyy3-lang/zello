@@ -70,8 +70,6 @@ function FriendPopup({ friend, onClose, onKick, canKick }) {
   if (!friend) return null;
   const rows = [
     ['역할', friend.role === 'owner' ? '모임장' : '멤버'],
-
-    ['오늘의 운동 랭킹', friend.rank],
     ['오늘의 운동 시간', friend.workoutTime],
     ['총 소모 칼로리', friend.calories],
     ['시작 시간', friend.startTime],
@@ -520,7 +518,6 @@ export default function Groupdetail() {
       const stats = await getGroupMemberStats(groupId, friend.id);
       setSelectedFriend(prev => (prev && prev.id === friend.id) ? {
         ...prev,
-        rank: stats.rank ? `${stats.rank}위` : '-',
         workoutTime: formatDuration(stats.todayDurationSec),
         calories: stats.todayCalories != null ? `${Math.round(stats.todayCalories)}kcal` : '-',
         startTime: formatClock(stats.startedAt),

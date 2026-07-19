@@ -246,7 +246,7 @@ public class GroupService {
                 .build();
     }
 
-    // ── 그룹원 상세 통계 (오늘의 랭킹/운동시간/칼로리, 역대 최대 지속시간) ──
+    // ── 그룹원 상세 통계 (오늘의 운동시간/칼로리, 역대 최대 지속시간) ──
     @Transactional(readOnly = true)
     public GroupMemberStatsResponse getMemberStats(Long groupId, Long requesterId, Long targetUserId) {
         if (!groupMemberRepo.existsByGroupIdAndUserId(groupId, requesterId))
@@ -255,30 +255,12 @@ public class GroupService {
         GroupMember target = groupMemberRepo.findByGroupIdAndUserId(groupId, targetUserId)
                 .orElseThrow(() -> new NotFoundException("해당 멤버가 없어요"));
 
-        List<Long> memberUserIds = groupMemberRepo.findByGroupId(groupId).stream()
-                .map(m -> m.getUser().getId())
-                .collect(Collectors.toList());
-
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         LocalDateTime endOfDay = startOfDay.plusDays(1);
 
-        List<WorkoutSession> todaySessions = sessionRepo
-                .findByUserIdInAndStartedAtBetween(memberUserIds, startOfDay, endOfDay).stream()
+        List<WorkoutSession> targetTodaySessions = sessionRepo
+                .findByUserIdInAndStartedAtBetween(List.of(targetUserId), startOfDay, endOfDay).stream()
                 .filter(s -> !s.getIsActive() && !s.getExcludedFromRanking())
-                .collect(Collectors.toList());
-
-        Map<Long, Long> durationByUser = todaySessions.stream()
-                .collect(Collectors.groupingBy(s -> s.getUser().getId(),
-                        Collectors.summingLong(WorkoutSession::getTotalDurationSec)));
-
-        List<Long> ranked = durationByUser.entrySet().stream()
-                .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        Integer rank = ranked.contains(targetUserId) ? ranked.indexOf(targetUserId) + 1 : null;
-
-        List<WorkoutSession> targetTodaySessions = todaySessions.stream()
-                .filter(s -> s.getUser().getId().equals(targetUserId))
                 .collect(Collectors.toList());
 
         long todayDurationSec = targetTodaySessions.stream()
@@ -298,7 +280,6 @@ public class GroupService {
                 .userId(targetUserId)
                 .name(target.getUser().getName())
                 .role(target.getRole().name())
-                .rank(rank)
                 .todayDurationSec(todayDurationSec)
                 .todayCalories(todayCalories)
                 .startedAt(startedAt)
