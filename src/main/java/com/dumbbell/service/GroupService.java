@@ -100,9 +100,7 @@ public class GroupService {
         return joinGroup(userId, group);
     }
 
-    // ── 그룹 탐색(검색)에서 바로 가입 ───────────────────
-    // 탐색 결과는 비멤버에게 초대코드를 안 보여주므로(GroupResponse.inviteCode),
-    // 초대코드 없이 groupId로 바로 가입할 수 있는 경로가 따로 필요하다.
+    // ── 그룹 탐색(검색)에서 바로 가입 (코드를 모르는 경우) ───────────────────
     @Transactional
     public GroupResponse joinByGroupId(Long userId, Long groupId) {
         Group group = groupRepo.findById(groupId)
